@@ -266,7 +266,6 @@ header.masthead h2 {
 
 .floating-label-form-group {
   position: relative;
-  border-bottom: 1px solid #e9ecef;
 }
 
 .floating-label-form-group input,
@@ -374,4 +373,10 @@ a:focus, a:hover, a:active {
 .btn-secondary:hover, .btn-secondary:focus, .btn-secondary:active {
   background-color: #1a252f;
   border-color: #1a252f;
+}
+
+.btn-light {
+  color: #212529;
+  background-color: none;
+  border-color: none;
 }
