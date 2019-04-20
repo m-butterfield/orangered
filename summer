@@ -4,7 +4,7 @@ import os
 import praw
 
 
-SUBREDDITS = [
+SUBREDDIT_NAMES = [
     'aviation',
     'spacex',
     'python',
@@ -24,8 +24,10 @@ def summer():
                          username=REDDIT_USERNAME,
                          password=REDDIT_PASSWORD,
                          user_agent='summer by /u/deneb150')
-    for result in reddit.subreddit('spacex').top('day', limit=10):
-        print(result)
+    for name in SUBREDDIT_NAMES:
+        print(f'Top posts from last 24 hours in subreddit: {name}')
+        for result in reddit.subreddit(name).top('day', limit=10):
+            print(f' - {result.title}')
 
 
 if __name__ == '__main__':
