@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+import praw
+
+
+SUBREDDITS = [
+    'aviation',
+    'spacex',
+    'python',
+    'technology',
+    'piano',
+]
+
+
+def summer():
+    reddit = praw.Reddit(client_id='CLIENT_ID', client_secret="CLIENT_SECRET",
+                         password='PASSWORD', user_agent='USERAGENT',
+                         username='USERNAME')
+
+    results = reddit.subreddit('spacex').top('day', limit=10)
+
+
+if __name__ == '__main__':
+    summer()
