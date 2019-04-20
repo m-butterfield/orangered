@@ -1,5 +1,9 @@
+import os
+import time
+import uuid
+
 from flask import Flask
-from flask import render_template
+from flask import render_template, request
 from flask_sqlalchemy import SQLAlchemy
 
 from sqlalchemy import Column, String, ForeignKey, func
@@ -7,7 +11,7 @@ from sqlalchemy.orm import relationship
 
 
 class Config(object):
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///app.db'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
@@ -23,7 +27,8 @@ user_subreddit = db.Table("user_subreddit", db.Model.metadata,
 
 
 class User(db.Model):
-    email = db.Column(db.String(255), primary_key=True)
+    email = Column(String(255), primary_key=True)
+    uuid = Column(String(80), unique=True, default=lambda: str(uuid.uuid4()))
     subreddits = relationship('Subreddit', secondary=user_subreddit)
 
     def __repr__(self):
@@ -31,7 +36,7 @@ class User(db.Model):
 
 
 class Subreddit(db.Model):
-    name = db.Column(db.String(255), primary_key=True)
+    name = Column(String(255), primary_key=True)
 
     def __repr__(self):
         return '<Subreddit %r>' % self.name
@@ -41,4 +46,19 @@ class Subreddit(db.Model):
 def index():
     subreddit_names = [s.name for s in db.session.query(
         Subreddit).order_by(func.lower(Subreddit.name))]
-    return render_template('index.html', subreddits=subreddit_names)
+    return render_template('index.html',
+                           cache_timestamp=str(int(time.time())),
+                           subreddits=subreddit_names)
+
+
+@app.route("/signup", methods=['POST'])
+def signup():
+    email = request.form['email']
+    subreddits = db.session.query(Subreddit).filter(Subreddit.name.in_(
+        request.form.getlist('subreddits'))).all()
+    db.session.add(User(
+        email=email,
+        subreddits=subreddits,
+    ))
+    db.session.commit()
+    return 'success', 201

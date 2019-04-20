@@ -25,7 +25,7 @@
   <link href="{{ url_for('static', filename='vendor/bootstrap-select/dist/css/bootstrap-select.min.css') }}" rel="stylesheet" type="text/css">
 
   <!-- Custom styles for this template -->
-  <link href="{{ url_for('static', filename='css/orangered.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/orangered.css', cache=cache_timestamp) }}" rel="stylesheet">
 
 </head>
 
@@ -94,7 +94,14 @@
             <div class="control-group">
               <div class="form-group floating-label-form-group controls mb-0 pb-2">
                 <label>Subreddits</label>
-                <select class="selectpicker form-control" multiple data-live-search="true" data-max-options="10" data-header="Choose subreddits (up to ten)" title="Choose subreddits...">
+                <select class="selectpicker form-control"
+                        id="subreddits"
+                        multiple data-live-search="true"
+                        data-max-options="10"
+                        data-header="Choose subreddits (up to ten)"
+                        title="Choose subreddits..."
+                        required="required"
+                        data-validation-required-message="Please choose at least one subreddit.">
                   {% for subreddit in subreddits %}
                     <option>{{ subreddit }}</option>
                   {% endfor %}
@@ -137,10 +144,10 @@
 
   <!-- Contact Form JavaScript -->
   <script src="{{ url_for('static', filename='js/jqBootstrapValidation.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/signup.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/signup.js', cache=cache_timestamp) }}"></script>
 
   <!-- Custom scripts for this template -->
-  <script src="{{ url_for('static', filename='js/orangered.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/orangered.js', cache=cache_timestamp) }}"></script>
 
 </body>
 
