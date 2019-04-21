@@ -15,9 +15,11 @@ class Config(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
-app = Flask(__name__)
-app.config.from_object(Config)
-db = SQLAlchemy(app)
+application = Flask(__name__)
+application.config.from_object(Config)
+db = SQLAlchemy(application)
+
+APP_START_TIME = time.time()
 
 
 user_subreddit = db.Table("user_subreddit", db.Model.metadata,
@@ -42,16 +44,17 @@ class Subreddit(db.Model):
         return '<Subreddit %r>' % self.name
 
 
-@app.route("/")
+@application.route("/")
 def index():
     subreddit_names = [s.name for s in db.session.query(
         Subreddit).order_by(func.lower(Subreddit.name))]
+    cache_time = time.time() if application.config['DEBUG'] else APP_START_TIME
     return render_template('index.html',
-                           cache_timestamp=str(int(time.time())),
+                           cache_timestamp=str(int(cache_time)),
                            subreddits=subreddit_names)
 
 
-@app.route("/signup", methods=['POST'])
+@application.route("/signup", methods=['POST'])
 def signup():
     email = request.form['email']
     subreddits = db.session.query(Subreddit).filter(Subreddit.name.in_(

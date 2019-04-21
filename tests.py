@@ -1,12 +1,12 @@
 import unittest
 
-from app import app, db, User
+from application import application, db, User
 
 
 class AppTests(unittest.TestCase):
 
     def setUp(self):
-        self.client = app.test_client()
+        self.client = application.test_client()
 
     def test_valid_signup(self):
         expected_subreddits = ['aviation', 'spacex']
