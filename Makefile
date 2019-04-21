@@ -1,12 +1,14 @@
 db:
-	python -c 'from app import db; db.create_all()'
-	sqlite3 app.db < insert_subreddits.sql
+	createdb orangered
+	python -c 'from application import db; db.create_all()'
+	psql -d orangered -f insert_subreddits.sql
 
 run-dev:
-	FLASK_APP=app.py FLASK_DEBUG=1 flask run
+	FLASK_APP=application.py FLASK_DEBUG=1 flask run
 
 test:
-	SQLALCHEMY_DATABASE_URI='sqlite:///test.db' python -c 'from app import db; db.create_all()'
-	sqlite3 test.db < insert_subreddits.sql
-	SQLALCHEMY_DATABASE_URI='sqlite:///test.db' python -m unittest -v tests
-	rm test.db
+	dropdb --if-exists orangered_test
+	createdb orangered_test
+	SQLALCHEMY_DATABASE_URI='postgresql://localhost/orangered_test' python -c 'from application import db; db.create_all()'
+	psql -d orangered_test -f insert_subreddits.sql
+	SQLALCHEMY_DATABASE_URI='postgresql://localhost/orangered_test' python -m unittest -v tests
