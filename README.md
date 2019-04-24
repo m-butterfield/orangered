@@ -1,15 +1,19 @@
-# summer
+# orangered
+
+<a href="https://orangered.io">orangered.io</a>
 
 ## development
 
 To run the app locally:
 
-    $ FLASK_APP=app.py FLASK_DEBUG=1 flask run
+    $ make db
+    $ make run-dev
 
 
-## environment variables
+required environment variables:
 
-REDDIT_CLIENT_ID  
-REDDIT_CLIENT_SECRET  
-REDDIT_USERNAME  
-REDDIT_PASSWORD  
+    SQLALCHEMY_DATABASE_URI
+    REDDIT_CLIENT_ID  
+    REDDIT_CLIENT_SECRET  
+    REDDIT_USERNAME  
+    REDDIT_PASSWORD  
