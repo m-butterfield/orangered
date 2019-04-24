@@ -1,5 +1,3 @@
-# orangered
-
 <a href="https://orangered.io">orangered.io</a>
 
 ## development
