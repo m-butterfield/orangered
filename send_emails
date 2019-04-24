@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from jinja2 import Template
+
 from praw_client import get_reddit
 
 
@@ -10,13 +12,30 @@ SUBREDDITS = [
 ]
 
 
-def summer():
+def send_emails():
     reddit = get_reddit()
+    subreddits = []
+    template_data = _template_data()
     for name in SUBREDDITS:
-        print(f'Top posts from last 24 hours in subreddit: {name}')
+        posts = []
         for result in reddit.subreddit(name).top('day', limit=10):
-            print(f' - {result.title}')
+            posts.append({
+                'title': result.title,
+                'url': result.url,
+            })
+        subreddits.append({'name': name, 'posts': posts})
+
+    with open('scratch.html', 'w') as fp:
+        fp.write(Template(template_data).render(
+            email_management_url='',
+            subreddits=subreddits,
+        ))
+
+
+def _template_data():
+    with open('templates/email.html') as fp:
+        return fp.read()
 
 
 if __name__ == '__main__':
-    summer()
+    send_emails()
