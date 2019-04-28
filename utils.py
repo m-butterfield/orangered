@@ -21,24 +21,40 @@ def send_emails():
             email_management_url='',
             subreddits=subreddits,
     )
+    with open('scratch.html', 'w') as fp:
+        fp.write(data)
 
 
 def _scrape_posts():
     reddit = _reddit()
     subreddits = []
-    for subreddit in db.session.query(Subreddit).join(Subreddit.accounts):
+    now = datetime.datetime.utcnow()
+    for subreddit in _subreddits_to_scrape():
         posts = []
-        for result in reddit.subreddit(subreddit.name).top('day', limit=10):
-            posts.append(SubredditPost(
-                id=result.id,
-                url=result.url,
-                title=result.title,
-                subreddit=subreddit,
-            ))
-        subreddit.last_scraped = datetime.datetime.utcnow()
-        db.session.add_all(posts)
+        if subreddit.last_scraped and (
+                subreddit.last_scraped > now - datetime.timedelta(hours=23)):
+            posts = db.session.query(SubredditPost).filter(
+                SubredditPost.scraped_at > now - datetime.timedelta(hours=23),
+            ).all()
+        else:
+            for result in reddit.subreddit(subreddit.name).top('day', limit=10):
+                post = SubredditPost(
+                    id=result.id,
+                    url=result.url,
+                    title=result.title,
+                    subreddit=subreddit,
+                )
+                posts.append(post)
+                db.session.add(post)
+        subreddit.last_scraped = now
         db.session.commit()
-        subreddits.append({'name': subreddit.name, 'posts': posts})
+        if posts:
+            subreddits.append({'subreddit': subreddit, 'posts': posts})
+    return subreddits
+
+
+def _subreddits_to_scrape():
+    return db.session.query(Subreddit).join(Subreddit.accounts)
 
 
 def _reddit():
