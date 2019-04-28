@@ -1,6 +1,8 @@
 import unittest
+from unittest import mock
 
-from application import application, db, User
+from application import application, db, Account, Subreddit
+from utils import send_emails
 
 
 class AppTests(unittest.TestCase):
@@ -15,7 +17,20 @@ class AppTests(unittest.TestCase):
             'subreddits': expected_subreddits,
         })
         self.assertEqual(resp.status_code, 201)
-        user = db.session.query(User).get('bob@aol.com')
-        self.assertIsNotNone(user)
+        account = db.session.query(Account).get('bob@aol.com')
+        self.assertIsNotNone(account)
         self.assertEqual(
-            set(expected_subreddits), {s.name for s in user.subreddits})
+            set(expected_subreddits), {s.name for s in account.subreddits})
+
+
+class EmailTests(unittest.TestCase):
+
+    @mock.patch('utils.Template')
+    def test_send_emails(self, fake_template):
+        db.session.add(Account(
+            email='bob@aol.com',
+            subreddits=db.session.query(Subreddit).filter(Subreddit.name.in_(
+                    ['aviation', 'spacex'])).all(),
+        ))
+        db.session.commit()
+        send_emails()
