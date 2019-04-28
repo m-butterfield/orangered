@@ -30,28 +30,36 @@ def scrape_posts():
     subreddits = {}
     now = datetime.utcnow()
     for subreddit in _subreddits_to_scrape():
-        posts = []
         if subreddit.last_scraped and (
                 subreddit.last_scraped > now - timedelta(hours=23)):
-            posts = db.session.query(SubredditPost).filter(
-                SubredditPost.subreddit == subreddit,
-                SubredditPost.scraped_at > now - timedelta(hours=23),
-            ).all()
+            posts = _existing_scraped_posts(subreddit, now)
         else:
-            for result in reddit.subreddit(subreddit.name).top('day', limit=10):
-                post = SubredditPost(
-                    id=result.id,
-                    url=result.url,
-                    title=result.title,
-                    subreddit=subreddit,
-                )
-                posts.append(post)
-                db.session.add(post)
-            subreddit.last_scraped = now
-        db.session.commit()
-        if posts:
-            subreddits[subreddit.name] = posts
+            posts = _scrape_new_posts(reddit, subreddit)
+        subreddits[subreddit.name] = posts
     return subreddits
+
+
+def _existing_scraped_posts(subreddit, now):
+    return db.session.query(SubredditPost).filter(
+        SubredditPost.subreddit == subreddit,
+        SubredditPost.scraped_at > now - timedelta(hours=23),
+    ).all()
+
+
+def _scrape_new_posts(reddit, subreddit):
+    posts = [
+        SubredditPost(
+            id=result.id,
+            url=result.url,
+            title=result.title,
+            subreddit=subreddit,
+        )
+        for result in reddit.subreddit(subreddit.name).top('day', limit=10)
+    ]
+    db.session.add_all(posts)
+    subreddit.last_scraped = datetime.utcnow()
+    db.session.commit()
+    return posts
 
 
 def _subreddits_to_scrape():

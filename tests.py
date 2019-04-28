@@ -12,6 +12,8 @@ class BaseTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        db.close_all_sessions()
+        db.drop_all()
         db.create_all()
         insert_subreddits()
 
