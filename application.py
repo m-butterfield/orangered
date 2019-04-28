@@ -1,3 +1,4 @@
+import datetime
 import os
 import time
 import uuid
@@ -6,7 +7,7 @@ from flask import Flask
 from flask import render_template, request
 from flask_sqlalchemy import SQLAlchemy
 
-from sqlalchemy import Column, String, ForeignKey, func
+from sqlalchemy import Column, DateTime, ForeignKey, func, String
 from sqlalchemy.orm import relationship
 
 
@@ -22,26 +23,46 @@ db = SQLAlchemy(application)
 APP_START_TIME = time.time()
 
 
-user_subreddit = db.Table("user_subreddit", db.Model.metadata,
-    Column("user_email", String, ForeignKey("user.email"), primary_key=True),
-    Column("subreddit_name", String, ForeignKey("subreddit.name"), primary_key=True),
+account_subreddit = db.Table(
+    "account_subreddit", db.Model.metadata,
+    Column("account_email", String(255), ForeignKey("account.email"),
+           primary_key=True),
+    Column("subreddit_name", String(255), ForeignKey("subreddit.name"),
+           primary_key=True),
 )
 
 
-class User(db.Model):
+class Account(db.Model):
     email = Column(String(255), primary_key=True)
     uuid = Column(String(80), unique=True, default=lambda: str(uuid.uuid4()))
-    subreddits = relationship('Subreddit', secondary=user_subreddit)
+    subreddits = relationship('Subreddit',
+                              backref='accounts', secondary=account_subreddit)
 
     def __repr__(self):
-        return '<User %r>' % self.email
+        return f'<Account {self.email}>'
 
 
 class Subreddit(db.Model):
     name = Column(String(255), primary_key=True)
+    last_scraped = Column(DateTime())
 
     def __repr__(self):
-        return '<Subreddit %r>' % self.name
+        return f'<Subreddit {self.name}>'
+
+
+class SubredditPost(db.Model):
+    id = Column(String(128), primary_key=True)
+    subreddit_name = Column(String(255), ForeignKey('subreddit.name'),
+                            nullable=False)
+    subreddit = relationship('Subreddit')
+    title = Column(String(255), nullable=False)
+    url = Column(String(255), nullable=False)
+
+    scraped_at = Column(DateTime(),
+                        default=datetime.datetime.utcnow, nullable=False)
+
+    def __repr__(self):
+        return f'<SubredditPost {self.id}>'
 
 
 @application.route("/")
@@ -58,8 +79,8 @@ def index():
 def signup():
     email = request.form['email']
     subreddits = db.session.query(Subreddit).filter(Subreddit.name.in_(
-        request.form.getlist('subreddits'))).all()
-    db.session.add(User(
+        request.form.getlist('subreddits[]'))).all()
+    db.session.add(Account(
         email=email,
         subreddits=subreddits,
     ))
