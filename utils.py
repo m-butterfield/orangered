@@ -5,7 +5,7 @@ from jinja2 import Template
 
 import praw
 
-from application import db, Subreddit, SubredditPost
+from application import Account, db, Subreddit, SubredditPost
 
 
 REDDIT_CLIENT_ID = os.environ.get('REDDIT_CLIENT_ID')
@@ -15,19 +15,31 @@ REDDIT_PASSWORD = os.environ.get('REDDIT_PASSWORD')
 
 
 def send_emails():
-    subreddits = scrape_posts()
+    _send_emails(_scrape_posts())
+
+
+def _send_emails(subreddit_posts):
     html_template = _template_data()
-    data = Template(html_template).render(
-            email_management_url='',
-            subreddits=subreddits,
+    for account in db.session.query(Account):
+        _send_email_for_account(account, subreddit_posts, html_template)
+
+
+def _send_email_for_account(account, subreddit_posts, html_template):
+    subreddits = sorted(
+        [(s.name, subreddit_posts[s.name]) for s in account.subreddits],
+        key=lambda s: s[0].lower(),
     )
-    with open('scratch.html', 'w') as fp:
-        fp.write(data)
+    data = Template(html_template).render(
+        email_management_url='',
+        subreddits=subreddits,
+    )
+    # with open('scratch.html', 'w') as fp:
+    #     fp.write(data)
 
 
-def scrape_posts():
+def _scrape_posts():
     reddit = _reddit()
-    subreddits = {}
+    subreddit_posts = {}
     now = datetime.utcnow()
     for subreddit in _subreddits_to_scrape():
         if subreddit.last_scraped and (
@@ -35,8 +47,8 @@ def scrape_posts():
             posts = _existing_scraped_posts(subreddit, now)
         else:
             posts = _scrape_new_posts(reddit, subreddit)
-        subreddits[subreddit.name] = posts
-    return subreddits
+        subreddit_posts[subreddit.name] = posts
+    return subreddit_posts
 
 
 def _existing_scraped_posts(subreddit, now):

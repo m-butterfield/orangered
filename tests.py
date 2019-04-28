@@ -5,7 +5,7 @@ import uuid
 
 from application import application, db, Account, Subreddit, SubredditPost
 from subreddits import insert_subreddits
-from utils import scrape_posts
+from utils import _scrape_posts, _send_emails
 
 
 class BaseTestCase(unittest.TestCase):
@@ -68,7 +68,8 @@ class FakeReddit:
 class EmailTests(BaseTestCase):
 
     @mock.patch('utils._reddit', return_value=FakeReddit())
-    def test_scrape_posts(self, _):
+    @mock.patch('utils.Template')
+    def test_scrape_and_send_emails(self, fake_template, _):
         # user account with some subscriptions
         db.session.add(Account(
             email='bob@aol.com',
@@ -112,15 +113,25 @@ class EmailTests(BaseTestCase):
         ])
         db.session.commit()
 
-        subreddits = scrape_posts()
+        subreddit_posts = _scrape_posts()
         self.assertSetEqual(
-            {'aviation', 'spacex', 'running'}, set(subreddits.keys()))
-        self.assertEqual(len(subreddits['aviation']), 2)
-        self.assertEqual(len(subreddits['spacex']), 5)
-        self.assertEqual(len(subreddits['running']), 5)
+            {'aviation', 'spacex', 'running'}, set(subreddit_posts.keys()))
+        self.assertEqual(len(subreddit_posts['aviation']), 2)
+        self.assertEqual(len(subreddit_posts['spacex']), 5)
+        self.assertEqual(len(subreddit_posts['running']), 5)
         self.assertIsNotNone(
             db.session.query(Subreddit).get('spacex').last_scraped)
         self.assertGreaterEqual(
             db.session.query(Subreddit).get('running').last_scraped, now)
         self.assertEqual(
             db.session.query(Subreddit).get('aviation').last_scraped, now)
+
+        _send_emails(subreddit_posts)
+        fake_template().render.assert_called_with(
+            email_management_url='',
+            subreddits=[
+                ('aviation', subreddit_posts['aviation']),
+                ('running', subreddit_posts['running']),
+                ('spacex', subreddit_posts['spacex']),
+            ],
+        )
