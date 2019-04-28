@@ -7,6 +7,6 @@ run-dev:
 	FLASK_APP=application.py FLASK_DEBUG=1 flask run
 
 test:
-	dropdb --if-exists orangered_test
-	createdb orangered_test
+	@dropdb --if-exists orangered_test
+	@createdb orangered_test
 	SQLALCHEMY_DATABASE_URI='postgresql://localhost/orangered_test' python -m unittest -v $(filter-out $@,$(MAKECMDGOALS))
