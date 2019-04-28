@@ -9,6 +9,4 @@ run-dev:
 test:
 	dropdb --if-exists orangered_test
 	createdb orangered_test
-	SQLALCHEMY_DATABASE_URI='postgresql://localhost/orangered_test' python -c 'from application import db; db.create_all()'
-	psql -d orangered_test -f insert_subreddits.sql >/dev/null
 	SQLALCHEMY_DATABASE_URI='postgresql://localhost/orangered_test' python -m unittest -v $(filter-out $@,$(MAKECMDGOALS))

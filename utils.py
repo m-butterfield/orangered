@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timedelta
 import os
 
 from jinja2 import Template
@@ -28,13 +28,14 @@ def send_emails():
 def scrape_posts():
     reddit = _reddit()
     subreddits = {}
-    now = datetime.datetime.utcnow()
+    now = datetime.utcnow()
     for subreddit in _subreddits_to_scrape():
         posts = []
         if subreddit.last_scraped and (
-                subreddit.last_scraped > now - datetime.timedelta(hours=23)):
+                subreddit.last_scraped > now - timedelta(hours=23)):
             posts = db.session.query(SubredditPost).filter(
-                SubredditPost.scraped_at > now - datetime.timedelta(hours=23),
+                SubredditPost.subreddit == subreddit,
+                SubredditPost.scraped_at > now - timedelta(hours=23),
             ).all()
         else:
             for result in reddit.subreddit(subreddit.name).top('day', limit=10):
@@ -46,7 +47,7 @@ def scrape_posts():
                 )
                 posts.append(post)
                 db.session.add(post)
-        subreddit.last_scraped = now
+            subreddit.last_scraped = now
         db.session.commit()
         if posts:
             subreddits[subreddit.name] = posts

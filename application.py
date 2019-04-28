@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import os
 import time
 import uuid
@@ -58,8 +58,7 @@ class SubredditPost(db.Model):
     title = Column(String(255), nullable=False)
     url = Column(String(255), nullable=False)
 
-    scraped_at = Column(DateTime(),
-                        default=datetime.datetime.utcnow, nullable=False)
+    scraped_at = Column(DateTime(), default=datetime.utcnow, nullable=False)
 
     def __repr__(self):
         return f'<SubredditPost {self.id}>'
