@@ -1,9 +1,10 @@
+from datetime import datetime, timedelta
 import unittest
 from unittest import mock
 import uuid
 
 from application import application, db, Account, Subreddit
-from utils import send_emails
+from utils import scrape_posts
 
 
 class AppTests(unittest.TestCase):
@@ -34,8 +35,9 @@ class FakeSubredditPost:
 
 class FakeSubreddit:
 
-    def __init__(self, name):
+    def __init__(self, name, last_scraped=None):
         self.name = name
+        self.last_scraped = last_scraped
 
     def top(self, *args, **kwargs):
         return [FakeSubredditPost(f'{self.name} post {i}') for i in range(5)]
@@ -45,7 +47,10 @@ class FakeReddit:
 
     def __init__(self):
         self._subreddits = {
-            'aviation': FakeSubreddit('aviation'),
+            'aviation': FakeSubreddit(
+                'aviation',
+                last_scraped=datetime.utcnow() - timedelta(days=1),
+            ),
             'spacex': FakeSubreddit('spacex'),
         }
 
@@ -56,11 +61,12 @@ class FakeReddit:
 class EmailTests(unittest.TestCase):
 
     @mock.patch('utils._reddit', return_value=FakeReddit())
-    def test_send_emails(self, _):
+    def test_scrape_posts(self, _):
         db.session.add(Account(
             email='bob@aol.com',
             subreddits=db.session.query(Subreddit).filter(Subreddit.name.in_(
                     ['aviation', 'spacex'])).all(),
         ))
         db.session.commit()
-        send_emails()
+        subreddits = scrape_posts()
+        self.assertSetEqual({'aviation', 'spacex'}, set(subreddits.keys()))

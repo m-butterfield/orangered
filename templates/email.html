@@ -90,9 +90,9 @@
                     <h1 style="font-family: sans-serif; font-size: 70px; font-weight: normal; margin: 0; Margin-bottom: 15px; color: #FF9612; text-align: center;">orangered</h1>
                     <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; text-align: center; Margin-bottom: 5px;">A daily summary of your favorite subreddits.</p>
                     <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; text-align: center; Margin-bottom: 15px;"><a style="color: #FF9612;" href="{{ email_management_url }}">click here to manage your subreddits</a></p>
-                    {% for subreddit in subreddits %}
-                      <h3 style="font-family: sans-serif; font-size: 50px; font-weight: normal; margin: 0; Margin-bottom: 15px; Margin-top: 50px; color: #FF9612;">/r/{{ subreddit['subreddit'].name }}</h3>
-                      {% for post in subreddit['posts'] %}
+                    {% for subreddit_name, posts in subreddits %}
+                      <h3 style="font-family: sans-serif; font-size: 50px; font-weight: normal; margin: 0; Margin-bottom: 15px; Margin-top: 50px; color: #FF9612;">/r/{{ subreddit_name }}</h3>
+                      {% for post in posts %}
                         <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;"><a style="color: #2C3E50;" href="{{ post.url }}">{{ post.title }}</a></p>
                       {% endfor %}
                     {% endfor %}

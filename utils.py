@@ -15,7 +15,7 @@ REDDIT_PASSWORD = os.environ.get('REDDIT_PASSWORD')
 
 
 def send_emails():
-    subreddits = _scrape_posts()
+    subreddits = scrape_posts()
     html_template = _template_data()
     data = Template(html_template).render(
             email_management_url='',
@@ -25,9 +25,9 @@ def send_emails():
         fp.write(data)
 
 
-def _scrape_posts():
+def scrape_posts():
     reddit = _reddit()
-    subreddits = []
+    subreddits = {}
     now = datetime.datetime.utcnow()
     for subreddit in _subreddits_to_scrape():
         posts = []
@@ -49,7 +49,7 @@ def _scrape_posts():
         subreddit.last_scraped = now
         db.session.commit()
         if posts:
-            subreddits.append({'subreddit': subreddit, 'posts': posts})
+            subreddits[subreddit.name] = posts
     return subreddits
 
 
