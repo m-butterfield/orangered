@@ -1,7 +1,7 @@
 db:
-	createdb orangered
-	python -c 'from application import db; db.create_all()'
-	psql -d orangered -f insert_subreddits.sql >/dev/null
+	@createdb orangered
+	@python -c 'from application import db; db.create_all()'
+	@python -c 'from subreddits import insert_subreddits; insert_subreddits()'
 
 run-dev:
 	FLASK_APP=application.py FLASK_DEBUG=1 flask run
