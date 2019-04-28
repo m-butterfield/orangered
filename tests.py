@@ -15,7 +15,7 @@ class AppTests(unittest.TestCase):
         expected_subreddits = ['aviation', 'spacex']
         resp = self.client.post('/signup', data={
             'email': 'bob@aol.com',
-            'subreddits': expected_subreddits,
+            'subreddits[]': expected_subreddits,
         })
         self.assertEqual(resp.status_code, 201)
         account = db.session.query(Account).get('bob@aol.com')

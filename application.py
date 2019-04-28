@@ -79,7 +79,7 @@ def index():
 def signup():
     email = request.form['email']
     subreddits = db.session.query(Subreddit).filter(Subreddit.name.in_(
-        request.form.getlist('subreddits'))).all()
+        request.form.getlist('subreddits[]'))).all()
     db.session.add(Account(
         email=email,
         subreddits=subreddits,
