@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import os
+import requests
 
 from jinja2 import Template
 
@@ -8,10 +9,27 @@ import praw
 from application import Account, db, Subreddit, SubredditPost
 
 
+MAILGUN_API_URL = "https://api.mailgun.net/v3/orangered.io/messages",
+MAILGUN_API_KEY = os.environ.get('MAILGUN_API_KEY')
+
+
 REDDIT_CLIENT_ID = os.environ.get('REDDIT_CLIENT_ID')
 REDDIT_CLIENT_SECRET = os.environ.get('REDDIT_CLIENT_SECRET')
 REDDIT_USERNAME = os.environ.get('REDDIT_USERNAME')
 REDDIT_PASSWORD = os.environ.get('REDDIT_PASSWORD')
+
+
+def _html_template():
+    with open('templates/email.html') as fp:
+        return fp.read()
+
+
+def _text_template():
+    with open('templates/email.txt') as fp:
+        return fp.read()
+
+
+HTML_TEMPLATE, TEXT_TEMPLATE = _html_template(), _text_template()
 
 
 def send_emails():
@@ -19,22 +37,38 @@ def send_emails():
 
 
 def _send_emails(subreddit_posts):
-    html_template = _template_data()
     for account in db.session.query(Account):
-        _send_email_for_account(account, subreddit_posts, html_template)
+        _send_email_for_account(account, subreddit_posts)
 
 
-def _send_email_for_account(account, subreddit_posts, html_template):
+def _send_email_for_account(account, subreddit_posts):
     subreddits = sorted(
         [(s.name, subreddit_posts[s.name]) for s in account.subreddits],
         key=lambda s: s[0].lower(),
     )
-    data = Template(html_template).render(
+    html_data = Template(HTML_TEMPLATE).render(
         email_management_url='',
         subreddits=subreddits,
     )
-    # with open('scratch.html', 'w') as fp:
-    #     fp.write(data)
+    text_data = Template(TEXT_TEMPLATE).render(
+        email_management_url='',
+        subreddits=subreddits,
+    )
+    _send_email(account.email, html_data, text_data)
+
+
+def _send_email(email, html, text):
+    resp = requests.post(
+        MAILGUN_API_URL,
+        auth=("api", MAILGUN_API_KEY),
+        data={
+            "from": "Orangered <no-reply@orangered.io>",
+            "to": [email],
+            "subject": "Orangered - Your daily Reddit summary",
+            "html": html,
+            "text": text,
+        })
+    resp.raise_for_status()
 
 
 def _scrape_posts():
@@ -84,8 +118,3 @@ def _reddit():
                        username=REDDIT_USERNAME,
                        password=REDDIT_PASSWORD,
                        user_agent='orangered by /u/deneb150')
-
-
-def _template_data():
-    with open('templates/email.html') as fp:
-        return fp.read()

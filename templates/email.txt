@@ -1,0 +1,11 @@
+Orangered - A daily summary of your favorite subreddits
+Go here to manage your settings: {{ email_management_url }}
+
+{% for subreddit_name, posts in subreddits %}
+/r/{{ subreddit_name }}:
+{% for post in posts %}
+- {{ post.title }}: {{ post.url }}
+{% endfor %}
+{% endfor %}
+
+Go here to unsubscribe:

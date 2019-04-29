@@ -69,7 +69,8 @@ class EmailTests(BaseTestCase):
 
     @mock.patch('utils._reddit', return_value=FakeReddit())
     @mock.patch('utils.Template')
-    def test_scrape_and_send_emails(self, fake_template, _):
+    @mock.patch('utils._send_email')
+    def test_scrape_and_send_emails(self, fake_send_email, fake_template, _):
         # user account with some subscriptions
         db.session.add(Account(
             email='bob@aol.com',
@@ -135,3 +136,4 @@ class EmailTests(BaseTestCase):
                 ('spacex', subreddit_posts['spacex']),
             ],
         )
+        fake_send_email.assert_called_with('bob@aol.com', mock.ANY, mock.ANY)
