@@ -25,7 +25,8 @@ APP_START_TIME = time.time()
 
 account_subreddit = db.Table(
     "account_subreddit", db.Model.metadata,
-    Column("account_email", String(255), ForeignKey("account.email"),
+    Column("account_email", String(255), ForeignKey(
+        "account.email", onupdate="cascade"),
            primary_key=True),
     Column("subreddit_name", String(255), ForeignKey("subreddit.name"),
            primary_key=True),

@@ -9,7 +9,7 @@ import praw
 from application import Account, db, Subreddit, SubredditPost
 
 
-MAILGUN_API_URL = "https://api.mailgun.net/v3/orangered.io/messages",
+MAILGUN_API_URL = "https://api.mailgun.net/v3/orangered.io/messages"
 MAILGUN_API_KEY = os.environ.get('MAILGUN_API_KEY')
 
 
