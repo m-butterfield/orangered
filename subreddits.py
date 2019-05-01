@@ -1007,6 +1007,5 @@ SUBREDDITS = [
 
 
 def insert_subreddits():
-    for name in SUBREDDITS:
-        db.session.add(Subreddit(name=name))
+    db.session.add_all([Subreddit(name=n) for n in SUBREDDITS])
     db.session.commit()
