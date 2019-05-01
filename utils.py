@@ -6,7 +6,7 @@ from jinja2 import Template
 
 import praw
 
-from application import Account, db, Subreddit, SubredditPost
+from app import Account, db, Subreddit, SubredditPost
 
 
 MAILGUN_API_URL = "https://api.mailgun.net/v3/orangered.io/messages"

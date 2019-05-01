@@ -1,4 +1,4 @@
-from application import db, Subreddit
+from app import db, Subreddit
 
 
 # The top 1000 subreddits by subscriber count
