@@ -7,7 +7,6 @@ RUN apk add --virtual .build-deps gcc python-dev musl-dev postgresql-dev
 ADD requirements.txt /orangered/requirements.txt
 RUN pip install -r /orangered/requirements.txt
 
-# Delete build dependencies
 RUN apk del .build-deps
 
 ADD . /orangered
