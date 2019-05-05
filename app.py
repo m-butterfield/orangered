@@ -67,8 +67,8 @@ class SubredditPost(db.Model):
 
 @app.route("/")
 def index():
-    subreddit_names = [s.name for s in db.session.query(
-        Subreddit).order_by(func.lower(Subreddit.name))]
+    subreddit_names = ['Hello'] # [s.name for s in db.session.query(
+        # Subreddit).order_by(func.lower(Subreddit.name))]
     cache_time = time.time() if app.config['DEBUG'] else APP_START_TIME
     return render_template('index.html',
                            cache_timestamp=str(int(cache_time)),

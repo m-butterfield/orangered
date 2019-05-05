@@ -5,10 +5,6 @@ metadata:
   labels:
     app: orangered
 
-# The orangered worker replica set ensures that at least 2 instances of the
-# orangered worker pod are running on the cluster.
-# For more info about Pods see:
-#   https://cloud.google.com/kubernetes-engine/docs/pods/
 spec:
   replicas: 2
   template:
@@ -19,10 +15,6 @@ spec:
       containers:
         - name: orangered
           image: gcr.io/orangered/orangered
-          # This setting makes nodes pull the docker image every time before
-          # starting the pod. This is useful when debugging, but should be turned
-          # off in production.
-          imagePullPolicy: Always
           env:
             - name: SQLALCHEMY_DATABASE_URI
               value: postgresql://127.0.0.1/orangered

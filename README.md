@@ -75,8 +75,11 @@ To build container:
 
 Push container:
 
-    docker -- push gcr.io/orangered/orangered
+    docker push gcr.io/orangered/orangered
 
 Deploy orangered:
 
-    
+    kubectl create -f kubernetes/remote/
+
+To rebuild and deploy the container, run the `docker build` and `docker push` steps again, then delete the pods.
+
