@@ -31,7 +31,8 @@ Create the database:
 
 Create the database tables and base data:
 
-    kubectl exec -it <orangered pod name> -- python -c 'from app import db; db.create_all()' && python -c 'from subreddits import insert_subreddits; insert_subreddits()'
+    kubectl exec -it <orangered pod name> -- python -c 'from app import db; db.create_all()'
+    kubectl exec -it <orangered pod name> -- python -c 'from subreddits import insert_subreddits; insert_subreddits()'
 
 Modify hosts file to point to the minikube ingress:
 
@@ -66,11 +67,22 @@ Push container:
 
     docker push gcr.io/orangered/orangered
 
-Add secrets:
+Add secrets (fill in values before running commands):
 
-    kubectl create secret generic dev-db-secrets \
-        –from-literal=username=devuser \
-        -from-literal=password=orangered
+    kubectl create secret generic psql-creds \
+        --from-literal=pgdatabase= \
+        -–from-literal=pghost= \
+        --from-literal=pguser= \
+        --from-literal=pgpassword=
+
+    kubectl create secret generic mailgun-creds \
+        --from-literal=mailgun-api-key=
+
+    kubectl create secret generic reddit-creds \
+        --from-literal=reddit-client-id= \
+        --from-literal=reddit-client-secret= \
+        --from-literal=reddit-username= \
+        --from-literal=reddit-password=
 
 Deploy orangered:
 
@@ -78,7 +90,10 @@ Deploy orangered:
 
 To rebuild and deploy the container, run the `docker build` and `docker push` steps again, then delete the pods.
 
+Create the database tables and base data:
 
+    kubectl exec -it <orangered pod name> -- python -c 'from app import db; db.create_all()'
+    kubectl exec -it <orangered pod name> -- python -c 'from subreddits import insert_subreddits; insert_subreddits()'
 
 To scale, simply:
 

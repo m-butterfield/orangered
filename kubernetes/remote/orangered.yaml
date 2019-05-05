@@ -16,6 +16,48 @@ spec:
         - name: orangered
           image: gcr.io/orangered/orangered
           env:
-            - name: SQLALCHEMY_DATABASE_URI
-              value: postgresql://127.0.0.1/orangered
-
+            - name: PGDATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: psql-creds
+                  key: pgdatabase
+            - name: PGHOST
+              valueFrom:
+                secretKeyRef:
+                  name: psql-creds
+                  key: pghost
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: psql-creds
+                  key: pguser
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: psql-creds
+                  key: pgpassword
+            - name: MAILGUN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mailgun-creds
+                  key: mailgun-api-key
+            - name: REDDIT_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: reddit-creds
+                  key: reddit-client-id
+            - name: REDDIT_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: reddit-creds
+                  key: reddit-client-secret
+            - name: REDDIT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: reddit-creds
+                  key: reddit-username
+            - name: REDDIT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: reddit-creds
+                  key: reddit-password
