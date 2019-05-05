@@ -3,11 +3,10 @@ kind: Service
 metadata:
   name: orangered
   labels:
-    app: orangered
+    service: orangered
 spec:
-  type: LoadBalancer
+  selector:
+    app: orangered
   ports:
     - port: 5000
       targetPort: 5000
-  selector:
-    app: orangered

@@ -20,9 +20,10 @@ required environment variables:
 
 ### Minikube instructions
 
-Start minikube:
+Start minikube and enable ingress addon:
 
     minikube start
+    minikube addons enable ingress
 
 Build local image:
 
@@ -42,6 +43,12 @@ Create the database:
 Create the database tables and base data:
 
     kubectl exec -it <orangered pod name> -- python -c 'from app import db; db.create_all()' && python -c 'from subreddits import insert_subreddits; insert_subreddits()'
+
+Modify hosts file to point to the minikube ingress:
+
+    echo "$(minikube ip) dev.orangered.io" | sudo tee -a /etc/hosts
+
+Go to <a href="dev.orangered.io">dev.orangered.io</a> to see your sweet new running app.
 
 
 ### Google cloud instructions:
