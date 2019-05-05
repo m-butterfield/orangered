@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: orangered
+  labels:
+    app: orangered
+    tier: orangered
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: http-server
+  selector:
+    app: orangered
+    tier: orangered

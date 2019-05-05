@@ -18,7 +18,7 @@ spec:
         tier: orangered
     spec:
       containers:
-        - name: orangered-app
+        - name: orangered
           image: gcr.io/orangered/orangered
           # This setting makes nodes pull the docker image every time before
           # starting the pod. This is useful when debugging, but should be turned
