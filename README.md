@@ -50,6 +50,10 @@ Modify hosts file to point to the minikube ingress:
 
 Go to <a href="dev.orangered.io">dev.orangered.io</a> to see your sweet new running app.
 
+To scale, simply:
+
+    kubectl scale deployment orangered --replicas=2
+
 
 ### Google cloud instructions:
 
