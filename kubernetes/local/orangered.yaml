@@ -17,5 +17,11 @@ spec:
           image: orangered
           imagePullPolicy: Never
           env:
-            - name: SQLALCHEMY_DATABASE_URI
-              value: postgres://orangered_user:orangered@postgres:5432/orangered
+            - name: PGHOST
+              value: postgres
+            - name: PGUSER
+              value: orangered_user
+            - name: PGPASSWORD
+              value: orangered
+            - name: PGDATABASE
+              value: orangered

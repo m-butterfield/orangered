@@ -11,8 +11,20 @@ from sqlalchemy import Column, DateTime, ForeignKey, func, String
 from sqlalchemy.orm import relationship
 
 
+def _psql_uri():
+    username = os.environ.get('PGUSER')
+    password = os.environ.get('PGPASSWORD')
+    if username and password:
+        return (f'postgres://{username}:{password}@'
+                f'{os.environ.get("PGHOST")}:5432/'
+                f'{os.environ.get("PGDATABASE")}')
+    else:
+        return (f'postgres://{os.environ.get("PGHOST")}:5432/'
+                f'{os.environ.get("PGDATABASE")}')
+
+
 class Config(object):
-    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
+    SQLALCHEMY_DATABASE_URI = _psql_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
@@ -67,8 +79,8 @@ class SubredditPost(db.Model):
 
 @app.route("/")
 def index():
-    subreddit_names = ['Hello'] # [s.name for s in db.session.query(
-        # Subreddit).order_by(func.lower(Subreddit.name))]
+    subreddit_names = [s.name for s in db.session.query(
+        Subreddit).order_by(func.lower(Subreddit.name))]
     cache_time = time.time() if app.config['DEBUG'] else APP_START_TIME
     return render_template('index.html',
                            cache_timestamp=str(int(cache_time)),

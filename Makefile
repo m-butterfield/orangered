@@ -9,4 +9,4 @@ run-dev:
 test:
 	@dropdb --if-exists orangered_test
 	@createdb orangered_test
-	SQLALCHEMY_DATABASE_URI='postgresql://localhost/orangered_test' python -m unittest -v $(filter-out $@,$(MAKECMDGOALS))
+	PGHOST='localhost' PGDATABASE='orangered_test' python -m unittest -v $(filter-out $@,$(MAKECMDGOALS))

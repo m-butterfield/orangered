@@ -2,21 +2,10 @@
 
 ## development
 
-To run the app locally:
+To run the app locally (might remove this since minikube does everything now):
 
     make db
     make run-dev
-
-
-required environment variables:
-
-    MAILGUN_API_KEY
-    REDDIT_CLIENT_ID  
-    REDDIT_CLIENT_SECRET  
-    REDDIT_USERNAME  
-    REDDIT_PASSWORD  
-    SQLALCHEMY_DATABASE_URI
-
 
 ### Minikube instructions
 
@@ -77,9 +66,21 @@ Push container:
 
     docker push gcr.io/orangered/orangered
 
+Add secrets:
+
+    kubectl create secret generic dev-db-secrets \
+        –from-literal=username=devuser \
+        -from-literal=password=orangered
+
 Deploy orangered:
 
     kubectl create -f kubernetes/remote/
 
 To rebuild and deploy the container, run the `docker build` and `docker push` steps again, then delete the pods.
+
+
+
+To scale, simply:
+
+    kubectl scale deployment orangered --replicas=2
 
