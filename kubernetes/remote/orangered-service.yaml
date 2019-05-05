@@ -4,7 +4,6 @@ metadata:
   name: orangered
   labels:
     app: orangered
-    tier: orangered
 spec:
   type: LoadBalancer
   ports:
@@ -12,4 +11,3 @@ spec:
       targetPort: http-server
   selector:
     app: orangered
-    tier: orangered

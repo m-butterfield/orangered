@@ -11,12 +11,11 @@ spec:
     metadata:
       labels:
         app: orangered
-        tier: orangered
     spec:
       containers:
         - name: orangered
           image: orangered
           imagePullPolicy: Never
           env:
-            - name: PROCESSES
-              value: orangered
+            - name: SQLALCHEMY_DATABASE_URI
+              value: postgres://orangered_user:orangered@postgres:5432/orangered

@@ -15,7 +15,6 @@ spec:
     metadata:
       labels:
         app: orangered
-        tier: orangered
     spec:
       containers:
         - name: orangered
@@ -24,9 +23,7 @@ spec:
           # starting the pod. This is useful when debugging, but should be turned
           # off in production.
           imagePullPolicy: Always
-          # The PROCESSES environment variable is used by Honcho in the
-          # Dockerfile's CMD to control which processes are started. In this
-          # case, only the worker process is needed.
           env:
-            - name: PROCESSES
-              value: orangered
+            - name: SQLALCHEMY_DATABASE_URI
+              value: postgresql://127.0.0.1/orangered
+
