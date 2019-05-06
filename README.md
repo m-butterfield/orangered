@@ -99,3 +99,18 @@ To scale, simply:
 
     kubectl scale deployment orangered --replicas=2
 
+
+### Database notes
+
+In production, a Postgres 11.2 database is running in Google cloud, with a private IP, username and password created in the console and stored as kubernetes secrets in the production cluster.
+
+To access via `psql` run:
+
+    kubectl exec -it <postgres pod name> -- psql
+
+
+### Reddit client notes
+
+
+### Mailgun notes
+

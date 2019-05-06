@@ -1,0 +1,35 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        service: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:11.2-alpine
+          env:
+            - name: PGDATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: psql-creds
+                  key: pgdatabase
+            - name: PGHOST
+              valueFrom:
+                secretKeyRef:
+                  name: psql-creds
+                  key: pghost
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: psql-creds
+                  key: pguser
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: psql-creds
+                  key: pgpassword
