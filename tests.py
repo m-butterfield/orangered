@@ -3,7 +3,7 @@ import unittest
 from unittest import mock
 import uuid
 
-from application import application, db, Account, Subreddit, SubredditPost
+from app import app, db, Account, Subreddit, SubredditPost
 from subreddits import insert_subreddits
 from utils import _scrape_posts, _send_emails
 
@@ -21,7 +21,7 @@ class BaseTestCase(unittest.TestCase):
 class AppTests(BaseTestCase):
 
     def setUp(self):
-        self.client = application.test_client()
+        self.client = app.test_client()
 
     def test_valid_signup(self):
         expected_subreddits = ['aviation', 'spacex']

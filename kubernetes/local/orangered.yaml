@@ -1,0 +1,27 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: orangered
+  labels:
+    app: orangered
+
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: orangered
+    spec:
+      containers:
+        - name: orangered
+          image: orangered
+          imagePullPolicy: Never
+          env:
+            - name: PGHOST
+              value: postgres
+            - name: PGUSER
+              value: orangered_user
+            - name: PGPASSWORD
+              value: orangered
+            - name: PGDATABASE
+              value: orangered

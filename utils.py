@@ -6,7 +6,7 @@ from jinja2 import Template
 
 import praw
 
-from application import Account, db, Subreddit, SubredditPost
+from app import Account, db, Subreddit, SubredditPost
 
 
 MAILGUN_API_URL = "https://api.mailgun.net/v3/orangered.io/messages"
@@ -46,11 +46,11 @@ def _send_email_for_account(account, subreddit_posts):
         [(s.name, subreddit_posts[s.name]) for s in account.subreddits],
         key=lambda s: s[0].lower(),
     )
-    html_data = Template(HTML_TEMPLATE).render(
+    html_data = Template(HTML_TEMPLATE, trim_blocks=True).render(
         email_management_url='',
         subreddits=subreddits,
     )
-    text_data = Template(TEXT_TEMPLATE).render(
+    text_data = Template(TEXT_TEMPLATE, trim_blocks=True).render(
         email_management_url='',
         subreddits=subreddits,
     )

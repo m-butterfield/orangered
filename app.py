@@ -11,14 +11,26 @@ from sqlalchemy import Column, DateTime, ForeignKey, func, String
 from sqlalchemy.orm import relationship
 
 
+def _psql_uri():
+    username = os.environ.get('PGUSER')
+    password = os.environ.get('PGPASSWORD')
+    if username and password:
+        return (f'postgres://{username}:{password}@'
+                f'{os.environ.get("PGHOST")}:5432/'
+                f'{os.environ.get("PGDATABASE")}')
+    else:
+        return (f'postgres://{os.environ.get("PGHOST")}:5432/'
+                f'{os.environ.get("PGDATABASE")}')
+
+
 class Config(object):
-    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
+    SQLALCHEMY_DATABASE_URI = _psql_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
-application = Flask(__name__)
-application.config.from_object(Config)
-db = SQLAlchemy(application)
+app = Flask(__name__)
+app.config.from_object(Config)
+db = SQLAlchemy(app)
 
 APP_START_TIME = time.time()
 
@@ -65,17 +77,17 @@ class SubredditPost(db.Model):
         return f'<SubredditPost {self.id}>'
 
 
-@application.route("/")
+@app.route("/")
 def index():
     subreddit_names = [s.name for s in db.session.query(
         Subreddit).order_by(func.lower(Subreddit.name))]
-    cache_time = time.time() if application.config['DEBUG'] else APP_START_TIME
+    cache_time = time.time() if app.config['DEBUG'] else APP_START_TIME
     return render_template('index.html',
                            cache_timestamp=str(int(cache_time)),
                            subreddits=subreddit_names)
 
 
-@application.route("/signup", methods=['POST'])
+@app.route("/signup", methods=['POST'])
 def signup():
     email = request.form['email']
     subreddits = db.session.query(Subreddit).filter(Subreddit.name.in_(
