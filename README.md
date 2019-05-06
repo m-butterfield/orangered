@@ -38,7 +38,7 @@ Modify hosts file to point to the minikube ingress:
 
     echo "$(minikube ip) dev.orangered.io" | sudo tee -a /etc/hosts
 
-Go to <a href="dev.orangered.io">dev.orangered.io</a> to see your sweet new running app.
+Go to <a href="http://dev.orangered.io">dev.orangered.io</a> to see your sweet new running app.
 
 To scale, simply:
 
