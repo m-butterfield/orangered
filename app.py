@@ -68,7 +68,7 @@ class SubredditPost(db.Model):
     subreddit_name = Column(String(255), ForeignKey('subreddit.name'),
                             nullable=False)
     subreddit = relationship('Subreddit')
-    title = Column(String(255), nullable=False)
+    title = Column(String(512), nullable=False)
     url = Column(String(255), nullable=False)
 
     scraped_at = Column(DateTime(), default=datetime.utcnow, nullable=False)
