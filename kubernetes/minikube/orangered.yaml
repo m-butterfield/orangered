@@ -4,7 +4,6 @@ metadata:
   name: orangered
   labels:
     app: orangered
-
 spec:
   replicas: 1
   template:
@@ -25,3 +24,5 @@ spec:
               value: orangered
             - name: PGDATABASE
               value: orangered
+            - name: FLASK_DEBUG
+              value: "1"

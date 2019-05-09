@@ -4,7 +4,7 @@ import time
 import uuid
 
 from flask import Flask
-from flask import render_template, request
+from flask import render_template, redirect, request
 from flask_sqlalchemy import SQLAlchemy
 
 from sqlalchemy import Column, DateTime, ForeignKey, func, String
@@ -33,6 +33,14 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 
 APP_START_TIME = time.time()
+
+
+@app.before_request
+def https_redirect():
+    if (request.headers.get('X-Forwarded-Proto', 'http') != 'https' and not
+            app.config['DEBUG']):
+        return redirect(request.url.replace('http://', 'https://', 1),
+                        code=301)
 
 
 account_subreddit = db.Table(

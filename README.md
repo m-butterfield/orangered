@@ -21,7 +21,7 @@ Build local image:
 
 Run:
 
-    kubectl create -f kubernetes/local/
+    kubectl create -f kubernetes/minikube/
 
 To apply changes to the container, build it again (`docker build` step) then delete the running pod using `kubectl`.
 
@@ -52,12 +52,10 @@ Install gcloud tooling and set up authentication.
 To create cluster:
 
     gcloud container clusters create orangered \
-        --scopes "cloud-platform" \
         --num-nodes 2 \
-        --enable-basic-auth \
-        --issue-client-certificate \
+        --zone us-east4-a \
         --enable-ip-alias \
-        --zone us-east4
+        --cluster-version 1.12.7-gke.10
 
 To build container:
 
@@ -86,7 +84,7 @@ Add secrets (fill in values before running commands):
 
 Deploy orangered:
 
-    kubectl create -f kubernetes/remote/
+    kubectl create -f kubernetes/gke/
 
 To rebuild and deploy the container, run the `docker build` and `docker push` steps again, then delete the pods.
 
