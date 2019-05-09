@@ -24,3 +24,5 @@ spec:
               value: orangered
             - name: PGDATABASE
               value: orangered
+            - name: FLASK_DEBUG
+              value: "1"
