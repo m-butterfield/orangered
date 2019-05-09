@@ -37,7 +37,7 @@ APP_START_TIME = time.time()
 
 @app.before_request
 def https_redirect():
-    if (not request.headers.get('X-Forwarded-Proto', 'http') == 'https' and not
+    if (request.headers.get('X-Forwarded-Proto', 'http') != 'https' and not
             app.config['DEBUG']):
         return redirect(request.url.replace('http://', 'https://', 1),
                         code=301)
