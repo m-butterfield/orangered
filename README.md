@@ -21,7 +21,7 @@ Build local image:
 
 Run:
 
-    kubectl create -f kubernetes/local/
+    kubectl create -f kubernetes/minikube/
 
 To apply changes to the container, build it again (`docker build` step) then delete the running pod using `kubectl`.
 
@@ -86,7 +86,7 @@ Add secrets (fill in values before running commands):
 
 Deploy orangered:
 
-    kubectl create -f kubernetes/remote/
+    kubectl create -f kubernetes/gke/
 
 To rebuild and deploy the container, run the `docker build` and `docker push` steps again, then delete the pods.
 
