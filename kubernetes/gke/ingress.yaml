@@ -5,7 +5,6 @@ metadata:
   annotations:
     kubernetes.io/ingress.global-static-ip-name: orangered
     networking.gke.io/managed-certificates: orangered-certificate
-    kubernetes.io/ingress.allow-http: "false"
 spec:
   backend:
     serviceName: orangered
