@@ -52,12 +52,10 @@ Install gcloud tooling and set up authentication.
 To create cluster:
 
     gcloud container clusters create orangered \
-        --scopes "cloud-platform" \
         --num-nodes 2 \
-        --enable-basic-auth \
-        --issue-client-certificate \
+        --zone us-east4-a \
         --enable-ip-alias \
-        --zone us-east4
+        --cluster-version 1.12.7-gke.10
 
 To build container:
 
