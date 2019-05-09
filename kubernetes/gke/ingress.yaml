@@ -8,4 +8,4 @@ metadata:
 spec:
   backend:
     serviceName: orangered
-    servicePort: 443
+    servicePort: 5000

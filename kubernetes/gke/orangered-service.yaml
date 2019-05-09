@@ -9,7 +9,7 @@ spec:
   selector:
     app: orangered
   ports:
-    - port: 443
+    - port: 5000
       targetPort: 5000
       protocol: TCP
       name: orangered-port
