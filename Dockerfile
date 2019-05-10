@@ -4,7 +4,7 @@ COPY . /orangered
 WORKDIR /orangered
 
 RUN apk update && apk add libpq
-RUN apk add --virtual .build-deps gcc python-dev musl-dev postgresql-dev
+RUN apk add --virtual .build-deps gcc g++ python-dev musl-dev postgresql-dev
 RUN pip install -r requirements.txt
 RUN apk del .build-deps
 

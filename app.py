@@ -1,4 +1,5 @@
 from datetime import datetime
+import logging
 import os
 import time
 import uuid
@@ -6,6 +7,8 @@ import uuid
 from flask import Flask
 from flask import render_template, redirect, request
 from flask_sqlalchemy import SQLAlchemy
+
+import google.cloud.logging
 
 from sqlalchemy import Column, DateTime, ForeignKey, func, String
 from sqlalchemy.orm import relationship
@@ -35,10 +38,17 @@ db = SQLAlchemy(app)
 APP_START_TIME = time.time()
 
 
+if not app.config['DEBUG']:
+    client = google.cloud.logging.Client()
+    client.setup_logging()
+
+
 @app.before_request
 def https_redirect():
-    if (request.headers.get('X-Forwarded-Proto', 'http') != 'https' and not
-            app.config['DEBUG']):
+    if (request.headers.get('X-Forwarded-Proto', 'http') != 'https' and
+            'GoogleHC' not in request.headers.get('User-Agent', '') and
+            not app.config['DEBUG']):
+        logging.info('Redirecting %s to https', request.url)
         return redirect(request.url.replace('http://', 'https://', 1),
                         code=301)
 
