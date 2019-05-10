@@ -46,9 +46,8 @@ if not app.config['DEBUG']:
 @app.before_request
 def https_redirect():
     if (request.headers.get('X-Forwarded-Proto', 'http') != 'https' and
-            'GoogleHC' not in request.headers.get('User-Agent', '') and
+            request.endpoint != 'health_check' and
             not app.config['DEBUG']):
-        logging.info('Redirecting %s to https', request.url)
         return redirect(request.url.replace('http://', 'https://', 1),
                         code=301)
 
@@ -103,6 +102,16 @@ def index():
     return render_template('index.html',
                            cache_timestamp=str(int(cache_time)),
                            subreddits=subreddit_names)
+
+
+@app.route("/health_check")
+def health_check():
+    try:
+        db.session.execute('SELECT 1')
+    except Exception:
+        logging.exception('could not connect to database')
+        return 'could not connect to database', 500
+    return 'all good'
 
 
 @app.route("/signup", methods=['POST'])
