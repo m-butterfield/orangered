@@ -117,4 +117,4 @@ def _reddit():
                        client_secret=REDDIT_CLIENT_SECRET,
                        username=REDDIT_USERNAME,
                        password=REDDIT_PASSWORD,
-                       user_agent='orangered by /u/deneb150')
+                       user_agent='orangered')

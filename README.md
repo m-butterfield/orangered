@@ -40,10 +40,6 @@ Modify hosts file to point to the minikube ingress:
 
 Go to <a href="http://dev.orangered.io">dev.orangered.io</a> to see your sweet new running app.
 
-To scale, simply:
-
-    kubectl scale deployment orangered --replicas=2
-
 
 ### Google cloud instructions:
 
@@ -100,7 +96,7 @@ To scale, simply:
 
 ### Database notes
 
-In production, a Postgres 11.2 database is running in Google cloud, with a private IP, username and password created in the console and stored as kubernetes secrets in the production cluster.
+In production, a Postgres 11.2 database is running in Google Cloud SQL with a private IP, username, and password created in the console and stored as kubernetes secrets in the production cluster.
 
 To access via `psql` run:
 
