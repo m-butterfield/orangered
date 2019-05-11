@@ -10,8 +10,7 @@ from utils import _scrape_posts, _send_emails
 
 class BaseTestCase(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         db.close_all_sessions()
         db.drop_all()
         db.create_all()
@@ -21,19 +20,33 @@ class BaseTestCase(unittest.TestCase):
 class AppTests(BaseTestCase):
 
     def setUp(self):
+        super().setUp()
         self.client = app.test_client()
+        self.account = Account(email='bob@aol.com')
+        db.session.add(self.account)
+        db.session.commit()
 
     def test_valid_signup(self):
         expected_subreddits = ['aviation', 'spacex']
         resp = self.client.post('/signup', data={
-            'email': 'bob@aol.com',
+            'email': 'bob2@aol.com',
             'subreddits[]': expected_subreddits,
         })
         self.assertEqual(resp.status_code, 201)
-        account = db.session.query(Account).get('bob@aol.com')
+        account = Account.query.get('bob2@aol.com')
         self.assertIsNotNone(account)
+        self.assertTrue(account.active)
         self.assertEqual(
             set(expected_subreddits), {s.name for s in account.subreddits})
+
+    def test_unsubscribe_not_found(self):
+        resp = self.client.post('/email/blah/unsubscribe')
+        self.assertEqual(resp.status_code, 404)
+
+    def test_unsubscribe(self):
+        resp = self.client.post(f'/email/{self.account.uuid}/unsubscribe')
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(self.account.active)
 
 
 class FakeSubredditPost:
@@ -74,19 +87,18 @@ class EmailTests(BaseTestCase):
         # user account with some subscriptions
         db.session.add(Account(
             email='bob@aol.com',
-            subreddits=db.session.query(Subreddit).filter(Subreddit.name.in_(
-                    ['aviation', 'spacex', 'running'])).all(),
+            subreddits=Subreddit.query.filter(Subreddit.name.in_(
+                ['aviation', 'spacex', 'running'])).all(),
         ))
 
         # spacex will have last_scraped = None so scraping should happen
-        self.assertIsNone(
-            db.session.query(Subreddit).get('spacex').last_scraped)
+        self.assertIsNone(Subreddit.query.get('spacex').last_scraped)
         # set last scraped past one day for running so scraping should happen
-        db.session.query(Subreddit).get('running').last_scraped = (
+        Subreddit.query.get('running').last_scraped = (
                 datetime.utcnow() - timedelta(days=2))
         # aviation has already been scraped so add some existing scraped posts
         now = datetime.utcnow()
-        db.session.query(Subreddit).get('aviation').last_scraped = now
+        Subreddit.query.get('aviation').last_scraped = now
         # add existing posts for aviation
         db.session.add_all([
             SubredditPost(
@@ -120,12 +132,10 @@ class EmailTests(BaseTestCase):
         self.assertEqual(len(subreddit_posts['aviation']), 2)
         self.assertEqual(len(subreddit_posts['spacex']), 5)
         self.assertEqual(len(subreddit_posts['running']), 5)
-        self.assertIsNotNone(
-            db.session.query(Subreddit).get('spacex').last_scraped)
+        self.assertIsNotNone(Subreddit.query.get('spacex').last_scraped)
         self.assertGreaterEqual(
-            db.session.query(Subreddit).get('running').last_scraped, now)
-        self.assertEqual(
-            db.session.query(Subreddit).get('aviation').last_scraped, now)
+            Subreddit.query.get('running').last_scraped, now)
+        self.assertEqual(Subreddit.query.get('aviation').last_scraped, now)
 
         _send_emails(subreddit_posts)
         fake_template().render.assert_called_with(

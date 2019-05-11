@@ -38,7 +38,7 @@ def send_emails():
 
 
 def _send_emails(subreddit_posts):
-    for account in db.session.query(Account):
+    for account in Account.query:
         _send_email_for_account(account, subreddit_posts)
 
 
@@ -92,7 +92,7 @@ def _scrape_posts():
 
 
 def _existing_scraped_posts(subreddit, now):
-    return db.session.query(SubredditPost).filter(
+    return SubredditPost.query.filter(
         SubredditPost.subreddit == subreddit,
         SubredditPost.scraped_at > now - timedelta(hours=23),
     ).all()
@@ -115,7 +115,7 @@ def _scrape_new_posts(reddit, subreddit):
 
 
 def _subreddits_to_scrape():
-    return db.session.query(Subreddit).join(Subreddit.accounts)
+    return Subreddit.query.join(Subreddit.accounts)
 
 
 def _reddit():

@@ -11,9 +11,6 @@ from flask_sqlalchemy import SQLAlchemy
 
 import google.cloud.logging
 
-from sqlalchemy import Column, DateTime, ForeignKey, func, String
-from sqlalchemy.orm import relationship
-
 
 def _psql_uri():
     username = os.environ.get('PGUSER')
@@ -46,6 +43,53 @@ else:
     client.setup_logging()
 
 
+account_subreddit = db.Table(
+    "account_subreddit", db.Model.metadata,
+    db.Column("account_email", db.String(255), db.ForeignKey(
+        "account.email", onupdate="cascade"),
+        primary_key=True),
+    db.Column("subreddit_name", db.String(255), db.ForeignKey(
+        "subreddit.name"),
+        primary_key=True),
+)
+
+
+class Account(db.Model):
+    email = db.Column(db.String(320), primary_key=True)
+    uuid = db.Column(db.String(36),
+                     unique=True, default=lambda: str(uuid.uuid4()))
+    active = db.Column(db.Boolean, default=True, nullable=False)
+    subreddits = db.relationship('Subreddit',
+                                 backref='accounts',
+                                 secondary=account_subreddit)
+
+    def __repr__(self):
+        return f'<Account {self.email}>'
+
+
+class Subreddit(db.Model):
+    name = db.Column(db.String(255), primary_key=True)
+    last_scraped = db.Column(db.DateTime)
+
+    def __repr__(self):
+        return f'<Subreddit {self.name}>'
+
+
+class SubredditPost(db.Model):
+    id = db.Column(db.String(128), primary_key=True)
+    subreddit_name = db.Column(db.String(255), db.ForeignKey('subreddit.name'),
+                               nullable=False)
+    subreddit = db.relationship('Subreddit')
+    title = db.Column(db.String(512), nullable=False)
+    url = db.Column(db.String(2000), nullable=False)
+
+    scraped_at = db.Column(db.DateTime(),
+                           default=datetime.utcnow, nullable=False)
+
+    def __repr__(self):
+        return f'<SubredditPost {self.id}>'
+
+
 @app.before_request
 def https_redirect():
     if (request.headers.get('X-Forwarded-Proto', 'http') != 'https' and
@@ -55,52 +99,10 @@ def https_redirect():
                         code=301)
 
 
-account_subreddit = db.Table(
-    "account_subreddit", db.Model.metadata,
-    Column("account_email", String(255), ForeignKey(
-        "account.email", onupdate="cascade"),
-           primary_key=True),
-    Column("subreddit_name", String(255), ForeignKey("subreddit.name"),
-           primary_key=True),
-)
-
-
-class Account(db.Model):
-    email = Column(String(255), primary_key=True)
-    uuid = Column(String(80), unique=True, default=lambda: str(uuid.uuid4()))
-    subreddits = relationship('Subreddit',
-                              backref='accounts', secondary=account_subreddit)
-
-    def __repr__(self):
-        return f'<Account {self.email}>'
-
-
-class Subreddit(db.Model):
-    name = Column(String(255), primary_key=True)
-    last_scraped = Column(DateTime())
-
-    def __repr__(self):
-        return f'<Subreddit {self.name}>'
-
-
-class SubredditPost(db.Model):
-    id = Column(String(128), primary_key=True)
-    subreddit_name = Column(String(255), ForeignKey('subreddit.name'),
-                            nullable=False)
-    subreddit = relationship('Subreddit')
-    title = Column(String(512), nullable=False)
-    url = Column(String(255), nullable=False)
-
-    scraped_at = Column(DateTime(), default=datetime.utcnow, nullable=False)
-
-    def __repr__(self):
-        return f'<SubredditPost {self.id}>'
-
-
 @app.route("/")
 def index():
-    subreddit_names = [s.name for s in db.session.query(
-        Subreddit).order_by(func.lower(Subreddit.name))]
+    subreddit_names = [s.name for s in Subreddit.query.order_by(
+        db.func.lower(Subreddit.name))]
     cache_time = time.time() if app.config['DEBUG'] else APP_START_TIME
     return render_template('index.html',
                            cache_timestamp=str(int(cache_time)),
@@ -117,10 +119,20 @@ def health_check():
     return 'all good'
 
 
+@app.route("/email/<uuid>/unsubscribe", methods=['GET', 'POST'])
+def unsubscribe(uuid):
+    account = Account.query.filter(Account.uuid == uuid).one_or_none()
+    if account is None:
+        return 'not found', 404
+    if request.method == 'POST':
+        account.active = False
+        return 'success'
+
+
 @app.route("/signup", methods=['POST'])
 def signup():
     email = request.form['email']
-    subreddits = db.session.query(Subreddit).filter(Subreddit.name.in_(
+    subreddits = Subreddit.query.filter(Subreddit.name.in_(
         request.form.getlist('subreddits[]'))).all()
     db.session.add(Account(
         email=email,
