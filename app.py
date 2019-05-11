@@ -119,14 +119,16 @@ def health_check():
     return 'all good'
 
 
-@app.route("/email/<uuid>/unsubscribe", methods=['GET', 'POST'])
+@app.route("/account/<uuid>/unsubscribe", methods=['GET', 'POST'])
 def unsubscribe(uuid):
     account = Account.query.filter(Account.uuid == uuid).one_or_none()
     if account is None:
         return 'not found', 404
     if request.method == 'POST':
         account.active = False
+        db.session.commit()
         return 'success'
+    return render_template('unsubscribe.html', account=account)
 
 
 @app.route("/signup", methods=['POST'])

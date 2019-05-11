@@ -46,6 +46,7 @@ class AppTests(BaseTestCase):
     def test_unsubscribe(self):
         resp = self.client.post(f'/email/{self.account.uuid}/unsubscribe')
         self.assertEqual(resp.status_code, 200)
+        db.session.add(self.account)
         self.assertFalse(self.account.active)
 
 

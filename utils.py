@@ -43,6 +43,8 @@ def _send_emails(subreddit_posts):
 
 
 def _send_email_for_account(account, subreddit_posts):
+    logging.info('Sending email to %s with subreddits: %s',
+                 account.email, ', '.join(subreddit_posts.keys()))
     subreddits = sorted(
         [(s.name, subreddit_posts[s.name]) for s in account.subreddits],
         key=lambda s: s[0].lower(),
@@ -61,7 +63,7 @@ def _send_email_for_account(account, subreddit_posts):
 def _send_email(email, html, text):
     if app.config['DEBUG']:
         with open('test_email.html', 'w') as fp:
-            logging.info('generating test_email.html')
+            logging.debug('generating test_email.html')
             fp.write(html)
             return
     resp = requests.post(
@@ -78,16 +80,22 @@ def _send_email(email, html, text):
 
 
 def _scrape_posts():
+    logging.info('Scraping subreddit posts')
     reddit = _reddit()
     subreddit_posts = {}
     now = datetime.utcnow()
     for subreddit in _subreddits_to_scrape():
         if subreddit.last_scraped and (
                 subreddit.last_scraped > now - timedelta(hours=23)):
+            logging.info('Subreddit: %s recently scraped, loading existing '
+                         'posts', subreddit.name)
             posts = _existing_scraped_posts(subreddit, now)
         else:
+            logging.info('Scraping new posts for subreddit: %s',
+                         subreddit.name)
             posts = _scrape_new_posts(reddit, subreddit)
         subreddit_posts[subreddit.name] = posts
+    logging.info('Done scraping subreddit posts')
     return subreddit_posts
 
 
