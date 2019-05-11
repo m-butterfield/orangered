@@ -1,6 +1,7 @@
 from datetime import datetime
 import logging
 import os
+import sys
 import time
 import uuid
 
@@ -38,7 +39,9 @@ db = SQLAlchemy(app)
 APP_START_TIME = time.time()
 
 
-if not app.config['DEBUG']:
+if app.config['DEBUG']:
+    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+else:
     client = google.cloud.logging.Client()
     client.setup_logging()
 
