@@ -48,10 +48,10 @@ else:
 
 account_subreddit = db.Table(
     "account_subreddit", db.Model.metadata,
-    db.Column("account_email", db.String(255), db.ForeignKey(
+    db.Column("account_email", db.String(320), db.ForeignKey(
         "account.email", onupdate="cascade"),
         primary_key=True),
-    db.Column("subreddit_name", db.String(255), db.ForeignKey(
+    db.Column("subreddit_name", db.String(21), db.ForeignKey(
         "subreddit.name"),
         primary_key=True),
 )
@@ -71,7 +71,7 @@ class Account(db.Model):
 
 
 class Subreddit(db.Model):
-    name = db.Column(db.String(255), primary_key=True)
+    name = db.Column(db.String(300), primary_key=True)
     last_scraped = db.Column(db.DateTime)
 
     def __repr__(self):
@@ -80,10 +80,10 @@ class Subreddit(db.Model):
 
 class SubredditPost(db.Model):
     id = db.Column(db.String(128), primary_key=True)
-    subreddit_name = db.Column(db.String(255), db.ForeignKey('subreddit.name'),
+    subreddit_name = db.Column(db.String(21), db.ForeignKey('subreddit.name'),
                                nullable=False)
     subreddit = db.relationship('Subreddit')
-    title = db.Column(db.String(512), nullable=False)
+    title = db.Column(db.String(300), nullable=False)
     url = db.Column(db.String(2000), nullable=False)
 
     scraped_at = db.Column(db.DateTime(),
