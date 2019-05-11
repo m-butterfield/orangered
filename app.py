@@ -71,7 +71,7 @@ class Account(db.Model):
 
 
 class Subreddit(db.Model):
-    name = db.Column(db.String(300), primary_key=True)
+    name = db.Column(db.String(21), primary_key=True)
     last_scraped = db.Column(db.DateTime)
 
     def __repr__(self):
