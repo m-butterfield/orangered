@@ -125,9 +125,8 @@ def unsubscribe(uuid):
     if account is None:
         return 'not found', 404
     if request.method == 'POST':
-        account.active = False
+        account.active = request.form['unsubscribe'] == 'False'
         db.session.commit()
-        return 'success'
     return render_template('unsubscribe.html', account=account)
 
 

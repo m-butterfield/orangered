@@ -44,10 +44,18 @@ class AppTests(BaseTestCase):
         self.assertEqual(resp.status_code, 404)
 
     def test_unsubscribe(self):
-        resp = self.client.post(f'/email/{self.account.uuid}/unsubscribe')
+        resp = self.client.post(f'/account/{self.account.uuid}/unsubscribe',
+                                data={'unsubscribe': 'True'})
         self.assertEqual(resp.status_code, 200)
         db.session.add(self.account)
         self.assertFalse(self.account.active)
+
+        # resubscribe
+        resp = self.client.post(f'/account/{self.account.uuid}/unsubscribe',
+                                data={'unsubscribe': 'False'})
+        self.assertEqual(resp.status_code, 200)
+        db.session.add(self.account)
+        self.assertTrue(self.account.active)
 
 
 class FakeSubredditPost:
