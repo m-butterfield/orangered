@@ -21,6 +21,9 @@ spec:
             httpGet:
               path: /health_check
               port: 5000
+              httpHeaders:
+                - name: Host
+                  value: orangered.io
           env:
             - name: MAILGUN_API_KEY
               valueFrom:
@@ -68,4 +71,4 @@ spec:
                   name: reddit-creds
                   key: reddit-password
             - name: SERVER_NAME
-              value: "orangered.io"
+              value: orangered.io
