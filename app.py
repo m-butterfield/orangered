@@ -28,6 +28,9 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = _psql_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    SERVER_NAME = os.environ.get('SERVER_NAME')
+    PREFERRED_URL_SCHEME = 'https' if SERVER_NAME == 'orangered.io' else 'http'
+
 
 app = Flask(__name__)
 app.config.from_object(Config)

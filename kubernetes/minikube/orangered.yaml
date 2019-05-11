@@ -16,6 +16,8 @@ spec:
           image: orangered
           imagePullPolicy: Never
           env:
+            - name: FLASK_DEBUG
+              value: "1"
             - name: PGHOST
               value: postgres
             - name: PGUSER
@@ -24,5 +26,5 @@ spec:
               value: orangered
             - name: PGDATABASE
               value: orangered
-            - name: FLASK_DEBUG
-              value: "1"
+            - name: SERVER_NAME
+              value: "dev.orangered.io"

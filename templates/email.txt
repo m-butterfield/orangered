@@ -8,4 +8,4 @@ Go here to manage your settings: {{ email_management_url }}
 {% endfor %}
 {% endfor %}
 
-Go here to unsubscribe:
+Go here to unsubscribe: {{ unsubscribe_url }}

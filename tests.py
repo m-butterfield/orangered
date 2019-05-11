@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from itertools import chain
 import unittest
 from unittest import mock
 import uuid
@@ -147,8 +148,10 @@ class EmailTests(BaseTestCase):
         self.assertEqual(Subreddit.query.get('aviation').last_scraped, now)
 
         _send_emails(subreddit_posts)
+        db.session.add_all(chain.from_iterable(subreddit_posts.values()))
         fake_template().render.assert_called_with(
             email_management_url='',
+            unsubscribe_url=mock.ANY,
             subreddits=[
                 ('aviation', subreddit_posts['aviation']),
                 ('running', subreddit_posts['running']),

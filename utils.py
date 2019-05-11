@@ -1,11 +1,14 @@
 from datetime import datetime, timedelta
 import logging
 import os
-import requests
+
+from flask import url_for
 
 from jinja2 import Template
 
 import praw
+
+import requests
 
 from app import Account, app, db, Subreddit, SubredditPost
 
@@ -38,34 +41,30 @@ def send_emails():
 
 
 def _send_emails(subreddit_posts):
-    for account in Account.query:
-        _send_email_for_account(account, subreddit_posts)
+    with app.app_context():
+        for account in Account.query:
+            _send_email_for_account(account, subreddit_posts)
 
 
 def _send_email_for_account(account, subreddit_posts):
     logging.info('Sending email to %s with subreddits: %s',
                  account.email, ', '.join(subreddit_posts.keys()))
-    subreddits = sorted(
-        [(s.name, subreddit_posts[s.name]) for s in account.subreddits],
-        key=lambda s: s[0].lower(),
-    )
-    html_data = Template(HTML_TEMPLATE, trim_blocks=True).render(
-        email_management_url='',
-        subreddits=subreddits,
-    )
-    text_data = Template(TEXT_TEMPLATE, trim_blocks=True).render(
-        email_management_url='',
-        subreddits=subreddits,
-    )
+    context = {
+        'subreddits': sorted(
+            [(s.name, subreddit_posts[s.name]) for s in account.subreddits],
+            key=lambda s: s[0].lower(),
+        ),
+        'email_management_url': '',
+        'unsubscribe_url': url_for('unsubscribe', uuid=account.uuid),
+    }
+    html_data = Template(HTML_TEMPLATE, trim_blocks=True).render(**context)
+    text_data = Template(TEXT_TEMPLATE, trim_blocks=True).render(**context)
     _send_email(account.email, html_data, text_data)
 
 
 def _send_email(email, html, text):
     if app.config['DEBUG']:
-        with open('test_email.html', 'w') as fp:
-            logging.debug('generating test_email.html')
-            fp.write(html)
-            return
+        return _save_test_emails(html, text)
     resp = requests.post(
         MAILGUN_API_URL,
         auth=("api", MAILGUN_API_KEY),
@@ -77,6 +76,15 @@ def _send_email(email, html, text):
             "text": text,
         })
     resp.raise_for_status()
+
+
+def _save_test_emails(html, text):
+    with open('test_email.html', 'w') as h, open('test_email.txt', 'w') as t:
+        logging.debug('saving test_email.html')
+        h.write(html)
+        logging.debug('saving test_email.txt')
+        t.write(text)
+        return
 
 
 def _scrape_posts():
