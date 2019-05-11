@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import logging
 import os
 import requests
 
@@ -6,7 +7,7 @@ from jinja2 import Template
 
 import praw
 
-from app import Account, db, Subreddit, SubredditPost
+from app import Account, app, db, Subreddit, SubredditPost
 
 
 MAILGUN_API_URL = "https://api.mailgun.net/v3/orangered.io/messages"
@@ -58,6 +59,11 @@ def _send_email_for_account(account, subreddit_posts):
 
 
 def _send_email(email, html, text):
+    if app.config['DEBUG']:
+        with open('test_email.html', 'w') as fp:
+            logging.info('generating test_email.html')
+            fp.write(html)
+            return
     resp = requests.post(
         MAILGUN_API_URL,
         auth=("api", MAILGUN_API_KEY),
