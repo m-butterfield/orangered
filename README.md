@@ -96,7 +96,7 @@ To scale, simply:
 
 ### Database notes
 
-In production, a Postgres 11.2 database is running in Google Cloud SQL with a private IP, username, and password created in the console and stored as kubernetes secrets in the production cluster.
+In production, a Postgres 11 database is running in Google Cloud SQL with a private IP, username, and password created in the console and stored as kubernetes secrets in the production cluster.
 
 To access via `psql` run:
 
