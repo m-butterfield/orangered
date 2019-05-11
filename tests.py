@@ -100,6 +100,13 @@ class EmailTests(BaseTestCase):
             subreddits=Subreddit.query.filter(Subreddit.name.in_(
                 ['aviation', 'spacex', 'running'])).all(),
         ))
+        # another that is deactivated
+        db.session.add(Account(
+            email='bob2@aol.com',
+            subreddits=Subreddit.query.filter(Subreddit.name.in_(
+                ['programming', 'AskReddit'])).all(),
+            active=False,
+        ))
 
         # spacex will have last_scraped = None so scraping should happen
         self.assertIsNone(Subreddit.query.get('spacex').last_scraped)
@@ -158,4 +165,5 @@ class EmailTests(BaseTestCase):
                 ('spacex', subreddit_posts['spacex']),
             ],
         )
-        fake_send_email.assert_called_with('bob@aol.com', mock.ANY, mock.ANY)
+        fake_send_email.assert_called_once_with(
+            'bob@aol.com', mock.ANY, mock.ANY)
