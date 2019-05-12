@@ -62,6 +62,7 @@ class Account(db.Model):
     uuid = db.Column(db.String(36),
                      unique=True, default=lambda: str(uuid.uuid4()))
     active = db.Column(db.Boolean, default=True, nullable=False)
+    last_email = db.Column(db.DateTime)
     subreddits = db.relationship('Subreddit',
                                  backref='accounts',
                                  secondary=account_subreddit)
@@ -86,7 +87,7 @@ class SubredditPost(db.Model):
     title = db.Column(db.String(300), nullable=False)
     url = db.Column(db.String(2000), nullable=False)
 
-    scraped_at = db.Column(db.DateTime(),
+    scraped_at = db.Column(db.DateTime,
                            default=datetime.utcnow, nullable=False)
 
     def __repr__(self):

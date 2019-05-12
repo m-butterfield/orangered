@@ -42,7 +42,10 @@ def send_emails():
 
 def _send_emails(subreddit_posts):
     with app.app_context():
-        for account in Account.query.filter(Account.active.is_(True)):
+        for account in Account.query.filter(
+                Account.active.is_(True),
+                Account.last_email < datetime.utcnow() - timedelta(hours=23),
+        ):
             _send_email_for_account(account, subreddit_posts)
 
 
@@ -60,6 +63,8 @@ def _send_email_for_account(account, subreddit_posts):
     html_data = Template(HTML_TEMPLATE, trim_blocks=True).render(**context)
     text_data = Template(TEXT_TEMPLATE, trim_blocks=True).render(**context)
     _send_email(account.email, html_data, text_data)
+    account.last_email = datetime.utcnow()
+    db.session.commit()
 
 
 def _send_email(email, html, text):
@@ -132,7 +137,9 @@ def _scrape_new_posts(reddit, subreddit):
 
 def _subreddits_to_scrape():
     return Subreddit.query.join(Subreddit.accounts).filter(
-        Account.active.is_(True))
+        Account.active.is_(True),
+        Account.last_email < datetime.utcnow() - timedelta(hours=23),
+    )
 
 
 def _reddit():

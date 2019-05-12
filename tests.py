@@ -99,6 +99,7 @@ class EmailTests(BaseTestCase):
             email='bob@aol.com',
             subreddits=Subreddit.query.filter(Subreddit.name.in_(
                 ['aviation', 'spacex', 'running'])).all(),
+            last_email=datetime.utcnow() - timedelta(days=1),
         ))
         # another that is deactivated
         db.session.add(Account(
@@ -106,6 +107,13 @@ class EmailTests(BaseTestCase):
             subreddits=Subreddit.query.filter(Subreddit.name.in_(
                 ['programming', 'AskReddit'])).all(),
             active=False,
+        ))
+        # another that already received their email for today
+        db.session.add(Account(
+            email='bob3@aol.com',
+            subreddits=Subreddit.query.filter(Subreddit.name.in_(
+                ['analog', 'finance'])).all(),
+            last_email=datetime.utcnow() - timedelta(minutes=10),
         ))
 
         # spacex will have last_scraped = None so scraping should happen
@@ -167,3 +175,6 @@ class EmailTests(BaseTestCase):
         )
         fake_send_email.assert_called_once_with(
             'bob@aol.com', mock.ANY, mock.ANY)
+        self.assertAlmostEqual(Account.query.get('bob@aol.com').last_email,
+                               now,
+                               delta=timedelta(seconds=1))
