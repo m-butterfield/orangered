@@ -18,11 +18,16 @@ class BaseTestCase(unittest.TestCase):
         insert_subreddits()
 
 
-class AppTests(BaseTestCase):
+class BaseAppTestCase(BaseTestCase):
 
     def setUp(self):
         super().setUp()
         self.client = app.test_client()
+
+
+class SignupTests(BaseAppTestCase):
+
+    def setUp(self):
         self.account = Account(email='bob@aol.com')
         db.session.add(self.account)
         db.session.commit()
@@ -39,6 +44,14 @@ class AppTests(BaseTestCase):
         self.assertTrue(account.active)
         self.assertEqual(
             set(expected_subreddits), {s.name for s in account.subreddits})
+
+
+class UnsubscribeTests(BaseAppTestCase):
+
+    def setUp(self):
+        self.account = Account(email='bob@aol.com')
+        db.session.add(self.account)
+        db.session.commit()
 
     def test_unsubscribe_not_found(self):
         resp = self.client.post('/email/blah/unsubscribe')
@@ -57,6 +70,16 @@ class AppTests(BaseTestCase):
         self.assertEqual(resp.status_code, 200)
         db.session.add(self.account)
         self.assertTrue(self.account.active)
+
+
+class ManageTests(BaseAppTestCase):
+
+    def test_redirect_to_unsubscribe(self):
+        account = Account(email='bob@aol.com', active=False)
+        db.session.add(account)
+        db.session.commit()
+        resp = self.client.get(f'/account/{account.uuid}/manage')
+        self.assertEqual(resp.status_code, 302)
 
 
 class FakeSubredditPost:
