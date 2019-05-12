@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: orangered-send-emails
 spec:
-  schedule: "*/1 * * * *"
+  schedule: "0 12 * * *"
   jobTemplate:
     spec:
       template:
@@ -12,7 +12,53 @@ spec:
             - name: orangered
               image: gcr.io/orangered/orangered
               args:
-                - /bin/sh
-                - -c
-                - date; echo Hello from the Kubernetes cluster
+                - ./send_emails
+              env:
+                - name: MAILGUN_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: mailgun-creds
+                      key: mailgun-api-key
+                - name: PGDATABASE
+                  valueFrom:
+                    secretKeyRef:
+                      name: psql-creds
+                      key: pgdatabase
+                - name: PGHOST
+                  valueFrom:
+                    secretKeyRef:
+                      name: psql-creds
+                      key: pghost
+                - name: PGUSER
+                  valueFrom:
+                    secretKeyRef:
+                      name: psql-creds
+                      key: pguser
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: psql-creds
+                      key: pgpassword
+                - name: REDDIT_CLIENT_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: reddit-creds
+                      key: reddit-client-id
+                - name: REDDIT_CLIENT_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: reddit-creds
+                      key: reddit-client-secret
+                - name: REDDIT_USERNAME
+                  valueFrom:
+                    secretKeyRef:
+                      name: reddit-creds
+                      key: reddit-username
+                - name: REDDIT_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: reddit-creds
+                      key: reddit-password
+                - name: SERVER_NAME
+                  value: orangered.io
           restartPolicy: OnFailure
