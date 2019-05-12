@@ -99,7 +99,6 @@ class EmailTests(BaseTestCase):
             email='bob@aol.com',
             subreddits=Subreddit.query.filter(Subreddit.name.in_(
                 ['aviation', 'spacex', 'running'])).all(),
-            last_email=datetime.utcnow() - timedelta(days=1),
         ))
         # another that is deactivated
         db.session.add(Account(
