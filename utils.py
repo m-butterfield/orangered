@@ -58,7 +58,7 @@ def _send_email_for_account(account, subreddit_posts):
             [(s.name, subreddit_posts[s.name]) for s in account.subreddits],
             key=lambda s: s[0].lower(),
         ),
-        'email_management_url': '',
+        'email_management_url': url_for('manage', uuid=account.uuid),
         'unsubscribe_url': url_for('unsubscribe', uuid=account.uuid),
     }
     html_data = Template(HTML_TEMPLATE, trim_blocks=True).render(**context)

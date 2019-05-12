@@ -123,6 +123,16 @@ def health_check():
     return 'all good'
 
 
+@app.route("/account/<uuid>/manage", methods=['GET', 'POST'])
+def manage(uuid):
+    account = Account.query.filter(Account.uuid == uuid).one_or_none()
+    if account is None:
+        return 'not found', 404
+    if request.method == 'POST':
+        pass
+    return render_template('manage.html', account=account)
+
+
 @app.route("/account/<uuid>/unsubscribe", methods=['GET', 'POST'])
 def unsubscribe(uuid):
     account = Account.query.filter(Account.uuid == uuid).one_or_none()
