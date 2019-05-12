@@ -6,7 +6,7 @@ import time
 import uuid
 
 from flask import Flask
-from flask import render_template, redirect, request
+from flask import render_template, redirect, request, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 import google.cloud.logging
@@ -128,6 +128,8 @@ def manage(uuid):
     account = Account.query.filter(Account.uuid == uuid).one_or_none()
     if account is None:
         return 'not found', 404
+    if not account.active:
+        return redirect(url_for('unsubscribe', uuid=uuid))
     if request.method == 'POST':
         pass
     return render_template('manage.html', account=account)
