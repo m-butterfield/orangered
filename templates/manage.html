@@ -23,6 +23,22 @@
         {% endif %}
       </div>
     </div>
+    <div class="row">
+      <div class="col-lg-8 m-auto text-center">
+        <p class="lead">or</p>
+        <p class="lead">click the button below to unsubscribe</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-lg-8 mx-auto">
+        <form action="{{ url_for('unsubscribe', uuid=account.uuid) }}" method="post">
+          <input type="hidden" name="unsubscribe" value="{{ account.active }}">
+          <div class="form-group">
+            <button type="submit" class="btn btn-primary btn-xl">Unsubscribe</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </header>
 

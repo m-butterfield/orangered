@@ -33,6 +33,14 @@
         </form>
       </div>
     </div>
+    {% if account.active %}
+    <div class="row">
+      <div class="col-lg-8 m-auto text-center">
+        <p class="lead">or</p>
+        <p class="lead"><a href="{{ url_for('manage', uuid=account.uuid) }}">Click here to manage your emails</a></p>
+      </div>
+    </div>
+    {% endif %}
   </div>
 </header>
 
