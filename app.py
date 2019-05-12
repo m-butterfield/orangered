@@ -149,10 +149,12 @@ def unsubscribe(uuid):
 @app.route("/signup", methods=['POST'])
 def signup():
     email = request.form['email']
+    if Account.query.get(email.lower()) is not None:
+        return 'account already exists', 400
     subreddits = Subreddit.query.filter(Subreddit.name.in_(
         request.form.getlist('subreddits[]'))).all()
     db.session.add(Account(
-        email=email,
+        email=email.lower(),
         subreddits=subreddits,
     ))
     db.session.commit()
