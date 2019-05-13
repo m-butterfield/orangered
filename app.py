@@ -134,7 +134,12 @@ def manage(uuid):
     if not account.active:
         return redirect(url_for('unsubscribe', uuid=uuid))
     if request.method == 'POST':
-        pass
+        subreddits = request.form.getlist('subreddits[]')
+        if len(subreddits) > 10:
+            return 'too many subreddits', 400
+        account.subreddits = Subreddit.query.filter(
+            Subreddit.name.in_(subreddits)).all()
+        db.session.commit()
     return render_template('manage.html',
                            account=account,
                            subreddits=Subreddit.subreddit_names())
