@@ -50,6 +50,13 @@ class SignupTests(BaseAppTestCase):
         })
         self.assertEqual(resp.status_code, 400)
 
+    def test_max_10_subreddits(self):
+        resp = self.client.post('/signup', data={
+            'email': 'bob2@aol.com',
+            'subreddits[]': ['aviation'] * 11,
+        })
+        self.assertEqual(resp.status_code, 400)
+
 
 class UnsubscribeTests(BaseAppTestCase):
 

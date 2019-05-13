@@ -78,6 +78,11 @@ class Subreddit(db.Model):
     def __repr__(self):
         return f'<Subreddit {self.name}>'
 
+    @classmethod
+    def subreddit_names(cls):
+        return [s.name for s in cls.query.order_by(db.func.lower(cls.name))]
+
+
 
 class SubredditPost(db.Model):
     id = db.Column(db.String(128), primary_key=True)
@@ -105,12 +110,10 @@ def https_redirect():
 
 @app.route("/")
 def index():
-    subreddit_names = [s.name for s in Subreddit.query.order_by(
-        db.func.lower(Subreddit.name))]
     cache_time = time.time() if app.config['DEBUG'] else APP_START_TIME
     return render_template('index.html',
                            cache_timestamp=str(int(cache_time)),
-                           subreddits=subreddit_names)
+                           subreddits=Subreddit.subreddit_names())
 
 
 @app.route("/health_check")
@@ -132,7 +135,9 @@ def manage(uuid):
         return redirect(url_for('unsubscribe', uuid=uuid))
     if request.method == 'POST':
         pass
-    return render_template('manage.html', account=account)
+    return render_template('manage.html',
+                           account=account,
+                           subreddits=Subreddit.subreddit_names())
 
 
 @app.route("/account/<uuid>/unsubscribe", methods=['GET', 'POST'])
@@ -151,8 +156,10 @@ def signup():
     email = request.form['email']
     if Account.query.get(email.lower()) is not None:
         return 'account already exists', 400
-    subreddits = Subreddit.query.filter(Subreddit.name.in_(
-        request.form.getlist('subreddits[]'))).all()
+    subreddits = request.form.getlist('subreddits[]')
+    if len(subreddits) > 10:
+        return 'too many subreddits', 400
+    subreddits = Subreddit.query.filter(Subreddit.name.in_(subreddits)).all()
     db.session.add(Account(
         email=email.lower(),
         subreddits=subreddits,
