@@ -1,6 +1,6 @@
 $(function() {
 
-  $("#signupForm input,#signupForm select").jqBootstrapValidation({
+  $("#manageForm select").jqBootstrapValidation({
     preventSubmit: true,
     submitError: function($form, event, errors) {
       // additional error messages or events
@@ -8,15 +8,13 @@ $(function() {
     submitSuccess: function($form, event) {
       event.preventDefault(); // prevent default submit behaviour
       // get values from FORM
-      var email = $("input#email").val();
       var subreddits = $("select#subreddits").val();
-      $this = $("#sendMessageButton");
+      $this = $("#manageButton");
       $this.prop("disabled", true); // Disable submit button until AJAX call is complete to prevent duplicate messages
       $.ajax({
-        url: "/signup",
+        url: document.location.pathname,
         type: "POST",
         data: {
-          email: email,
           subreddits: subreddits
         },
         cache: false,
@@ -26,11 +24,9 @@ $(function() {
           $('#success > .alert-success').html("<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;")
             .append("</button>");
           $('#success > .alert-success')
-            .append("<strong>Success! You should receive your first email within the next day or so.</strong>");
+            .append("<strong>Success! Subreddits updated.</strong>");
           $('#success > .alert-success')
             .append('</div>');
-          //clear all fields
-          $('#signupForm').trigger("reset");
         },
         error: function() {
           // Fail message

@@ -20,6 +20,34 @@
       </div>
     </div>
     <div class="row">
+      <div class="col-lg-4 mx-auto">
+        <form id="manageForm" novalidate="novalidate">
+          <div class="control-group">
+            <div class="form-group floating-label-form-group controls mb-0 pb-2">
+              <select class="selectpicker form-control"
+                      id="subreddits"
+                      multiple data-live-search="true"
+                      data-max-options="10"
+                      data-header="Choose subreddits (up to ten)"
+                      title="Choose subreddits..."
+                      required="required"
+                      data-validation-required-message="Please choose at least one subreddit.">
+                {% for subreddit in subreddits %}
+                  <option{% if subreddit in user_subreddits %} selected="selected"{% endif %}>{{ subreddit }}</option>
+                {% endfor %}
+              </select>
+              <p class="help-block text-danger"></p>
+            </div>
+          </div>
+          <br>
+          <div id="success"></div>
+          <div class="form-group">
+            <button type="submit" class="btn btn-primary btn-xl" id="manageButton">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="row">
       <div class="col-lg-8 m-auto text-center">
         <p class="lead">or</p>
         <p class="lead">click the button below to unsubscribe</p>
@@ -38,4 +66,7 @@
   </div>
 </header>
 
+{% endblock %}
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/manage.js', cache=cache_timestamp) }}"></script>
 {% endblock %}
