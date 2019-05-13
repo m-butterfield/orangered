@@ -83,7 +83,6 @@ class Subreddit(db.Model):
         return [s.name for s in cls.query.order_by(db.func.lower(cls.name))]
 
 
-
 class SubredditPost(db.Model):
     id = db.Column(db.String(128), primary_key=True)
     subreddit_name = db.Column(db.String(21), db.ForeignKey('subreddit.name'),
@@ -140,9 +139,12 @@ def manage(uuid):
         account.subreddits = Subreddit.query.filter(
             Subreddit.name.in_(subreddits)).all()
         db.session.commit()
-    return render_template('manage.html',
-                           account=account,
-                           subreddits=Subreddit.subreddit_names())
+    return render_template(
+        'manage.html',
+        account=account,
+        user_subreddits=[s.name for s in account.subreddits],
+        subreddits=Subreddit.subreddit_names(),
+    )
 
 
 @app.route("/account/<uuid>/unsubscribe", methods=['GET', 'POST'])
