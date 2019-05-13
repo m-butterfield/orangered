@@ -18,7 +18,7 @@ class BaseTestCase(unittest.TestCase):
         insert_subreddits()
 
 
-class AppTests(BaseTestCase):
+class BaseAppTestCase(BaseTestCase):
 
     def setUp(self):
         super().setUp()
@@ -27,10 +27,13 @@ class AppTests(BaseTestCase):
         db.session.add(self.account)
         db.session.commit()
 
+
+class SignupTests(BaseAppTestCase):
+
     def test_valid_signup(self):
         expected_subreddits = ['aviation', 'spacex']
         resp = self.client.post('/signup', data={
-            'email': 'bob2@aol.com',
+            'email': 'Bob2@aol.com',
             'subreddits[]': expected_subreddits,
         })
         self.assertEqual(resp.status_code, 201)
@@ -39,6 +42,23 @@ class AppTests(BaseTestCase):
         self.assertTrue(account.active)
         self.assertEqual(
             set(expected_subreddits), {s.name for s in account.subreddits})
+
+    def test_account_already_exists(self):
+        resp = self.client.post('/signup', data={
+            'email': self.account.email,
+            'subreddits[]': ['aviation'],
+        })
+        self.assertEqual(resp.status_code, 400)
+
+    def test_max_10_subreddits(self):
+        resp = self.client.post('/signup', data={
+            'email': 'bob2@aol.com',
+            'subreddits[]': ['aviation'] * 11,
+        })
+        self.assertEqual(resp.status_code, 400)
+
+
+class UnsubscribeTests(BaseAppTestCase):
 
     def test_unsubscribe_not_found(self):
         resp = self.client.post('/email/blah/unsubscribe')
@@ -57,6 +77,29 @@ class AppTests(BaseTestCase):
         self.assertEqual(resp.status_code, 200)
         db.session.add(self.account)
         self.assertTrue(self.account.active)
+
+
+class ManageTests(BaseAppTestCase):
+
+    def test_redirect_to_unsubscribe(self):
+        self.account.active = False
+        db.session.commit()
+        resp = self.client.get(f'/account/{self.account.uuid}/manage')
+        self.assertEqual(resp.status_code, 302)
+
+    def test_max_10_subreddits(self):
+        resp = self.client.post(f'/account/{self.account.uuid}/manage', data={
+            'subreddits[]': ['aviation'] * 11})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_update_subreddits(self):
+        expected_subreddits = ['aviation', 'spacex', 'analog']
+        resp = self.client.post(f'/account/{self.account.uuid}/manage', data={
+            'subreddits[]': expected_subreddits})
+        self.assertEqual(resp.status_code, 200)
+        account = Account.query.get(self.account.email)
+        self.assertEqual(
+            set(expected_subreddits), {s.name for s in account.subreddits})
 
 
 class FakeSubredditPost:
@@ -99,7 +142,6 @@ class EmailTests(BaseTestCase):
             email='bob@aol.com',
             subreddits=Subreddit.query.filter(Subreddit.name.in_(
                 ['aviation', 'spacex', 'running'])).all(),
-            last_email=datetime.utcnow() - timedelta(days=1),
         ))
         # another that is deactivated
         db.session.add(Account(
@@ -165,7 +207,7 @@ class EmailTests(BaseTestCase):
         _send_emails(subreddit_posts)
         db.session.add_all(chain.from_iterable(subreddit_posts.values()))
         fake_template().render.assert_called_with(
-            email_management_url='',
+            email_management_url=mock.ANY,
             unsubscribe_url=mock.ANY,
             subreddits=[
                 ('aviation', subreddit_posts['aviation']),

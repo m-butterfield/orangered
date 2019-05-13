@@ -43,8 +43,9 @@ def send_emails():
 def _send_emails(subreddit_posts):
     with app.app_context():
         for account in Account.query.filter(
-                Account.active.is_(True),
-                Account.last_email < datetime.utcnow() - timedelta(hours=23),
+            Account.active.is_(True),
+            (Account.last_email < datetime.utcnow() - timedelta(hours=23)) |
+            Account.last_email.is_(None),
         ):
             _send_email_for_account(account, subreddit_posts)
 
@@ -57,7 +58,7 @@ def _send_email_for_account(account, subreddit_posts):
             [(s.name, subreddit_posts[s.name]) for s in account.subreddits],
             key=lambda s: s[0].lower(),
         ),
-        'email_management_url': '',
+        'email_management_url': url_for('manage', uuid=account.uuid),
         'unsubscribe_url': url_for('unsubscribe', uuid=account.uuid),
     }
     html_data = Template(HTML_TEMPLATE, trim_blocks=True).render(**context)
@@ -138,7 +139,8 @@ def _scrape_new_posts(reddit, subreddit):
 def _subreddits_to_scrape():
     return Subreddit.query.join(Subreddit.accounts).filter(
         Account.active.is_(True),
-        Account.last_email < datetime.utcnow() - timedelta(hours=23),
+        (Account.last_email < datetime.utcnow() - timedelta(hours=23)) |
+        Account.last_email.is_(None),
     )
 
 

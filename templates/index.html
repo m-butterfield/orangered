@@ -92,3 +92,6 @@
 </section>
 
 {% endblock %}
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/signup.js', cache=cache_timestamp) }}"></script>
+{% endblock %}
