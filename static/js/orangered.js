@@ -72,4 +72,6 @@
     });
   });
 
+  $('select').select2();
+
 })(jQuery); // End of use strict
