@@ -72,6 +72,9 @@
     });
   });
 
-  $('select').select2();
+  $('select').select2({
+    closeOnSelect: false,
+    maximumSelectionLength: true
+  });
 
 })(jQuery); // End of use strict
