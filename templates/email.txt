@@ -6,6 +6,7 @@ Go here to manage your subreddits: {{ email_management_url }}
 {% for post in posts %}
 - {{ post.title }}: {{ post.url }}
 {% endfor %}
+\r\n\r\n
 {% endfor %}
 
 Go here to unsubscribe: {{ unsubscribe_url }}
