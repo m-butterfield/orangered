@@ -6,7 +6,7 @@ import time
 import uuid
 
 from flask import Flask
-from flask import abort, render_template, redirect, request, url_for
+from flask import render_template, redirect, request, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 import google.cloud.logging
@@ -141,7 +141,7 @@ def manage(uuid):
         'manage.html',
         account=account,
         user_subreddits=[s.name for s in account.subreddits],
-        subreddits=SUBREDDIT_INFO,
+        subreddit_info=SUBREDDIT_INFO,
     )
 
 
