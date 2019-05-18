@@ -76,6 +76,7 @@
     placeholder_text_multiple: 'select subreddits (up to 10)',
     max_selected_options: 10,
     hide_results_on_select: false,
+    search_contains: true
   }).on('chosen:maxselected', function(evt, params) {
       alert('Max number of subreddits selected');
   });
