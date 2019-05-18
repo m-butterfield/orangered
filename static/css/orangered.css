@@ -280,7 +280,8 @@ header.masthead h2 {
 }
 
 .floating-label-form-group label {
-  font-size: 0.85em;
+  font-size: 1.5em;
+  color: #2C3E50;
   line-height: 1.764705882em;
   position: relative;
   z-index: 0;
