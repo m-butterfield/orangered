@@ -39,11 +39,11 @@ HTML_TEMPLATE, TEXT_TEMPLATE = _html_template(), _text_template()
 
 
 def insert_subreddits():
-    unique_subs = {}
+    subs = set()
     for _, subreddits in SUBREDDIT_INFO:
         for subreddit in subreddits:
-            unique_subs[subreddit.lower()] = subreddit
-    db.session.add_all([Subreddit(name=s) for s in unique_subs.values()])
+            subs.add(subreddit)
+    db.session.add_all([Subreddit(name=s) for s in subs])
     db.session.commit()
 
 
