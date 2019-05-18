@@ -9,6 +9,10 @@ $(function() {
       event.preventDefault(); // prevent default submit behaviour
       // get values from FORM
       var subreddits = $("select#subreddits").val();
+      if (subreddits.length > 10) {
+        alert('Too many subreddits selected, maximum is 10.');
+        return;
+      }
       $this = $("#manageButton");
       $this.prop("disabled", true); // Disable submit button until AJAX call is complete to prevent duplicate messages
       $.ajax({
@@ -35,8 +39,6 @@ $(function() {
             .append("</button>");
           $('#success > .alert-danger').append($("<strong>").text("Sorry, it seems that the server is not responding. Please try again later!"));
           $('#success > .alert-danger').append('</div>');
-          //clear all fields
-          $('#signupForm').trigger("reset");
         },
         complete: function() {
           setTimeout(function() {
