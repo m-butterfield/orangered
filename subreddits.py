@@ -1,3 +1,5 @@
+import itertools
+
 from app import db, Subreddit
 
 
@@ -277,5 +279,9 @@ SUBREDDITS = [
 
 
 def insert_subreddits():
-    db.session.add_all([Subreddit(name=n) for n in SUBREDDITS])
+    all_subreddits = {}
+    for _, subreddits in SUBREDDITS:
+        for subreddit in subreddits:
+            all_subreddits[subreddit.lower()] = subreddit
+    db.session.add_all([Subreddit(name=s) for s in all_subreddits.values()])
     db.session.commit()
