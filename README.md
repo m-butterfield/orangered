@@ -32,7 +32,7 @@ Create the database:
 Create the database tables and base data:
 
     kubectl exec -it <orangered pod name> -- python -c 'from app import db; db.create_all()'
-    kubectl exec -it <orangered pod name> -- python -c 'from subreddits import insert_subreddits; insert_subreddits()'
+    kubectl exec -it <orangered pod name> -- python -c 'from utils import insert_subreddits; insert_subreddits()'
 
 Modify hosts file to point to the minikube ingress:
 
@@ -87,7 +87,7 @@ To rebuild and deploy the container, run the `docker build` and `docker push` st
 Create the database tables and base data:
 
     kubectl exec -it <orangered pod name> -- python -c 'from app import db; db.create_all()'
-    kubectl exec -it <orangered pod name> -- python -c 'from subreddits import insert_subreddits; insert_subreddits()'
+    kubectl exec -it <orangered pod name> -- python -c 'from utils import insert_subreddits; insert_subreddits()'
 
 To scale, simply:
 

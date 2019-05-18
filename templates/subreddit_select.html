@@ -6,8 +6,12 @@
             multiple="multiple"
             required="required"
             data-validation-required-message="Please choose at least one subreddit.">
-      {% for subreddit in subreddits %}
-        <option{% if subreddit in user_subreddits %} selected="selected"{% endif %}>{{ subreddit }}</option>
+      {% for category, subreddits in subreddit_info %}
+        <optgroup label="{{ category }}">
+        {% for subreddit in subreddits%}
+          <option{% if subreddit in user_subreddits %} selected="selected"{% endif %}>{{ subreddit }}</option>
+        {% endfor %}
+        </optgroup>
       {% endfor %}
     </select>
     <p class="help-block text-danger"></p>

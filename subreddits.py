@@ -1,9 +1,7 @@
-import itertools
-
-from app import db, Subreddit
+from collections import OrderedDict
 
 
-SUBREDDITS = [
+SUBREDDIT_INFO = [
     ('Gifs', ['behindthegifs', 'bettereveryloop', 'brokengifs', 'Cinemagraphs', 'combinedgifs', 'educationalgifs', 'gif', 'gifextra', 'gifrecipes', 'gifs', 'gifsound', 'gifsthatkeepongiving', 'highqualitygifs', 'loadingicon', 'mechanical_gifs', 'michaelbaygifs', 'noisygifs', 'perfectloops', 'retiredgif', 'slygifs', 'splitdepthgifs', 'WastedGifs', 'wholesomegifs']),
     ('People', ['asianpeoplegifs', 'blackpeoplegifs', 'scriptedasiangifs', 'whitepeoplegifs']),
     ('Reaction', ['reactiongifs', 'shittyreactiongifs']),
@@ -18,7 +16,7 @@ SUBREDDITS = [
     ('Wallpapers', ['Offensive_Wallpapers', 'wallpaper', 'wallpapers']),
     ('Videos', ['artisanvideos', 'DeepIntoYouTube', 'killthecameraman', 'nottimanderic', 'praisethecameraman', 'videos', 'youtubehaiku']),
     ('General', ['accounting', 'applyingtocollege', 'architecture', 'awesome', 'blacksmith', 'bulletjournal', 'casualconversation', 'changemyview', 'college', 'CoolGuides', 'cosplay', 'crazyideas', 'crochet', 'crossstitch', 'cubers', 'digitalnomad', 'Disney', 'DiWHY', 'DIY', 'DoesAnybodyElse', 'dumpsterdiving', 'EDC', 'education', 'educationalgifs', 'entertainment', 'everymanshouldknow', 'fantheories', 'FastWorkers', 'Foodforthought', 'geek', 'GetStudying', 'gunpla', 'howto', 'howtonotgiveafuck', 'ifyoulikeblank', 'knitting', 'lawschool', 'LearnUselessTalents', 'lectures', 'lifehacks', 'LifeProTips', 'modelmakers', 'obscuremedia', 'preppers', 'ProtectAndServe', 'quotes', 'rainmeter', 'redneckengineering', 'RTLSDR', 'sewing', 'ShowerThoughts', 'simpleliving', 'somethingimade', 'teachers', 'tinyhouses', 'tipofmytongue', 'TrueReddit', 'UnethicalLifeProTips', 'urbanplanning', 'vandwellers', 'watchandlearn', 'woodworking', 'WorldBuilding', 'YouShouldKnow']),
-    ('For more advice/assistance subreddits, see here!', ['advice', 'bestoflegaladvice', 'legaladvice', 'raisedbynarcissists', 'relationship_advice']),
+    ('Advice/assistance', ['advice', 'bestoflegaladvice', 'legaladvice', 'raisedbynarcissists', 'relationship_advice']),
     ('AMA', ['AMA', 'casualiama', 'de_Iama', 'ExplainlikeIAmA', 'IAmA']),
     ('Games', ['AskOuija', 'boardgames', 'chess', 'jrpg', 'lego', 'poker', 'rpg', 'scenesfromahat', 'whowouldwin', 'wouldyourather']),
     ('Question/Answer', ['amiugly', 'answers', 'AskReddit', 'NoStupidQuestions', 'samplesize', 'tooafraidtoask', 'whatisthisthing', 'whatsthisbug', 'whatsthisplant']),
@@ -32,7 +30,7 @@ SUBREDDITS = [
     ('Support', ['Anxiety', 'depression', 'foreveralone', 'offmychest', 'socialanxiety', 'SuicideWatch', 'trueoffmychest']),
     ('Facts', ['todayilearned', 'wikipedia']),
     ('Questions', ['IWantToLearn', 'OutOfTheLoop']),
-    ('Explain Like...', ['explainlikeIAmA', 'ExplainLikeImCalvin']),
+    ('Explain Like...', ['explainlikeIAmA', 'ExplainLikeImCalvin', 'ExplainLikeImFive']),
     ('Anthropology', ['anthropology']),
     ('Art', ['animation', 'Art', 'artfundamentals', 'ArtPorn', 'breadstapledtotrees', 'drawing', 'graffiti', 'heavymind', 'illustration', 'learnart', 'pixelart', 'redditgetsdrawn', 'retrofuturism', 'sketchdaily', 'specart', 'streetart', 'wimmelbilder']),
     ('Painting', ['minipainting', 'painting']),
@@ -277,11 +275,6 @@ SUBREDDITS = [
     ('Ex 50k+', ['battlefield3', 'csgobetting', 'historicalwhatif', 'mindcrack', 'punchablefaces', 'twitchplayspokemon']),
 ]
 
+SUBREDDITS = OrderedDict(SUBREDDIT_INFO)
 
-def insert_subreddits():
-    all_subreddits = {}
-    for _, subreddits in SUBREDDITS:
-        for subreddit in subreddits:
-            all_subreddits[subreddit.lower()] = subreddit
-    db.session.add_all([Subreddit(name=s) for s in all_subreddits.values()])
-    db.session.commit()
+assert len(SUBREDDIT_INFO) == len(SUBREDDITS)

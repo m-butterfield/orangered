@@ -6,10 +6,12 @@ import time
 import uuid
 
 from flask import Flask
-from flask import render_template, redirect, request, url_for
+from flask import abort, render_template, redirect, request, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 import google.cloud.logging
+
+from subreddits import SUBREDDIT_INFO
 
 
 def _psql_uri():
@@ -78,10 +80,6 @@ class Subreddit(db.Model):
     def __repr__(self):
         return f'<Subreddit {self.name}>'
 
-    @classmethod
-    def subreddit_names(cls):
-        return [s.name for s in cls.query.order_by(db.func.lower(cls.name))]
-
 
 class SubredditPost(db.Model):
     id = db.Column(db.String(128), primary_key=True)
@@ -112,7 +110,7 @@ def index():
     cache_time = time.time() if app.config['DEBUG'] else APP_START_TIME
     return render_template('index.html',
                            cache_timestamp=str(int(cache_time)),
-                           subreddits=Subreddit.subreddit_names())
+                           subreddit_info=SUBREDDIT_INFO)
 
 
 @app.route("/health_check")
@@ -143,7 +141,7 @@ def manage(uuid):
         'manage.html',
         account=account,
         user_subreddits=[s.name for s in account.subreddits],
-        subreddits=Subreddit.subreddit_names(),
+        subreddits=SUBREDDIT_INFO,
     )
 
 

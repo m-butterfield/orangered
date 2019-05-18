@@ -12,6 +12,8 @@ import requests
 
 from app import Account, app, db, Subreddit, SubredditPost
 
+from subreddits import SUBREDDIT_INFO
+
 
 MAILGUN_API_URL = "https://api.mailgun.net/v3/orangered.io/messages"
 MAILGUN_API_KEY = os.environ.get('MAILGUN_API_KEY')
@@ -34,6 +36,15 @@ def _text_template():
 
 
 HTML_TEMPLATE, TEXT_TEMPLATE = _html_template(), _text_template()
+
+
+def insert_subreddits():
+    unique_subs = {}
+    for _, subreddits in SUBREDDIT_INFO:
+        for subreddit in subreddits:
+            unique_subs[subreddit.lower()] = subreddit
+    db.session.add_all([Subreddit(name=s) for s in unique_subs.values()])
+    db.session.commit()
 
 
 def send_emails():

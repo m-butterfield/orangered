@@ -5,7 +5,7 @@ from unittest import mock
 import uuid
 
 from app import app, db, Account, Subreddit, SubredditPost
-from subreddits import insert_subreddits
+from utils import insert_subreddits
 from utils import _scrape_posts, _send_emails
 
 
@@ -147,7 +147,7 @@ class EmailTests(BaseTestCase):
         db.session.add(Account(
             email='bob2@aol.com',
             subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                ['programming', 'AskReddit'])).all(),
+                ['programming', 'askreddit'])).all(),
             active=False,
         ))
         # another that already received their email for today

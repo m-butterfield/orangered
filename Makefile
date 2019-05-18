@@ -1,7 +1,7 @@
 db:
 	@createdb orangered
 	@python -c 'from app import db; db.create_all()'
-	@python -c 'from subreddits import insert_subreddits; insert_subreddits()'
+	@python -c 'from utils import insert_subreddits; insert_subreddits()'
 
 run-dev:
 	FLASK_APP=app.py FLASK_DEBUG=1 flask run
