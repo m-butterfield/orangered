@@ -73,7 +73,7 @@
   });
 
   $('select').chosen({
-    placeholder_text_multiple: 'Select subreddits (up to 10)',
+    placeholder_text_multiple: 'Select subreddits...',
     max_selected_options: 10,
     hide_results_on_select: false,
     search_contains: true
