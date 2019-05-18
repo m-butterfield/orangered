@@ -1,9 +1,9 @@
 <div class="control-group">
   <div class="form-group floating-label-form-group controls mb-0 pb-2">
+    <label>Select subreddits (up to 10)</label>
     <select class="form-control form-control-chosen"
             id="subreddits"
             multiple="multiple"
-            title="Choose subreddits..."
             required="required"
             data-validation-required-message="Please choose at least one subreddit.">
       {% for subreddit in subreddits %}
