@@ -35,6 +35,7 @@ $(function() {
             .append('</div>');
           //clear all fields
           $('#signupForm').trigger("reset");
+          $('select').val('').trigger('chosen:updated');
         },
         error: function(resp, t, e) {
           var text = resp.status === 400 ? "Error: " + resp.responseText : "An error occurred. Please try again later!";
