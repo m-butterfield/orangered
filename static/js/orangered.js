@@ -72,9 +72,10 @@
     });
   });
 
-  $('select').select2({
-    closeOnSelect: false,
-    maximumSelectionLength: true
+  $('select').chosen({
+    placeholder: 'select subreddits (up to 10)',
+    max_selected_options: 10,
+    hide_results_on_select: false,
   });
 
 })(jQuery); // End of use strict
