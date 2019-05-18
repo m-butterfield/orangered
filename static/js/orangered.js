@@ -79,6 +79,11 @@
     search_contains: true
   }).on('chosen:maxselected', function(evt, params) {
       alert('Max number of subreddits selected');
+  }).change(function () {
+    // support for mobile where chosen is turned off
+    if ($('select option:selected').length > 10) {
+      alert('Max number of subreddits selected, please remove some.');
+    }
   });
 
 })(jQuery); // End of use strict
