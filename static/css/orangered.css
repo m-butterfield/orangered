@@ -273,11 +273,7 @@ header.masthead h2 {
   font-size: 1.5em;
   position: relative;
   z-index: 1;
-  padding-right: 0;
-  padding-left: 0;
   resize: none;
-  border: none;
-  border-radius: 0;
   background: none;
   -webkit-box-shadow: none !important;
   box-shadow: none !important;
@@ -312,9 +308,9 @@ header.masthead h2 {
   color: #18BC9C;
 }
 
-form .row:first-child .floating-label-form-group {
-  border-top: 1px solid #e9ecef;
-}
+/*form .row:first-child .floating-label-form-group {*/
+/*  border-top: 1px solid #e9ecef;*/
+/*}*/
 
 .footer {
   padding-top: 5rem;
@@ -379,4 +375,17 @@ a:focus, a:hover, a:active {
   color: #212529;
   background-color: none;
   border-color: none;
+}
+
+.search-choice span {
+  font-size: 1.5em;
+}
+
+.search-field {
+  width: 100%;
+}
+
+.search-choice-close {
+  top: .4rem !important;
+  background-size: 1.5rem 1.5rem !important;
 }
