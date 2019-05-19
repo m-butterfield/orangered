@@ -79,7 +79,7 @@
     search_contains: true
   }).on('chosen:maxselected', function(evt, params) {
       alert('Max number of subreddits selected');
-  }).change(function () {
+  }).on('change', function (evt, params) {
     // support for mobile where chosen is turned off
     if ($('select option:selected').length > 10) {
       alert('Max number of subreddits selected, please remove some.');
