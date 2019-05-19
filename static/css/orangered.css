@@ -372,12 +372,6 @@ a:focus, a:hover, a:active {
   border-color: #1a252f;
 }
 
-.btn-light {
-  color: #212529;
-  background-color: none;
-  border-color: none;
-}
-
 .search-choice span {
   font-size: 1.5em;
 }
@@ -389,4 +383,8 @@ a:focus, a:hover, a:active {
 .search-choice-close {
   top: .4rem !important;
   background-size: 1.5rem 1.5rem !important;
+}
+
+.chosen-results {
+  max-height: 22rem !important;
 }

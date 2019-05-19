@@ -12,6 +12,8 @@ import requests
 
 from app import Account, app, db, Subreddit, SubredditPost
 
+from subreddits import SUBREDDITS
+
 
 MAILGUN_API_URL = "https://api.mailgun.net/v3/orangered.io/messages"
 MAILGUN_API_KEY = os.environ.get('MAILGUN_API_KEY')
@@ -34,6 +36,19 @@ def _text_template():
 
 
 HTML_TEMPLATE, TEXT_TEMPLATE = _html_template(), _text_template()
+
+
+def insert_subreddits():
+    db.session.add_all([Subreddit(name=s) for s in SUBREDDITS])
+    db.session.commit()
+
+
+def reddit_client():
+    return praw.Reddit(client_id=REDDIT_CLIENT_ID,
+                       client_secret=REDDIT_CLIENT_SECRET,
+                       username=REDDIT_USERNAME,
+                       password=REDDIT_PASSWORD,
+                       user_agent='orangered 1.0')
 
 
 def send_emails():
@@ -95,7 +110,7 @@ def _save_test_emails(html, text):
 
 def _scrape_posts():
     logging.info('Scraping subreddit posts')
-    reddit = _reddit()
+    reddit = reddit_client()
     subreddit_posts = {}
     now = datetime.utcnow()
     for subreddit in _subreddits_to_scrape():
@@ -142,11 +157,3 @@ def _subreddits_to_scrape():
         (Account.last_email < datetime.utcnow() - timedelta(hours=23)) |
         Account.last_email.is_(None),
     )
-
-
-def _reddit():
-    return praw.Reddit(client_id=REDDIT_CLIENT_ID,
-                       client_secret=REDDIT_CLIENT_SECRET,
-                       username=REDDIT_USERNAME,
-                       password=REDDIT_PASSWORD,
-                       user_agent='orangered')

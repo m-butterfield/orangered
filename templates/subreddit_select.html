@@ -1,13 +1,17 @@
 <div class="control-group">
   <div class="form-group floating-label-form-group controls mb-0 pb-2">
-    <label>Subreddits (up to 10)</label>
+    <label>Subreddits (pick up to 10)</label>
     <select class="form-control form-control-chosen"
             id="subreddits"
             multiple="multiple"
             required="required"
             data-validation-required-message="Please choose at least one subreddit.">
-      {% for subreddit in subreddits %}
-        <option{% if subreddit in user_subreddits %} selected="selected"{% endif %}>{{ subreddit }}</option>
+      {% for category, subreddits in subreddit_info %}
+        <optgroup label="{{ category }}">
+        {% for subreddit in subreddits%}
+          <option{% if subreddit in user_subreddits %} selected="selected"{% endif %}>{{ subreddit }}</option>
+        {% endfor %}
+        </optgroup>
       {% endfor %}
     </select>
     <p class="help-block text-danger"></p>

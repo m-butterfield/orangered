@@ -11,6 +11,8 @@ from flask_sqlalchemy import SQLAlchemy
 
 import google.cloud.logging
 
+from subreddits import SUBREDDIT_INFO
+
 
 def _psql_uri():
     username = os.environ.get('PGUSER')
@@ -52,15 +54,18 @@ account_subreddit = db.Table(
         "account.email", onupdate="cascade"),
         primary_key=True),
     db.Column("subreddit_name", db.String(21), db.ForeignKey(
-        "subreddit.name"),
+        "subreddit.name", onupdate="cascade"),
         primary_key=True),
 )
 
 
 class Account(db.Model):
     email = db.Column(db.String(320), primary_key=True)
-    uuid = db.Column(db.String(36),
-                     unique=True, default=lambda: str(uuid.uuid4()))
+    uuid = db.Column(
+        db.String(36),
+        unique=True,
+        default=lambda: str(uuid.uuid4()),
+    )
     active = db.Column(db.Boolean, default=True, nullable=False)
     last_email = db.Column(db.DateTime)
     subreddits = db.relationship('Subreddit',
@@ -78,15 +83,14 @@ class Subreddit(db.Model):
     def __repr__(self):
         return f'<Subreddit {self.name}>'
 
-    @classmethod
-    def subreddit_names(cls):
-        return [s.name for s in cls.query.order_by(db.func.lower(cls.name))]
-
 
 class SubredditPost(db.Model):
     id = db.Column(db.String(128), primary_key=True)
-    subreddit_name = db.Column(db.String(21), db.ForeignKey('subreddit.name'),
-                               nullable=False)
+    subreddit_name = db.Column(
+        db.String(21),
+        db.ForeignKey('subreddit.name', onupdate='cascade'),
+        nullable=False,
+    )
     subreddit = db.relationship('Subreddit')
     title = db.Column(db.String(300), nullable=False)
     url = db.Column(db.String(2000), nullable=False)
@@ -96,6 +100,11 @@ class SubredditPost(db.Model):
 
     def __repr__(self):
         return f'<SubredditPost {self.id}>'
+
+
+@app.context_processor
+def add_now():
+    return {'now': datetime.utcnow()}
 
 
 @app.before_request
@@ -112,7 +121,7 @@ def index():
     cache_time = time.time() if app.config['DEBUG'] else APP_START_TIME
     return render_template('index.html',
                            cache_timestamp=str(int(cache_time)),
-                           subreddits=Subreddit.subreddit_names())
+                           subreddit_info=SUBREDDIT_INFO)
 
 
 @app.route("/health_check")
@@ -143,7 +152,7 @@ def manage(uuid):
         'manage.html',
         account=account,
         user_subreddits=[s.name for s in account.subreddits],
-        subreddits=Subreddit.subreddit_names(),
+        subreddit_info=SUBREDDIT_INFO,
     )
 
 

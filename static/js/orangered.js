@@ -73,13 +73,13 @@
   });
 
   $('select').chosen({
-    placeholder_text_multiple: 'Select subreddits (up to 10)',
+    placeholder_text_multiple: 'Select subreddits...',
     max_selected_options: 10,
     hide_results_on_select: false,
     search_contains: true
   }).on('chosen:maxselected', function(evt, params) {
       alert('Max number of subreddits selected');
-  }).change(function () {
+  }).on('change', function (evt, params) {
     // support for mobile where chosen is turned off
     if ($('select option:selected').length > 10) {
       alert('Max number of subreddits selected, please remove some.');
