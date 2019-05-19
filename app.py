@@ -54,7 +54,7 @@ account_subreddit = db.Table(
         "account.email", onupdate="cascade"),
         primary_key=True),
     db.Column("subreddit_name", db.String(21), db.ForeignKey(
-        "subreddit.name"),
+        "subreddit.name", onupdate="cascade"),
         primary_key=True),
 )
 
