@@ -96,6 +96,11 @@ class SubredditPost(db.Model):
         return f'<SubredditPost {self.id}>'
 
 
+@app.context_processor
+def add_now():
+    return {'now': datetime.utcnow()}
+
+
 @app.before_request
 def https_redirect():
     if (request.headers.get('X-Forwarded-Proto', 'http') != 'https' and
