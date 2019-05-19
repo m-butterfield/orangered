@@ -104,10 +104,10 @@ class ManageTests(BaseAppTestCase):
 
 class FakeSubredditPost:
 
-    def __init__(self, title):
-        self.id = str(uuid.uuid4())
+    def __init__(self, subreddit_name, post_number):
+        self.id = f'{subreddit_name}_{post_number}'
         self.url = 'http://example.com'
-        self.title = title
+        self.title = f'{subreddit_name} post {post_number}'
 
 
 class FakeSubreddit:
@@ -116,7 +116,7 @@ class FakeSubreddit:
         self.name = name
 
     def top(self, *args, **kwargs):
-        return [FakeSubredditPost(f'{self.name} post {i}') for i in range(5)]
+        return [FakeSubredditPost(self.name, i) for i in range(5)]
 
 
 class FakeReddit:
@@ -190,6 +190,14 @@ class EmailTests(BaseTestCase):
                 # this post from a previous day shouldn't show up in the result
                 scraped_at=datetime.utcnow() - timedelta(days=1),
             ),
+            # spacex post from previous day that shows up again
+            SubredditPost(
+                id='spacex_1',
+                subreddit_name='spacex',
+                title='aviation post 3',
+                url='http://example.com',
+                scraped_at=datetime.utcnow() - timedelta(days=1),
+            ),
         ])
         db.session.commit()
 
@@ -197,7 +205,7 @@ class EmailTests(BaseTestCase):
         self.assertSetEqual(
             {'aviation', 'spacex', 'running'}, set(subreddit_posts.keys()))
         self.assertEqual(len(subreddit_posts['aviation']), 2)
-        self.assertEqual(len(subreddit_posts['spacex']), 5)
+        self.assertEqual(len(subreddit_posts['spacex']), 4)
         self.assertEqual(len(subreddit_posts['running']), 5)
         self.assertIsNotNone(Subreddit.query.get('spacex').last_scraped)
         self.assertGreaterEqual(

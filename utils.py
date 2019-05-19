@@ -144,6 +144,7 @@ def _scrape_new_posts(reddit, subreddit):
             subreddit=subreddit,
         )
         for result in reddit.subreddit(subreddit.name).top('day', limit=10)
+        if not SubredditPost.query.get(result.id)
     ]
     db.session.add_all(posts)
     subreddit.last_scraped = datetime.utcnow()
