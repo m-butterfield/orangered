@@ -61,8 +61,11 @@ account_subreddit = db.Table(
 
 class Account(db.Model):
     email = db.Column(db.String(320), primary_key=True)
-    uuid = db.Column(db.String(36),
-                     unique=True, default=lambda: str(uuid.uuid4()))
+    uuid = db.Column(
+        db.String(36),
+        unique=True,
+        default=lambda: str(uuid.uuid4()),
+    )
     active = db.Column(db.Boolean, default=True, nullable=False)
     last_email = db.Column(db.DateTime)
     subreddits = db.relationship('Subreddit',
@@ -83,8 +86,11 @@ class Subreddit(db.Model):
 
 class SubredditPost(db.Model):
     id = db.Column(db.String(128), primary_key=True)
-    subreddit_name = db.Column(db.String(21), db.ForeignKey('subreddit.name'),
-                               nullable=False)
+    subreddit_name = db.Column(
+        db.String(21),
+        db.ForeignKey('subreddit.name', onupdate='cascade'),
+        nullable=False,
+    )
     subreddit = db.relationship('Subreddit')
     title = db.Column(db.String(300), nullable=False)
     url = db.Column(db.String(2000), nullable=False)
