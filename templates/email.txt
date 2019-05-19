@@ -1,5 +1,6 @@
 Orangered - A daily summary of your favorite subreddits
 Go here to manage your subreddits: {{ email_management_url }}
+Need help? Contact help@orangered.io
 
 {% for subreddit_name, posts in subreddits %}
 /r/{{ subreddit_name }}:
