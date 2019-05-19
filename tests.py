@@ -133,7 +133,7 @@ class FakeReddit:
 
 class EmailTests(BaseTestCase):
 
-    @mock.patch('utils._reddit', return_value=FakeReddit())
+    @mock.patch('utils.reddit_client', return_value=FakeReddit())
     @mock.patch('utils.Template')
     @mock.patch('utils._send_email')
     def test_scrape_and_send_emails(self, fake_send_email, fake_template, _):
