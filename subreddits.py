@@ -1,6 +1,3 @@
-from collections import OrderedDict
-
-
 SUBREDDIT_INFO = [
     ('Gifs', ['behindthegifs', 'bettereveryloop', 'brokengifs', 'cinemagraphs', 'combinedgifs', 'educationalgifs', 'gif', 'gifextra', 'gifrecipes', 'gifs', 'gifsound', 'gifsthatkeepongiving', 'highqualitygifs', 'loadingicon', 'mechanical_gifs', 'michaelbaygifs', 'noisygifs', 'perfectloops', 'retiredgif', 'slygifs', 'splitdepthgifs', 'wastedgifs', 'wholesomegifs']),
     ('People', ['asianpeoplegifs', 'blackpeoplegifs', 'scriptedasiangifs', 'whitepeoplegifs']),
@@ -309,6 +306,7 @@ SUBREDDIT_INFO = [
     ('Uncategorized', ['2healthbars', 'bitchimabus', 'bizarrebuildings', 'boop', 'catastrophicfailure', 'collapse', 'confusing_perspective', 'dashcamgifs', 'dontputyourdickinthat', 'drunkorakid', 'evilbuildings', 'expanddong', 'fifthworldpics', 'fiftyfifty', 'firstworldproblems', 'fullscorpion', 'greendawn', 'hadtohurt', 'halloween', 'happycryingdads', 'hmmm', 'hmmmgifs', 'idiotsfightingthings', 'idiotsincars', 'inclusiveor', 'instantkarma', 'instantregret', 'justfuckmyshitup', 'justiceserved', 'kurzgesagt', 'lostgeneration', 'mandelaeffect', 'mildlypenis', 'mildlyvandalised', 'mypeopleneedme', 'nextfuckinglevel', 'notinteresting', 'notmyjob', 'okbuddyretard', 'onejob', 'ooer', 'pussypassdenied', 'redditdayof', 'slavs_squatting', 'sweatypalms', 'tendies', 'the_pack', 'therewasanattempt', 'thingsforants', 'tworedditorsonecup', 'unbgbbiivchidctiicbg', 'unpopularopinion', 'urbanhell', 'wackytictacs', 'watchpeoplesurvive', 'whatcouldgoright', 'whatintarnation', 'whatsinthisthing', 'youseeingthisshit']),
 ]
 
-SUBREDDITS = OrderedDict(SUBREDDIT_INFO)
+# make sure there are no duplicate category names
+assert len(SUBREDDIT_INFO) == len(dict(SUBREDDIT_INFO))
 
-assert len(SUBREDDIT_INFO) == len(SUBREDDITS)
+SUBREDDITS = {s for _, subreddits in SUBREDDIT_INFO for s in subreddits}

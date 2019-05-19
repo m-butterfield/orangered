@@ -12,7 +12,7 @@ import requests
 
 from app import Account, app, db, Subreddit, SubredditPost
 
-from subreddits import SUBREDDIT_INFO
+from subreddits import SUBREDDITS
 
 
 MAILGUN_API_URL = "https://api.mailgun.net/v3/orangered.io/messages"
@@ -39,11 +39,7 @@ HTML_TEMPLATE, TEXT_TEMPLATE = _html_template(), _text_template()
 
 
 def insert_subreddits():
-    subs = set()
-    for _, subreddits in SUBREDDIT_INFO:
-        for subreddit in subreddits:
-            subs.add(subreddit)
-    db.session.add_all([Subreddit(name=s) for s in subs])
+    db.session.add_all([Subreddit(name=s) for s in SUBREDDITS])
     db.session.commit()
 
 
