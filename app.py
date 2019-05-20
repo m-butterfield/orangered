@@ -14,6 +14,10 @@ import google.cloud.logging
 from subreddits import SUBREDDIT_INFO
 
 
+RECAPTCHA_SITE_KEY = os.environ.get('RECAPTCHA_SITE_KEY')
+RECAPTCHA_SECRET = os.environ.get('RECAPTCHA_SECRET_KEY')
+
+
 def _psql_uri():
     username = os.environ.get('PGUSER')
     password = os.environ.get('PGPASSWORD')
@@ -125,7 +129,8 @@ def index():
     cache_time = time.time() if app.config['DEBUG'] else APP_START_TIME
     return render_template('index.html',
                            cache_timestamp=str(int(cache_time)),
-                           subreddit_info=SUBREDDIT_INFO)
+                           subreddit_info=SUBREDDIT_INFO,
+                           recaptcha_site_key=RECAPTCHA_SITE_KEY)
 
 
 @app.route("/health_check")
