@@ -57,6 +57,16 @@
   {% block extra_js %}
   {% endblock %}
 
+  {% if not config['DEBUG'] %}
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-48100239-7"></script>
+  <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-48100239-7');
+  </script>
+  {% endif %}
+
 </body>
 
 </html>
