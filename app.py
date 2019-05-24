@@ -9,6 +9,7 @@ from flask import Flask
 from flask import render_template, redirect, request, url_for
 from flask_sqlalchemy import SQLAlchemy
 
+from google.cloud import error_reporting
 import google.cloud.logging
 
 from subreddits import SUBREDDIT_INFO
@@ -41,11 +42,11 @@ db = SQLAlchemy(app)
 APP_START_TIME = time.time()
 
 
-if app.config['DEBUG']:
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-else:
-    client = google.cloud.logging.Client()
-    client.setup_logging()
+# if app.config['DEBUG']:
+#     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+# else:
+#     client = google.cloud.logging.Client()
+#     client.setup_logging()
 
 
 account_subreddit = db.Table(
@@ -107,6 +108,14 @@ def add_now():
     return {'now': datetime.utcnow()}
 
 
+@app.errorhandler(500)
+def server_error(e):
+    er_client = error_reporting.Client()
+    er_client.report_exception(
+        http_context=error_reporting.build_flask_context(request))
+    return 'An internal error occurred.', 500
+
+
 @app.before_request
 def https_redirect():
     if (request.headers.get('X-Forwarded-Proto', 'http') != 'https' and
@@ -114,6 +123,11 @@ def https_redirect():
             not app.config['DEBUG']):
         return redirect(request.url.replace('http://', 'https://', 1),
                         code=301)
+
+
+@app.route('/test')
+def test():
+    raise Exception("Oh nose")
 
 
 @app.route("/")

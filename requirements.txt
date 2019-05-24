@@ -1,6 +1,7 @@
 Flask==1.0.2
 Flask-SQLAlchemy==2.3.2
-google-cloud-logging==1.10.0
+google-cloud-error-reporting==0.31.0
+google-cloud-logging==1.11.0
 gunicorn==19.9.0
 ipdb==0.12
 praw==6.1.1
