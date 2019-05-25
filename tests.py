@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from datetime import datetime, timedelta
 from itertools import chain
 import unittest
@@ -217,11 +218,11 @@ class EmailTests(BaseTestCase):
         fake_template().render.assert_called_with(
             email_management_url=mock.ANY,
             unsubscribe_url=mock.ANY,
-            subreddits=[
+            subreddits=OrderedDict([
                 ('aviation', subreddit_posts['aviation']),
                 ('running', subreddit_posts['running']),
                 ('spacex', subreddit_posts['spacex']),
-            ],
+            ]),
         )
         fake_send_email.assert_called_once_with(
             'bob@aol.com', mock.ANY, mock.ANY)

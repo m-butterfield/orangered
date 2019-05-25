@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from datetime import datetime, timedelta
 import logging
 import os
@@ -62,17 +63,16 @@ def _send_emails(subreddit_posts):
             (Account.last_email < datetime.utcnow() - timedelta(hours=23)) |
             Account.last_email.is_(None),
         ):
-            _send_email_for_account(account, subreddit_posts)
+            account_subreddit_posts = OrderedDict([
+                (s.name, subreddit_posts[s.name]) for s in account.subreddits])
+            _send_email_for_account(account, account_subreddit_posts)
 
 
 def _send_email_for_account(account, subreddit_posts):
     logging.info('Sending email to %s with subreddits: %s',
                  account.email, ', '.join(subreddit_posts.keys()))
     context = {
-        'subreddits': sorted(
-            [(s.name, subreddit_posts[s.name]) for s in account.subreddits],
-            key=lambda s: s[0].lower(),
-        ),
+        'subreddits': subreddit_posts,
         'email_management_url': url_for('manage', uuid=account.uuid),
         'unsubscribe_url': url_for('unsubscribe', uuid=account.uuid),
     }

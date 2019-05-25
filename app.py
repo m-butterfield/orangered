@@ -70,6 +70,7 @@ class Account(db.Model):
     last_email = db.Column(db.DateTime)
     subreddits = db.relationship('Subreddit',
                                  backref='accounts',
+                                 order_by='Subreddit.name',
                                  secondary=account_subreddit)
 
     def __repr__(self):
