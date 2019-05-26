@@ -72,7 +72,7 @@ def _send_email_for_account(account, subreddit_posts):
     logging.info('Sending email to %s with subreddits: %s',
                  account.email, ', '.join(subreddit_posts.keys()))
     context = {
-        'subreddits': subreddit_posts,
+        'subreddits': subreddit_posts.items(),
         'email_management_url': url_for('manage', uuid=account.uuid),
         'unsubscribe_url': url_for('unsubscribe', uuid=account.uuid),
     }
