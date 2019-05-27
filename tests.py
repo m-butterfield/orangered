@@ -109,6 +109,51 @@ class FakeSubredditPost:
         self.id = f'{subreddit_name}_{post_number}'
         self.url = 'http://example.com'
         self.title = f'{subreddit_name} post {post_number}'
+        self.num_comments = 23
+        self.permalink = f'/r/{subreddit_name}/comments/abc123/cool_post/'
+        self.is_self = False
+
+    @property
+    def preview(self):
+        return {
+            'enabled': True,
+            'images': [{
+                'id': '1234567890abcdefGHIJKLMNOPQRSTUVWXYz0123456',
+                'resolutions': [
+                    {
+                        'height': 66,
+                        'url': 'https://preview.redd.it/1.jpg',
+                        'width': 108,
+                    }, {
+                        'height': 133,
+                        'url': 'https://preview.redd.it/2.jpg',
+                        'width': 216,
+                    }, {
+                        'height': 197,
+                        'url': 'https://preview.redd.it/3.jpg',
+                        'width': 320,
+                    }, {
+                        'height': 395,
+                        'url': 'https://preview.redd.it/4.jpg',
+                        'width': 640,
+                    }, {
+                        'height': 592,
+                        'url': 'https://preview.redd.it/5.jpg',
+                        'width': 960,
+                    }, {
+                        'height': 666,
+                        'url': 'https://preview.redd.it/6.jpg',
+                        'width': 1080,
+                    },
+                ],
+                'source': {
+                    'height': 3514,
+                    'url': 'https://preview.redd.it/zbdl7wi19h031.jpg?auto=webp&s=3d18c3607a9463c787b8f32fc122c529bc73a716',
+                    'width': 5691,
+                },
+                'variants': {},
+            }],
+        }
 
 
 class FakeSubreddit:
@@ -175,6 +220,7 @@ class EmailTests(BaseTestCase):
                 title='aviation post 1',
                 url='http://example.com',
                 scraped_at=datetime.utcnow(),
+                num_comments=23,
             ),
             SubredditPost(
                 id=str(uuid.uuid4()),
@@ -182,6 +228,7 @@ class EmailTests(BaseTestCase):
                 title='aviation post 2',
                 url='http://example.com',
                 scraped_at=datetime.utcnow(),
+                num_comments=23,
             ),
             SubredditPost(
                 id=str(uuid.uuid4()),
@@ -190,6 +237,7 @@ class EmailTests(BaseTestCase):
                 url='http://example.com',
                 # this post from a previous day shouldn't show up in the result
                 scraped_at=datetime.utcnow() - timedelta(days=1),
+                num_comments=23,
             ),
             # spacex post from previous day that shows up again
             SubredditPost(
@@ -198,6 +246,7 @@ class EmailTests(BaseTestCase):
                 title='aviation post 3',
                 url='http://example.com',
                 scraped_at=datetime.utcnow() - timedelta(days=1),
+                num_comments=23,
             ),
         ])
         db.session.commit()
@@ -222,7 +271,7 @@ class EmailTests(BaseTestCase):
                 ('aviation', subreddit_posts['aviation']),
                 ('running', subreddit_posts['running']),
                 ('spacex', subreddit_posts['spacex']),
-            ]),
+            ]).items(),
         )
         fake_send_email.assert_called_once_with(
             'bob@aol.com', mock.ANY, mock.ANY)
