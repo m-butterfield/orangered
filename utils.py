@@ -136,20 +136,37 @@ def _existing_scraped_posts(subreddit, now):
 
 
 def _scrape_new_posts(reddit, subreddit):
-    posts = [
-        SubredditPost(
-            id=result.id,
-            url=result.url,
-            title=result.title,
-            subreddit=subreddit,
-        )
-        for result in reddit.subreddit(subreddit.name).top('day', limit=10)
-        if not SubredditPost.query.get(result.id)
-    ]
+    posts = []
+    for post in reddit.subreddit(subreddit.name).top('day', limit=10):
+        if not SubredditPost.query.get(post.id):
+            logging.info(f'Scraping post: {post.id}')
+            posts.append(SubredditPost(
+                id=post.id,
+                url=post.url,
+                title=post.title,
+                subreddit=subreddit,
+                preview_image_url=_get_post_preview(post),
+                permalink_url=_get_permalink_url(post),
+                num_comments=post.num_comments,
+            ))
     db.session.add_all(posts)
     subreddit.last_scraped = datetime.utcnow()
     db.session.commit()
     return posts
+
+
+def _get_post_preview(post):
+    if not hasattr(post, 'preview') or not post.preview:
+        return
+    for image in reversed(post.preview['images'][0]['resolutions']):
+        if image['width'] < 800:
+            return image['url']
+
+
+def _get_permalink_url(post):
+    if post.is_self:
+        return
+    return f'https://www.reddit.com{post.permalink}'
 
 
 def _subreddits_to_scrape():

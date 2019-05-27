@@ -98,6 +98,9 @@ class SubredditPost(db.Model):
 
     scraped_at = db.Column(db.DateTime,
                            default=datetime.utcnow, nullable=False)
+    preview_image_url = db.Column(db.String(2000))
+    permalink_url = db.Column(db.String(2000))
+    num_comments = db.Column(db.Integer, nullable=False)
 
     def __repr__(self):
         return f'<SubredditPost {self.id}>'
