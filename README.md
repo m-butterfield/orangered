@@ -78,7 +78,7 @@ Add secrets (fill in values before running commands):
         --from-literal=reddit-username= \
         --from-literal=reddit-password=
 
-    kubectl create secret generic recaptcha
+    kubectl create secret generic recaptcha \
         --from-literal=recaptcha-site-key= \
         --from-literal=recaptcha-secret-key=
 
