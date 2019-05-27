@@ -49,7 +49,7 @@ def reddit_client():
                        client_secret=REDDIT_CLIENT_SECRET,
                        username=REDDIT_USERNAME,
                        password=REDDIT_PASSWORD,
-                       user_agent='orangered 1.0')
+                       user_agent='Orangered 1.0 (by /u/deneb150)')
 
 
 def send_emails():
