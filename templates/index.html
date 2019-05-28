@@ -77,14 +77,19 @@
 {% endblock %}
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/signup.js', cache=cache_timestamp) }}"></script>
+{% if not config['DEBUG'] %}
 <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}"></script>
 <script>
-{% if not config['DEBUG'] %}
 grecaptcha.ready(function() {
   grecaptcha.execute('{{ recaptcha_site_key }}', {action: 'homepage'}).then(function(token) {
-    $('#signupForm').prepend('<input type="hidden" name="captcha_token" value="' + token +  '">');
+    $('#signupForm').prepend('<input type="hidden" id="captcha_input" name="captcha_token" value="' + token +  '">');
   });
+  window.setInterval(function() {
+    grecaptcha.execute('{{ recaptcha_site_key }}', {action: 'homepage'}).then(function(token) {
+      $('#captcha_input').val(token);
+    });
+  }, 90000);
 });
-{% endif %}
 </script>
+{% endif %}
 {% endblock %}
