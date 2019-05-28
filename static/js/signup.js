@@ -52,9 +52,11 @@ $(function() {
             $this.prop("disabled", false); // Re-enable submit button when AJAX call is complete
           }, 1000);
           // reset captcha
-          grecaptcha.execute('{{ recaptcha_site_key }}', {action: 'homepage'}).then(function(token) {
-            $('#captcha_input').val(token);
-          });
+          if (window.recaptchaSiteKey) {
+              grecaptcha.execute(recaptchaSiteKey, {action: 'homepage'}).then(function(token) {
+                $('#captcha_input').val(token);
+              });
+          }
         }
       });
     },
