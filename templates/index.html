@@ -55,6 +55,7 @@
     <div class="row">
       <div class="col-lg-8 mx-auto">
         <form name="sentMessage" id="signupForm" novalidate="novalidate">
+          <input type="hidden" id="captcha_input" name="captcha_token" value="">
           {% include 'subreddit_select.html' %}
           <div class="control-group">
             <div class="form-group floating-label-form-group controls mb-0 pb-2">
@@ -76,5 +77,25 @@
 
 {% endblock %}
 {% block extra_js %}
+{% if not config['DEBUG'] %}
+<script>
+window.recaptchaSiteKey = '{{ recaptcha_site_key }}';
+</script>
+{% endif %}
 <script src="{{ url_for('static', filename='js/signup.js', cache=cache_timestamp) }}"></script>
+{% if not config['DEBUG'] %}
+<script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}"></script>
+<script>
+grecaptcha.ready(function() {
+  grecaptcha.execute(recaptchaSiteKey, {action: 'homepage'}).then(function(token) {
+    $('#captcha_input').val(token);
+  });
+  window.setInterval(function() {
+    grecaptcha.execute(recaptchaSiteKey, {action: 'homepage'}).then(function(token) {
+      $('#captcha_input').val(token);
+    });
+  }, 90000);
+});
+</script>
+{% endif %}
 {% endblock %}

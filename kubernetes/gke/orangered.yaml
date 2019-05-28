@@ -50,6 +50,16 @@ spec:
                 secretKeyRef:
                   name: psql-creds
                   key: pgpassword
+            - name: RECAPTCHA_SITE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: recaptcha
+                  key: recaptcha-site-key
+            - name: RECAPTCHA_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: recaptcha
+                  key: recaptcha-secret-key
             - name: REDDIT_CLIENT_ID
               valueFrom:
                 secretKeyRef:
