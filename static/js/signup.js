@@ -10,6 +10,7 @@ $(function() {
       // get values from FORM
       var email = $("input#email").val();
       var subreddits = $("select#subreddits").val();
+      var captcha_token = $("input#captcha_input").val();
       if (subreddits.length > 10) {
         alert('Too many subreddits selected, maximum is 10.');
         return;
@@ -21,7 +22,8 @@ $(function() {
         type: "POST",
         data: {
           email: email,
-          subreddits: subreddits
+          subreddits: subreddits,
+          captcha_token: captcha_token
         },
         cache: false,
         success: function() {
@@ -33,7 +35,7 @@ $(function() {
             .append("<strong>Success! You should receive your first email within the next day or so.<br>To ensure you receive your email, please add no-reply@orangered.io to your contacts.</strong>");
           $('#success > .alert-success')
             .append('</div>');
-          //clear all fields
+          // clear all fields
           $('#signupForm').trigger("reset");
           $('select').val('').trigger('chosen:updated');
         },
@@ -49,6 +51,10 @@ $(function() {
           setTimeout(function() {
             $this.prop("disabled", false); // Re-enable submit button when AJAX call is complete
           }, 1000);
+          // reset captcha
+          grecaptcha.execute('{{ recaptcha_site_key }}', {action: 'homepage'}).then(function(token) {
+            $('#captcha_input').val(token);
+          });
         }
       });
     },

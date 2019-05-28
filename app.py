@@ -6,10 +6,12 @@ import time
 import uuid
 
 from flask import Flask
-from flask import render_template, redirect, request, url_for
+from flask import abort, render_template, redirect, request, Response, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 import google.cloud.logging
+
+import requests
 
 from subreddits import SUBREDDIT_INFO
 
@@ -178,6 +180,7 @@ def unsubscribe(uuid):
 
 @app.route("/signup", methods=['POST'])
 def signup():
+    _check_captcha(request.form['captcha_token'])
     email = request.form['email']
     if Account.query.get(email.lower()) is not None:
         return 'account already exists', 400
@@ -191,3 +194,24 @@ def signup():
     ))
     db.session.commit()
     return 'success', 201
+
+
+def _check_captcha(token):
+    if app.config['DEBUG']:
+        return
+    logging.info(f'Checking captcha token: {token}')
+    resp = requests.post(
+        'https://www.google.com/recaptcha/api/siteverify',
+        data={
+            'secret': RECAPTCHA_SECRET,
+            'response': token,
+        })
+    try:
+        resp.raise_for_status()
+        data = resp.json()
+        logging.info(f'Response: {data}')
+        if not data['success']:
+            abort(Response('Could not verify captcha', status=400))
+    except Exception:
+        logging.exception('Error verifying captcha')
+        abort(Response('Could not verify captcha', status=400))
