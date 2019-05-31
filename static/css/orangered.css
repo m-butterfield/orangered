@@ -388,3 +388,7 @@ a:focus, a:hover, a:active {
 .chosen-results {
   max-height: 22rem !important;
 }
+
+.grecaptcha-badge {
+  visibility: hidden;
+}
