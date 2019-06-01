@@ -78,6 +78,12 @@ class Account(db.Model):
                                  backref='accounts',
                                  order_by='Subreddit.name',
                                  secondary=account_subreddit)
+    email_interval = db.Column(
+        db.Enum('daily', 'weekly', name='email_interval'),
+        nullable=False)
+    signup_time = db.Column(db.DateTime,
+                            server_default=db.func.now(),
+                            nullable=False)
 
     def __repr__(self):
         return f'<Account {self.email}>'
@@ -103,7 +109,8 @@ class SubredditPost(db.Model):
     url = db.Column(db.String(2000), nullable=False)
 
     scraped_at = db.Column(db.DateTime,
-                           default=datetime.utcnow, nullable=False)
+                           server_default=db.func.now(),
+                           nullable=False)
     preview_image_url = db.Column(db.String(2000))
     permalink_url = db.Column(db.String(2000))
     num_comments = db.Column(db.Integer, nullable=False)
@@ -180,7 +187,8 @@ def unsubscribe(uuid):
 
 @app.route("/signup", methods=['POST'])
 def signup():
-    _check_captcha(request.form['captcha_token'])
+    if not app.config['DEBUG']:
+        _check_captcha(request.form['captcha_token'])
     email = request.form['email']
     if Account.query.get(email.lower()) is not None:
         return 'account already exists', 400
@@ -197,8 +205,6 @@ def signup():
 
 
 def _check_captcha(token):
-    if app.config['DEBUG']:
-        return
     logging.info(f'Checking captcha token: {token}')
     resp = requests.post(
         'https://www.google.com/recaptcha/api/siteverify',
