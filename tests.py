@@ -24,7 +24,7 @@ class BaseAppTestCase(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.client = app.test_client()
-        self.account = Account(email='bob@aol.com')
+        self.account = Account(email='bob@aol.com', email_interval='daily')
         db.session.add(self.account)
         db.session.commit()
 
@@ -36,6 +36,7 @@ class SignupTests(BaseAppTestCase):
         resp = self.client.post('/signup', data={
             'email': 'Bob2@aol.com',
             'subreddits[]': expected_subreddits,
+            'email_interval': 'weekly',
         })
         self.assertEqual(resp.status_code, 201)
         account = Account.query.get('bob2@aol.com')
@@ -43,6 +44,7 @@ class SignupTests(BaseAppTestCase):
         self.assertTrue(account.active)
         self.assertEqual(
             set(expected_subreddits), {s.name for s in account.subreddits})
+        self.assertEqual(account.email_interval, 'weekly')
 
     def test_account_already_exists(self):
         resp = self.client.post('/signup', data={
@@ -188,6 +190,7 @@ class EmailTests(BaseTestCase):
             email='bob@aol.com',
             subreddits=Subreddit.query.filter(Subreddit.name.in_(
                 ['aviation', 'spacex', 'running'])).all(),
+            email_interval='daily',
         ))
         # another that is deactivated
         db.session.add(Account(
@@ -195,6 +198,7 @@ class EmailTests(BaseTestCase):
             subreddits=Subreddit.query.filter(Subreddit.name.in_(
                 ['programming', 'askreddit'])).all(),
             active=False,
+            email_interval='daily',
         ))
         # another that already received their email for today
         db.session.add(Account(
@@ -202,6 +206,7 @@ class EmailTests(BaseTestCase):
             subreddits=Subreddit.query.filter(Subreddit.name.in_(
                 ['analog', 'finance'])).all(),
             last_email=datetime.utcnow() - timedelta(minutes=10),
+            email_interval='daily',
         ))
 
         # spacex will have last_scraped = None so scraping should happen

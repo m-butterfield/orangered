@@ -199,6 +199,7 @@ def signup():
     db.session.add(Account(
         email=email.lower(),
         subreddits=subreddits,
+        email_interval=request.form['email_interval'],
     ))
     db.session.commit()
     return 'success', 201
