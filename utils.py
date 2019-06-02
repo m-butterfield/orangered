@@ -92,7 +92,8 @@ def _send_email(email, html, text):
         data={
             "from": "Orangered <no-reply@orangered.io>",
             "to": [email],
-            "subject": "Orangered - Your daily Reddit summary",
+            "subject": ("Orangered - "
+                        "The best content from your favorite subreddits"),
             "html": html,
             "text": text,
         })

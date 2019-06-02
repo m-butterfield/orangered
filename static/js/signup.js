@@ -11,6 +11,7 @@ $(function() {
       var email = $("input#email").val();
       var subreddits = $("select#subreddits").val();
       var captcha_token = $("input#captcha_input").val();
+      var email_interval = $('input[name=email_interval]:checked').val();
       if (subreddits.length > 10) {
         alert('Too many subreddits selected, maximum is 10.');
         return;
@@ -23,7 +24,8 @@ $(function() {
         data: {
           email: email,
           subreddits: subreddits,
-          captcha_token: captcha_token
+          captcha_token: captcha_token,
+          email_interval: email_interval
         },
         cache: false,
         success: function() {
