@@ -95,14 +95,17 @@ class ManageTests(BaseAppTestCase):
             'subreddits[]': ['aviation'] * 11})
         self.assertEqual(resp.status_code, 400)
 
-    def test_update_subreddits(self):
+    def test_update_account(self):
         expected_subreddits = ['aviation', 'spacex', 'analog']
         resp = self.client.post(f'/account/{self.account.uuid}/manage', data={
-            'subreddits[]': expected_subreddits})
+            'subreddits[]': expected_subreddits,
+            'email_interval': 'weekly',
+        })
         self.assertEqual(resp.status_code, 200)
         account = Account.query.get(self.account.email)
         self.assertEqual(
             set(expected_subreddits), {s.name for s in account.subreddits})
+        self.assertEqual(account.email_interval, 'weekly')
 
 
 class FakeSubredditPost:

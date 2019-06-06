@@ -165,6 +165,7 @@ def manage(uuid):
             return 'too many subreddits', 400
         account.subreddits = Subreddit.query.filter(
             Subreddit.name.in_(subreddits)).all()
+        account.email_interval = request.form['email_interval']
         db.session.commit()
     return render_template(
         'manage.html',
