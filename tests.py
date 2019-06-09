@@ -5,6 +5,8 @@ import unittest
 from unittest import mock
 import uuid
 
+from freezegun import freeze_time
+
 from app import app, db, Account, Subreddit, SubredditPost
 from utils import insert_subreddits
 from utils import _scrape_posts, _send_emails
@@ -187,6 +189,7 @@ class EmailTests(BaseTestCase):
     @mock.patch('utils.reddit_client', return_value=FakeReddit())
     @mock.patch('utils.Template')
     @mock.patch('utils._send_email')
+    @freeze_time("2019-06-08 12:00:00")
     def test_scrape_and_send_emails(self, fake_send_email, fake_template, _):
         # user account with some subscriptions
         db.session.add(Account(
@@ -195,7 +198,7 @@ class EmailTests(BaseTestCase):
                 ['aviation', 'spacex', 'running'])).all(),
             email_interval='daily',
         ))
-        # another that is deactivated
+        # deactivated account
         db.session.add(Account(
             email='bob2@aol.com',
             subreddits=Subreddit.query.filter(Subreddit.name.in_(
@@ -203,13 +206,20 @@ class EmailTests(BaseTestCase):
             active=False,
             email_interval='daily',
         ))
-        # another that already received their email for today
+        # account that already received their email for today
         db.session.add(Account(
             email='bob3@aol.com',
             subreddits=Subreddit.query.filter(Subreddit.name.in_(
                 ['analog', 'finance'])).all(),
             last_email=datetime.utcnow() - timedelta(minutes=10),
             email_interval='daily',
+        ))
+        # account expecting only weekly emails
+        db.session.add(Account(
+            email='bob4@aol.com',
+            subreddits=Subreddit.query.filter(Subreddit.name.in_(
+                ['aviation', 'spacex', 'running'])).all(),
+            email_interval='weekly',
         ))
 
         # spacex will have last_scraped = None so scraping should happen
@@ -259,7 +269,7 @@ class EmailTests(BaseTestCase):
         ])
         db.session.commit()
 
-        subreddit_posts = _scrape_posts()
+        subreddit_posts = _scrape_posts(now, 'daily')
         self.assertSetEqual(
             {'aviation', 'spacex', 'running'}, set(subreddit_posts.keys()))
         self.assertEqual(len(subreddit_posts['aviation']), 2)
@@ -270,7 +280,7 @@ class EmailTests(BaseTestCase):
             Subreddit.query.get('running').last_scraped, now)
         self.assertEqual(Subreddit.query.get('aviation').last_scraped, now)
 
-        _send_emails(subreddit_posts)
+        _send_emails(subreddit_posts, 'daily')
         db.session.add_all(chain.from_iterable(subreddit_posts.values()))
         fake_template().render.assert_called_with(
             email_management_url=mock.ANY,
