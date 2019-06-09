@@ -34,7 +34,7 @@ $(function() {
           $('#success > .alert-success').html("<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;")
             .append("</button>");
           $('#success > .alert-success')
-            .append("<strong>Success! You should receive your first email within the next day or so.<br>To ensure you receive your email, please add no-reply@orangered.io to your contacts.</strong>");
+            .append("<strong>Success! You should receive your first email soon.<br>To ensure you receive your email, please add no-reply@orangered.io to your contacts.</strong>");
           $('#success > .alert-success')
             .append('</div>');
           // clear all fields
