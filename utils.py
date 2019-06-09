@@ -62,20 +62,18 @@ def send_emails():
 
 def _send_emails(subreddit_posts, interval):
     with app.app_context():
-        for account in Account.query.filter(
-            Account.email_interval == interval,
-            *_build_account_base_filters(),
-        ):
+        for account in Account.query.filter(*_build_account_filters(interval)):
             account_subreddit_posts = OrderedDict([
                 (s.name, subreddit_posts[s.name]) for s in account.subreddits])
             _send_email_for_account(account, account_subreddit_posts)
 
 
-def _build_account_base_filters():
+def _build_account_filters(interval):
     return (
         Account.active.is_(True),
         (Account.last_email < datetime.utcnow() - timedelta(hours=23)) |
         Account.last_email.is_(None),
+        Account.email_interval == interval,
     )
 
 
@@ -182,4 +180,4 @@ def _get_permalink_url(post):
 
 def _subreddits_to_scrape(interval):
     return Subreddit.query.join(Subreddit.accounts).filter(
-        Account.email_interval == interval, *_build_account_base_filters())
+        *_build_account_filters(interval))
