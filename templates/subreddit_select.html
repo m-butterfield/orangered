@@ -6,10 +6,16 @@
             multiple="multiple"
             required="required"
             data-validation-required-message="Please choose at least one subreddit.">
+      {% set displayed_subreddits = [] %}
       {% for category, subreddits in subreddit_info %}
         <optgroup label="{{ category }}">
         {% for subreddit in subreddits%}
-          <option{% if subreddit in user_subreddits %} selected="selected"{% endif %}>{{ subreddit }}</option>
+          {% if subreddit in user_subreddits and subreddit not in displayed_subreddits %}
+          <option selected="selected">{{ subreddit }}</option>
+          {{  displayed_subreddits.append(subreddit) }}
+          {% else %}
+          <option>{{ subreddit }}</option>
+          {% endif %}
         {% endfor %}
         </optgroup>
       {% endfor %}
