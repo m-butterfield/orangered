@@ -74,16 +74,13 @@ class Account(db.Model):
     )
     active = db.Column(db.Boolean, default=True, nullable=False)
     last_email = db.Column(db.DateTime)
+    signup_time = db.Column(db.DateTime,
+                            server_default=db.func.now(),
+                            nullable=False)
     subreddits = db.relationship('Subreddit',
                                  backref='accounts',
                                  order_by='Subreddit.name',
                                  secondary=account_subreddit)
-    email_interval = db.Column(
-        db.Enum('daily', 'weekly', name='email_interval'),
-        nullable=False)
-    signup_time = db.Column(db.DateTime,
-                            server_default=db.func.now(),
-                            nullable=False)
 
     def __repr__(self):
         return f'<Account {self.email}>'
@@ -165,7 +162,7 @@ def manage(uuid):
             return 'too many subreddits', 400
         account.subreddits = Subreddit.query.filter(
             Subreddit.name.in_(subreddits)).all()
-        account.email_interval = request.form['email_interval']
+        email_interval = request.form['email_interval']
         db.session.commit()
     return render_template(
         'manage.html',
@@ -200,8 +197,8 @@ def signup():
     db.session.add(Account(
         email=email.lower(),
         subreddits=subreddits,
-        email_interval=request.form['email_interval'],
     ))
+    email_interval = request.form['email_interval']
     db.session.commit()
     return 'success', 201
 

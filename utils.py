@@ -53,27 +53,22 @@ def reddit_client():
 
 
 def send_emails():
-    now = datetime.utcnow()
-    daily_subreddit_posts = _scrape_posts(now, 'daily')
-    # if now.weekday() == 6:
-    #     pass
-    _send_emails(daily_subreddit_posts, 'daily')
+    _send_emails(_scrape_posts())
 
 
-def _send_emails(subreddit_posts, interval):
+def _send_emails(subreddit_posts):
     with app.app_context():
-        for account in Account.query.filter(*_build_account_filters(interval)):
+        for account in Account.query.filter(*_account_filters()):
             account_subreddit_posts = OrderedDict([
                 (s.name, subreddit_posts[s.name]) for s in account.subreddits])
             _send_email_for_account(account, account_subreddit_posts)
 
 
-def _build_account_filters(interval):
+def _account_filters():
     return (
         Account.active.is_(True),
         (Account.last_email < datetime.utcnow() - timedelta(hours=23)) |
         Account.last_email.is_(None),
-        Account.email_interval == interval,
     )
 
 
@@ -118,11 +113,12 @@ def _save_test_emails(html, text):
         return
 
 
-def _scrape_posts(now, interval):
+def _scrape_posts():
     logging.info('Scraping subreddit posts')
     reddit = reddit_client()
     subreddit_posts = {}
-    for subreddit in _subreddits_to_scrape(interval):
+    now = datetime.utcnow()
+    for subreddit in _subreddits_to_scrape():
         if subreddit.last_scraped and (
                 subreddit.last_scraped > now - timedelta(hours=23)):
             logging.info('Subreddit: %s recently scraped, loading existing '
@@ -178,6 +174,5 @@ def _get_permalink_url(post):
     return f'https://www.reddit.com{post.permalink}'
 
 
-def _subreddits_to_scrape(interval):
-    return Subreddit.query.join(Subreddit.accounts).filter(
-        *_build_account_filters(interval))
+def _subreddits_to_scrape():
+    return Subreddit.query.join(Subreddit.accounts).filter(*_account_filters())

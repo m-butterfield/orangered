@@ -26,7 +26,7 @@ class BaseAppTestCase(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.client = app.test_client()
-        self.account = Account(email='bob@aol.com', email_interval='daily')
+        self.account = Account(email='bob@aol.com')
         db.session.add(self.account)
         db.session.commit()
 
@@ -46,7 +46,7 @@ class SignupTests(BaseAppTestCase):
         self.assertTrue(account.active)
         self.assertEqual(
             set(expected_subreddits), {s.name for s in account.subreddits})
-        self.assertEqual(account.email_interval, 'weekly')
+        # check email event here
 
     def test_account_already_exists(self):
         resp = self.client.post('/signup', data={
@@ -107,7 +107,7 @@ class ManageTests(BaseAppTestCase):
         account = Account.query.get(self.account.email)
         self.assertEqual(
             set(expected_subreddits), {s.name for s in account.subreddits})
-        self.assertEqual(account.email_interval, 'weekly')
+        # check email event here
 
 
 class FakeSubredditPost:
@@ -196,7 +196,6 @@ class EmailTests(BaseTestCase):
             email='bob@aol.com',
             subreddits=Subreddit.query.filter(Subreddit.name.in_(
                 ['aviation', 'spacex', 'running'])).all(),
-            email_interval='daily',
         ))
         # deactivated account
         db.session.add(Account(
@@ -204,7 +203,6 @@ class EmailTests(BaseTestCase):
             subreddits=Subreddit.query.filter(Subreddit.name.in_(
                 ['programming', 'askreddit'])).all(),
             active=False,
-            email_interval='daily',
         ))
         # account that already received their email for today
         db.session.add(Account(
@@ -212,15 +210,13 @@ class EmailTests(BaseTestCase):
             subreddits=Subreddit.query.filter(Subreddit.name.in_(
                 ['analog', 'finance'])).all(),
             last_email=datetime.utcnow() - timedelta(minutes=10),
-            email_interval='daily',
         ))
         # account expecting only weekly emails
-        db.session.add(Account(
-            email='bob4@aol.com',
-            subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                ['aviation', 'spacex', 'running'])).all(),
-            email_interval='weekly',
-        ))
+        # db.session.add(Account(
+        #     email='bob4@aol.com',
+        #     subreddits=Subreddit.query.filter(Subreddit.name.in_(
+        #         ['aviation', 'spacex', 'running'])).all(),
+        # ))
 
         # spacex will have last_scraped = None so scraping should happen
         self.assertIsNone(Subreddit.query.get('spacex').last_scraped)
@@ -269,7 +265,7 @@ class EmailTests(BaseTestCase):
         ])
         db.session.commit()
 
-        subreddit_posts = _scrape_posts(now, 'daily')
+        subreddit_posts = _scrape_posts()
         self.assertSetEqual(
             {'aviation', 'spacex', 'running'}, set(subreddit_posts.keys()))
         self.assertEqual(len(subreddit_posts['aviation']), 2)
@@ -280,7 +276,7 @@ class EmailTests(BaseTestCase):
             Subreddit.query.get('running').last_scraped, now)
         self.assertEqual(Subreddit.query.get('aviation').last_scraped, now)
 
-        _send_emails(subreddit_posts, 'daily')
+        _send_emails(subreddit_posts)
         db.session.add_all(chain.from_iterable(subreddit_posts.values()))
         fake_template().render.assert_called_with(
             email_management_url=mock.ANY,
