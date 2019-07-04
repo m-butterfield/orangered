@@ -208,7 +208,7 @@ SUBREDDIT_INFO = [
     ('Online Relationships', ['dirtyr4r', 'longdistance', 'okcupid', 'r4r', 'tinder']),
     ('Sex', ['deadbedrooms', 'nofap', 'polyamory', 'seduction', 'sex']),
     ('Self-Improvement', ['decidingtobebetter', 'getdisciplined', 'getmotivated', 'getstudying', 'happy', 'happycrowds', 'humansbeingbros', 'iwantout', 'mademesmile', 'productivity', 'quotesporn', 'selfimprovement', 'sportsarefun']),
-    ('Technology', ['aboringdystopia', 'buildapc', 'cableporn', 'compsci', 'crackwatch', 'design', 'engineering', 'engineeringporn', 'futurology', 'gamedev', 'hacking', 'imaginarytechnology', 'infographics', 'internetisbeautiful', 'jailbreak', 'netsec', 'networking', 'onions', 'opensource', 'pcmasterrace', 'php', 'piracy', 'privacy', 'simulated', 'talesfromtechsupport', 'tech', 'technology', 'torrents', 'unixporn', 'virtualreality']),
+    ('Technology', ['aboringdystopia', 'buildapc', 'cableporn', 'compsci', 'crackwatch', 'design', 'engineering', 'engineeringporn', 'futurology', 'gamedev', 'hacking', 'imaginarytechnology', 'infographics', 'internetisbeautiful', 'jailbreak', 'netsec', 'networking', 'onions', 'opensource', 'pcmasterrace', 'php', 'piracy', 'privacy', 'simulated', 'talesfromtechsupport', 'tech', 'torrents', 'unixporn', 'virtualreality']),
     ('3D Printing', ['3dprinting', 'functionalprint']),
     ('Business Tech', ['amd', 'firefox', 'nasa', 'nintendo', 'nvidia', 'photoshop', 'spacex']),
     ('Android products', ['android', 'androidapps', 'androiddev', 'androidgaming', 'androidthemes', 'oneplus']),
