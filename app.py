@@ -88,7 +88,8 @@ class Account(db.Model):
 
 class Subreddit(db.Model):
     name = db.Column(db.String(21), primary_key=True)
-    last_scraped = db.Column(db.DateTime)
+    last_scraped_daily = db.Column(db.DateTime)
+    last_scraped_weekly = db.Column(db.DateTime)
 
     def __repr__(self):
         return f'<Subreddit {self.name}>'
@@ -111,6 +112,7 @@ class SubredditPost(db.Model):
     preview_image_url = db.Column(db.String(2000))
     permalink_url = db.Column(db.String(2000))
     num_comments = db.Column(db.Integer, nullable=False)
+    weekly_top = db.Column(db.Boolean)
 
     def __repr__(self):
         return f'<SubredditPost {self.id}>'

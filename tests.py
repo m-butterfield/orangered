@@ -223,6 +223,10 @@ class EmailTests(BaseTestCase):
             email='bob@aol.com',
             subreddits=Subreddit.query.filter(Subreddit.name.in_(
                 ['aviation', 'spacex', 'running'])).all(),
+            email_events=[EmailEvent(
+                account_email='bob@aol.com',
+                time_of_day=time(12),
+            )],
         ))
         # deactivated account
         db.session.add(Account(
@@ -230,6 +234,10 @@ class EmailTests(BaseTestCase):
             subreddits=Subreddit.query.filter(Subreddit.name.in_(
                 ['programming', 'askreddit'])).all(),
             active=False,
+            email_events=[EmailEvent(
+                account_email='bob@aol.com',
+                time_of_day=time(12),
+            )],
         ))
         # account that already received their email for today
         db.session.add(Account(
@@ -237,22 +245,31 @@ class EmailTests(BaseTestCase):
             subreddits=Subreddit.query.filter(Subreddit.name.in_(
                 ['analog', 'finance'])).all(),
             last_email=datetime.utcnow() - timedelta(minutes=10),
+            email_events=[EmailEvent(
+                account_email='bob@aol.com',
+                time_of_day=time(12),
+            )],
         ))
         # account expecting only weekly emails
-        # db.session.add(Account(
-        #     email='bob4@aol.com',
-        #     subreddits=Subreddit.query.filter(Subreddit.name.in_(
-        #         ['aviation', 'spacex', 'running'])).all(),
-        # ))
+        db.session.add(Account(
+            email='bob4@aol.com',
+            subreddits=Subreddit.query.filter(Subreddit.name.in_(
+                ['aviation', 'spacex', 'running'])).all(),
+            email_events=[EmailEvent(
+                account_email='bob@aol.com',
+                time_of_day=time(12),
+                day_of_week=6,
+            )],
+        ))
 
         # spacex will have last_scraped = None so scraping should happen
-        self.assertIsNone(Subreddit.query.get('spacex').last_scraped)
+        self.assertIsNone(Subreddit.query.get('spacex').last_scraped_daily)
         # set last scraped past one day for running so scraping should happen
-        Subreddit.query.get('running').last_scraped = (
+        Subreddit.query.get('running').last_scraped_daily = (
                 datetime.utcnow() - timedelta(days=2))
         # aviation has already been scraped so add some existing scraped posts
         now = datetime.utcnow()
-        Subreddit.query.get('aviation').last_scraped = now
+        Subreddit.query.get('aviation').last_scraped_daily = now
         # add existing posts for aviation
         db.session.add_all([
             SubredditPost(
@@ -298,10 +315,11 @@ class EmailTests(BaseTestCase):
         self.assertEqual(len(subreddit_posts['aviation']), 2)
         self.assertEqual(len(subreddit_posts['spacex']), 4)
         self.assertEqual(len(subreddit_posts['running']), 5)
-        self.assertIsNotNone(Subreddit.query.get('spacex').last_scraped)
+        self.assertIsNotNone(Subreddit.query.get('spacex').last_scraped_daily)
         self.assertGreaterEqual(
-            Subreddit.query.get('running').last_scraped, now)
-        self.assertEqual(Subreddit.query.get('aviation').last_scraped, now)
+            Subreddit.query.get('running').last_scraped_daily, now)
+        self.assertEqual(
+            Subreddit.query.get('aviation').last_scraped_daily, now)
 
         _send_emails(subreddit_posts)
         db.session.add_all(chain.from_iterable(subreddit_posts.values()))
