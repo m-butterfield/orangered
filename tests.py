@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from itertools import chain
 import unittest
 from unittest import mock
@@ -7,7 +7,7 @@ import uuid
 
 from freezegun import freeze_time
 
-from app import app, db, Account, Subreddit, SubredditPost
+from app import app, db, Account, EmailEvent, Subreddit, SubredditPost
 from utils import insert_subreddits
 from utils import _scrape_posts, _send_emails
 
@@ -26,7 +26,13 @@ class BaseAppTestCase(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.client = app.test_client()
-        self.account = Account(email='bob@aol.com')
+        self.account = Account(
+            email='bob@aol.com',
+            email_events=[EmailEvent(
+                account_email='bob@aol.com',
+                time_of_day=time(12),
+            )],
+        )
         db.session.add(self.account)
         db.session.commit()
 
@@ -46,7 +52,17 @@ class SignupTests(BaseAppTestCase):
         self.assertTrue(account.active)
         self.assertEqual(
             set(expected_subreddits), {s.name for s in account.subreddits})
-        # check email event here
+        self.assertEqual(len(account.email_events), 1)
+        self.assertEqual(account.email_events[0].time_of_day, time(12))
+        self.assertEqual(account.email_events[0].day_of_week, 6)
+
+        self.client.post('/signup', data={
+            'email': 'Bob3@aol.com',
+            'subreddits[]': expected_subreddits,
+            'email_interval': 'daily',
+        })
+        account = Account.query.get('bob3@aol.com')
+        self.assertIsNone(account.email_events[0].day_of_week)
 
     def test_account_already_exists(self):
         resp = self.client.post('/signup', data={
@@ -107,7 +123,18 @@ class ManageTests(BaseAppTestCase):
         account = Account.query.get(self.account.email)
         self.assertEqual(
             set(expected_subreddits), {s.name for s in account.subreddits})
-        # check email event here
+        self.assertEqual(len(account.email_events), 1)
+        self.assertEqual(account.email_events[0].time_of_day, time(12))
+        self.assertEqual(account.email_events[0].day_of_week, 6)
+
+        self.client.post(f'/account/{self.account.uuid}/manage', data={
+            'subreddits[]': expected_subreddits,
+            'email_interval': 'daily',
+        })
+        account = Account.query.get(self.account.email)
+        self.assertEqual(len(account.email_events), 1)
+        self.assertEqual(account.email_events[0].time_of_day, time(12))
+        self.assertIsNone(account.email_events[0].day_of_week)
 
 
 class FakeSubredditPost:

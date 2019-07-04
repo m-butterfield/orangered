@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 import logging
 import os
 import sys
@@ -116,9 +116,21 @@ class SubredditPost(db.Model):
         return f'<SubredditPost {self.id}>'
 
 
+class EmailEvent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    account_email = db.Column(
+        db.String(320),
+        db.ForeignKey('account.email', onupdate='cascade'),
+        nullable=False,
+    )
+    account = db.relationship('Account', backref='email_events')
+    time_of_day = db.Column(db.Time, nullable=False)
+    day_of_week = db.Column(db.Integer)
+
+
 @app.context_processor
 def add_now():
-    return {'now': datetime.utcnow()}
+    return {'now': datetime.datetime.utcnow()}
 
 
 @app.before_request
@@ -162,7 +174,8 @@ def manage(uuid):
             return 'too many subreddits', 400
         account.subreddits = Subreddit.query.filter(
             Subreddit.name.in_(subreddits)).all()
-        email_interval = request.form['email_interval']
+        account.email_events[0].day_of_week = (
+            6 if request.form['email_interval'] == 'weekly' else None)
         db.session.commit()
     return render_template(
         'manage.html',
@@ -187,18 +200,23 @@ def unsubscribe(uuid):
 def signup():
     if not app.config['DEBUG']:
         _check_captcha(request.form['captcha_token'])
-    email = request.form['email']
-    if Account.query.get(email.lower()) is not None:
+    email = request.form['email'].lower()
+    if Account.query.get(email) is not None:
         return 'account already exists', 400
     subreddits = request.form.getlist('subreddits[]')
     if len(subreddits) > 10:
         return 'too many subreddits', 400
     subreddits = Subreddit.query.filter(Subreddit.name.in_(subreddits)).all()
-    db.session.add(Account(
-        email=email.lower(),
-        subreddits=subreddits,
-    ))
     email_interval = request.form['email_interval']
+    db.session.add(Account(
+        email=email,
+        subreddits=subreddits,
+        email_events=[EmailEvent(
+            account_email=email,
+            time_of_day=datetime.time(12),
+            day_of_week=6 if email_interval == 'weekly' else None,
+        )]
+    ))
     db.session.commit()
     return 'success', 201
 
