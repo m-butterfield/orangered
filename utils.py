@@ -11,7 +11,7 @@ import praw
 
 import requests
 
-from app import Account, app, db, Subreddit, SubredditPost
+from app import Account, app, db, EmailEvent, Subreddit, SubredditPost
 
 from subreddits import SUBREDDITS
 
@@ -54,18 +54,27 @@ def reddit_client():
 
 def send_emails():
     _send_emails(_scrape_posts())
+    if datetime.now().weekday() == 6:
+        _send_emails(_scrape_posts('weekly'), 'weekly')
 
 
-def _send_emails(subreddit_posts):
+def _send_emails(subreddit_posts, interval='daily'):
     with app.app_context():
-        for account in Account.query.filter(
-            Account.active.is_(True),
-            (Account.last_email < datetime.utcnow() - timedelta(hours=23)) |
-            Account.last_email.is_(None),
-        ):
+        for account in Account.query.join(Account.email_events).filter(
+                *_account_filters(6 if interval == 'weekly' else None)):
             account_subreddit_posts = OrderedDict([
                 (s.name, subreddit_posts[s.name]) for s in account.subreddits])
             _send_email_for_account(account, account_subreddit_posts)
+
+
+def _account_filters(day_of_week):
+    return (
+        Account.active.is_(True),
+        (Account.last_email < datetime.utcnow() - timedelta(hours=23)) |
+        Account.last_email.is_(None),
+        (EmailEvent.day_of_week.is_(None) if day_of_week is None else
+         EmailEvent.day_of_week == day_of_week),
+    )
 
 
 def _send_email_for_account(account, subreddit_posts):
@@ -92,7 +101,8 @@ def _send_email(email, html, text):
         data={
             "from": "Orangered <no-reply@orangered.io>",
             "to": [email],
-            "subject": "Orangered - Your daily Reddit summary",
+            "subject": ("Orangered - "
+                        "The best content from your favorite subreddits"),
             "html": html,
             "text": text,
         })
@@ -108,49 +118,107 @@ def _save_test_emails(html, text):
         return
 
 
-def _scrape_posts():
-    logging.info('Scraping subreddit posts')
+def _scrape_posts(interval='daily'):
+    logging.info(f'Scraping subreddit posts for {interval} interval')
     reddit = reddit_client()
     subreddit_posts = {}
     now = datetime.utcnow()
-    for subreddit in _subreddits_to_scrape():
-        if subreddit.last_scraped and (
-                subreddit.last_scraped > now - timedelta(hours=23)):
-            logging.info('Subreddit: %s recently scraped, loading existing '
-                         'posts', subreddit.name)
-            posts = _existing_scraped_posts(subreddit, now)
+    for subreddit in _subreddits_to_scrape(
+            6 if interval == 'weekly' else None):
+        if interval == 'daily':
+            posts = _daily_top_posts(reddit, subreddit, now)
         else:
-            logging.info('Scraping new posts for subreddit: %s',
-                         subreddit.name)
-            posts = _scrape_new_posts(reddit, subreddit)
+            posts = _weekly_top_posts(reddit, subreddit, now)
         subreddit_posts[subreddit.name] = posts
     logging.info('Done scraping subreddit posts')
     return subreddit_posts
 
 
-def _existing_scraped_posts(subreddit, now):
-    return SubredditPost.query.filter(
+def _daily_top_posts(reddit, subreddit, now):
+    if subreddit.last_scraped_daily and (
+            subreddit.last_scraped_daily > now - timedelta(hours=23)):
+        logging.info('Subreddit: %s recently scraped for daily top '
+                     'posts, loading existing posts', subreddit.name)
+        return _existing_scraped_posts(subreddit, now, 'daily')
+    else:
+        logging.info('Scraping new daily top posts for subreddit: %s',
+                     subreddit.name)
+        return _scrape_new_posts(reddit, subreddit, 'daily')
+
+
+def _weekly_top_posts(reddit, subreddit, now):
+    if subreddit.last_scraped_weekly and (
+            subreddit.last_scraped_weekly > now - timedelta(hours=23)):
+        logging.info('Subreddit: %s recently scraped for weekly top '
+                     'posts, loading existing posts', subreddit.name)
+        return _existing_scraped_posts(subreddit, now, 'weekly')
+    else:
+        logging.info('Scraping new weekly top posts for subreddit: %s',
+                     subreddit.name)
+        return _scrape_new_posts(reddit, subreddit, 'weekly')
+
+
+def _existing_scraped_posts(subreddit, now, interval):
+    query = SubredditPost.query.filter(
         SubredditPost.subreddit == subreddit,
         SubredditPost.scraped_at > now - timedelta(hours=23),
-    ).all()
+    )
+    if interval == 'daily':
+        query.filter(SubredditPost.daily_top.is_(True))
+    elif interval == 'weekly':
+        query.filter(SubredditPost.weekly_top.is_(True))
+    return query.all()
 
 
-def _scrape_new_posts(reddit, subreddit):
+def _scrape_new_posts(reddit, subreddit, interval):
     posts = []
-    for post in reddit.subreddit(subreddit.name).top('day', limit=10):
-        if not SubredditPost.query.get(post.id):
-            logging.info(f'Scraping post: {post.id}')
-            posts.append(SubredditPost(
-                id=post.id,
-                url=post.url,
-                title=post.title,
-                subreddit=subreddit,
-                preview_image_url=_get_post_preview(post),
-                permalink_url=_get_permalink_url(post),
-                num_comments=post.num_comments,
-            ))
+    for post in reddit.subreddit(subreddit.name).top(
+            'day' if interval == 'daily' else 'week', limit=10):
+        if interval == 'daily' and not SubredditPost.query.filter(
+            SubredditPost.id == post.id,
+            SubredditPost.daily_top.is_(True),
+        ).one_or_none():
+            existing_post = SubredditPost.query.get(post.id)
+            if existing_post:
+                existing_post.daily_top = True
+                posts.append(existing_post)
+            else:
+                logging.info(f'Scraping daily top post: {post.id}')
+                posts.append(SubredditPost(
+                    id=post.id,
+                    url=post.url,
+                    title=post.title,
+                    subreddit=subreddit,
+                    preview_image_url=_get_post_preview(post),
+                    permalink_url=_get_permalink_url(post),
+                    num_comments=post.num_comments,
+                    daily_top=True,
+                ))
+        elif interval == 'weekly' and not SubredditPost.query.filter(
+            SubredditPost.id == post.id,
+            SubredditPost.weekly_top.is_(True),
+        ).one_or_none():
+            existing_post = SubredditPost.query.get(post.id)
+            if existing_post:
+                existing_post.weekly_top = True
+                posts.append(existing_post)
+            else:
+                logging.info(f'Scraping weekly top post: {post.id}')
+                posts.append(SubredditPost(
+                    id=post.id,
+                    url=post.url,
+                    title=post.title,
+                    subreddit=subreddit,
+                    preview_image_url=_get_post_preview(post),
+                    permalink_url=_get_permalink_url(post),
+                    num_comments=post.num_comments,
+                    weekly_top=True,
+                ))
     db.session.add_all(posts)
-    subreddit.last_scraped = datetime.utcnow()
+    if interval == 'daily':
+        subreddit.last_scraped_daily = datetime.utcnow()
+    elif interval == 'weekly':
+        subreddit.last_scraped_weekly = datetime.utcnow()
     db.session.commit()
     return posts
 
@@ -169,9 +237,6 @@ def _get_permalink_url(post):
     return f'https://www.reddit.com{post.permalink}'
 
 
-def _subreddits_to_scrape():
-    return Subreddit.query.join(Subreddit.accounts).filter(
-        Account.active.is_(True),
-        (Account.last_email < datetime.utcnow() - timedelta(hours=23)) |
-        Account.last_email.is_(None),
-    )
+def _subreddits_to_scrape(day_of_week):
+    return Subreddit.query.join(Subreddit.accounts).join(
+        Account.email_events).filter(*_account_filters(day_of_week))

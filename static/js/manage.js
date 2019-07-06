@@ -13,13 +13,15 @@ $(function() {
         alert('Too many subreddits selected, maximum is 10.');
         return;
       }
+      var email_interval = $('input[name=email_interval]:checked').val();
       $this = $("#manageButton");
       $this.prop("disabled", true); // Disable submit button until AJAX call is complete to prevent duplicate messages
       $.ajax({
         url: document.location.pathname,
         type: "POST",
         data: {
-          subreddits: subreddits
+          subreddits: subreddits,
+          email_interval: email_interval
         },
         cache: false,
         success: function() {
@@ -28,7 +30,7 @@ $(function() {
           $('#success > .alert-success').html("<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;")
             .append("</button>");
           $('#success > .alert-success')
-            .append("<strong>Success! Subreddits updated.</strong>");
+            .append("<strong>Success! Account updated.</strong>");
           $('#success > .alert-success')
             .append('</div>');
         },

@@ -1,4 +1,4 @@
-from datetime import datetime
+import datetime
 import logging
 import os
 import sys
@@ -74,6 +74,9 @@ class Account(db.Model):
     )
     active = db.Column(db.Boolean, default=True, nullable=False)
     last_email = db.Column(db.DateTime)
+    signup_time = db.Column(db.DateTime,
+                            server_default=db.func.now(),
+                            nullable=False)
     subreddits = db.relationship('Subreddit',
                                  backref='accounts',
                                  order_by='Subreddit.name',
@@ -85,7 +88,8 @@ class Account(db.Model):
 
 class Subreddit(db.Model):
     name = db.Column(db.String(21), primary_key=True)
-    last_scraped = db.Column(db.DateTime)
+    last_scraped_daily = db.Column(db.DateTime)
+    last_scraped_weekly = db.Column(db.DateTime)
 
     def __repr__(self):
         return f'<Subreddit {self.name}>'
@@ -103,18 +107,33 @@ class SubredditPost(db.Model):
     url = db.Column(db.String(2000), nullable=False)
 
     scraped_at = db.Column(db.DateTime,
-                           default=datetime.utcnow, nullable=False)
+                           server_default=db.func.now(),
+                           nullable=False)
     preview_image_url = db.Column(db.String(2000))
     permalink_url = db.Column(db.String(2000))
     num_comments = db.Column(db.Integer, nullable=False)
+    daily_top = db.Column(db.Boolean)
+    weekly_top = db.Column(db.Boolean)
 
     def __repr__(self):
         return f'<SubredditPost {self.id}>'
 
 
+class EmailEvent(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    account_email = db.Column(
+        db.String(320),
+        db.ForeignKey('account.email', onupdate='cascade'),
+        nullable=False,
+    )
+    account = db.relationship('Account', backref='email_events')
+    time_of_day = db.Column(db.Time, nullable=False)
+    day_of_week = db.Column(db.Integer)
+
+
 @app.context_processor
 def add_now():
-    return {'now': datetime.utcnow()}
+    return {'now': datetime.datetime.utcnow()}
 
 
 @app.before_request
@@ -158,6 +177,8 @@ def manage(uuid):
             return 'too many subreddits', 400
         account.subreddits = Subreddit.query.filter(
             Subreddit.name.in_(subreddits)).all()
+        account.email_events[0].day_of_week = (
+            6 if request.form['email_interval'] == 'weekly' else None)
         db.session.commit()
     return render_template(
         'manage.html',
@@ -180,25 +201,30 @@ def unsubscribe(uuid):
 
 @app.route("/signup", methods=['POST'])
 def signup():
-    _check_captcha(request.form['captcha_token'])
-    email = request.form['email']
-    if Account.query.get(email.lower()) is not None:
+    if not app.config['DEBUG']:
+        _check_captcha(request.form['captcha_token'])
+    email = request.form['email'].lower()
+    if Account.query.get(email) is not None:
         return 'account already exists', 400
     subreddits = request.form.getlist('subreddits[]')
     if len(subreddits) > 10:
         return 'too many subreddits', 400
     subreddits = Subreddit.query.filter(Subreddit.name.in_(subreddits)).all()
+    email_interval = request.form['email_interval']
     db.session.add(Account(
-        email=email.lower(),
+        email=email,
         subreddits=subreddits,
+        email_events=[EmailEvent(
+            account_email=email,
+            time_of_day=datetime.time(12),
+            day_of_week=6 if email_interval == 'weekly' else None,
+        )]
     ))
     db.session.commit()
     return 'success', 201
 
 
 def _check_captcha(token):
-    if app.config['DEBUG']:
-        return
     logging.info(f'Checking captcha token: {token}')
     resp = requests.post(
         'https://www.google.com/recaptcha/api/siteverify',

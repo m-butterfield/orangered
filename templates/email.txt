@@ -1,4 +1,4 @@
-Orangered - A daily summary of your favorite subreddits
+Orangered - The best content from your favorite subreddits delivered to your inbox
 Go here to manage your subreddits: {{ email_management_url }}
 Need help? Contact help@orangered.io
 

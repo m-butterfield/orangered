@@ -11,6 +11,7 @@ $(function() {
       var email = $("input#email").val();
       var subreddits = $("select#subreddits").val();
       var captcha_token = $("input#captcha_input").val();
+      var email_interval = $('input[name=email_interval]:checked').val();
       if (subreddits.length > 10) {
         alert('Too many subreddits selected, maximum is 10.');
         return;
@@ -23,7 +24,8 @@ $(function() {
         data: {
           email: email,
           subreddits: subreddits,
-          captcha_token: captcha_token
+          captcha_token: captcha_token,
+          email_interval: email_interval
         },
         cache: false,
         success: function() {
@@ -32,7 +34,7 @@ $(function() {
           $('#success > .alert-success').html("<button type='button' class='close' data-dismiss='alert' aria-hidden='true'>&times;")
             .append("</button>");
           $('#success > .alert-success')
-            .append("<strong>Success! You should receive your first email within the next day or so.<br>To ensure you receive your email, please add no-reply@orangered.io to your contacts.</strong>");
+            .append("<strong>Success! You should receive your first email soon.<br>To ensure you receive your email, please add no-reply@orangered.io to your contacts.</strong>");
           $('#success > .alert-success')
             .append('</div>');
           // clear all fields
