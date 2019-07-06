@@ -112,6 +112,7 @@ class SubredditPost(db.Model):
     preview_image_url = db.Column(db.String(2000))
     permalink_url = db.Column(db.String(2000))
     num_comments = db.Column(db.Integer, nullable=False)
+    daily_top = db.Column(db.Boolean)
     weekly_top = db.Column(db.Boolean)
 
     def __repr__(self):

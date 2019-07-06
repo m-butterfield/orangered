@@ -163,7 +163,9 @@ def _existing_scraped_posts(subreddit, now, interval):
         SubredditPost.subreddit == subreddit,
         SubredditPost.scraped_at > now - timedelta(hours=23),
     )
-    if interval == 'weekly':
+    if interval == 'daily':
+        query.filter(SubredditPost.daily_top.is_(True))
+    elif interval == 'weekly':
         query.filter(SubredditPost.weekly_top.is_(True))
     return query.all()
 
@@ -174,10 +176,11 @@ def _scrape_new_posts(reddit, subreddit, interval):
             'day' if interval == 'daily' else 'week', limit=10):
         if interval == 'daily' and not SubredditPost.query.filter(
             SubredditPost.id == post.id,
-            SubredditPost.weekly_top.isnot(True),
+            SubredditPost.daily_top.is_(True),
         ).one_or_none():
             existing_post = SubredditPost.query.get(post.id)
             if existing_post:
+                existing_post.daily_top = True
                 posts.append(existing_post)
             else:
                 logging.info(f'Scraping daily top post: {post.id}')
@@ -189,6 +192,7 @@ def _scrape_new_posts(reddit, subreddit, interval):
                     preview_image_url=_get_post_preview(post),
                     permalink_url=_get_permalink_url(post),
                     num_comments=post.num_comments,
+                    daily_top=True,
                 ))
         elif interval == 'weekly' and not SubredditPost.query.filter(
             SubredditPost.id == post.id,
