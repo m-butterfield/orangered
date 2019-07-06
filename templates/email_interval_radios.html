@@ -1,11 +1,11 @@
 <div class="control-group">
   <label>How often would you like to receive your email?</label>
   <div class="custom-control custom-radio">
-    <input type="radio" id="customRadio1" name="email_interval" value="daily" class="custom-control-input" {% if account and account.email_interval == 'weekly' %}{% else %}checked="checked"{% endif %}>
+    <input type="radio" id="customRadio1" name="email_interval" value="daily" class="custom-control-input" {% if email_interval == 'weekly' %}{% else %}checked="checked"{% endif %}>
     <label class="custom-control-label" for="customRadio1">Daily</label>
   </div>
   <div class="custom-control custom-radio">
-    <input type="radio" id="customRadio2" name="email_interval" value="weekly" class="custom-control-input" {% if account and account.email_interval == 'weekly' %}checked="checked"{% endif %}>
+    <input type="radio" id="customRadio2" name="email_interval" value="weekly" class="custom-control-input" {% if email_interval == 'weekly' %}checked="checked"{% endif %}>
     <label class="custom-control-label" for="customRadio2">Weekly</label>
   </div>
 </div>

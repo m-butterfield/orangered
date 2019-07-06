@@ -183,6 +183,8 @@ def manage(uuid):
     return render_template(
         'manage.html',
         account=account,
+        email_interval=(
+            'weekly' if account.email_events[0].day_of_week else 'daily'),
         user_subreddits=[s.name for s in account.subreddits],
         subreddit_info=SUBREDDIT_INFO,
     )
