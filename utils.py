@@ -11,7 +11,16 @@ import praw
 
 import requests
 
-from app import Account, app, db, EmailEvent, Subreddit, SubredditPost
+from app import (
+    Account,
+    app,
+    db,
+    EmailEvent,
+    ScrapeRecord,
+    ScrapeRecordSubredditPost,
+    Subreddit,
+    SubredditPost,
+)
 
 from subreddits import SUBREDDITS
 
@@ -126,102 +135,58 @@ def _scrape_posts(interval='daily'):
     now = datetime.utcnow()
     for subreddit in _subreddits_to_scrape(
             6 if interval == 'weekly' else None):
-        if interval == 'daily':
-            posts = _daily_top_posts(reddit, subreddit, now)
-        else:
-            posts = _weekly_top_posts(reddit, subreddit, now)
-        subreddit_posts[subreddit.name] = posts
+        scrape_record = ScrapeRecord.query.filter(
+            ScrapeRecord.subreddit == subreddit,
+            ScrapeRecord.interval == interval,
+            ScrapeRecord.scrape_time > now - timedelta(hours=23),
+        ).one_or_none()
+        if not scrape_record:
+            logging.info(f'Scraping new {interval} top posts for '
+                         f'subreddit: {subreddit.name}')
+            scrape_record = _scrape_new_posts(reddit, subreddit, interval)
+        subreddit_posts[subreddit.name] = scrape_record.subreddit_posts
     logging.info('Done scraping subreddit posts')
     return subreddit_posts
-
-
-def _daily_top_posts(reddit, subreddit, now):
-    if subreddit.last_scraped_daily and (
-            subreddit.last_scraped_daily > now - timedelta(hours=23)):
-        logging.info('Subreddit: %s recently scraped for daily top '
-                     'posts, loading existing posts', subreddit.name)
-        return _existing_scraped_posts(subreddit, now, 'daily')
-    else:
-        logging.info('Scraping new daily top posts for subreddit: %s',
-                     subreddit.name)
-        return _scrape_new_posts(reddit, subreddit, 'daily')
-
-
-def _weekly_top_posts(reddit, subreddit, now):
-    if subreddit.last_scraped_weekly and (
-            subreddit.last_scraped_weekly > now - timedelta(hours=23)):
-        logging.info('Subreddit: %s recently scraped for weekly top '
-                     'posts, loading existing posts', subreddit.name)
-        return _existing_scraped_posts(subreddit, now, 'weekly')
-    else:
-        logging.info('Scraping new weekly top posts for subreddit: %s',
-                     subreddit.name)
-        return _scrape_new_posts(reddit, subreddit, 'weekly')
-
-
-def _existing_scraped_posts(subreddit, now, interval):
-    query = SubredditPost.query.filter(
-        SubredditPost.subreddit == subreddit,
-        SubredditPost.scraped_at > now - timedelta(hours=23),
-    )
-    if interval == 'daily':
-        query.filter(SubredditPost.daily_top.is_(True))
-    elif interval == 'weekly':
-        query.filter(SubredditPost.weekly_top.is_(True))
-    return query.all()
 
 
 def _scrape_new_posts(reddit, subreddit, interval):
     posts = []
     for post in reddit.subreddit(subreddit.name).top(
             'day' if interval == 'daily' else 'week', limit=10):
-        if interval == 'daily' and not SubredditPost.query.filter(
-            SubredditPost.id == post.id,
-            SubredditPost.daily_top.is_(True),
-        ).one_or_none():
-            existing_post = SubredditPost.query.get(post.id)
-            if existing_post:
-                existing_post.daily_top = True
-                posts.append(existing_post)
-            else:
-                logging.info(f'Scraping daily top post: {post.id}')
-                posts.append(SubredditPost(
-                    id=post.id,
-                    url=post.url,
-                    title=post.title,
-                    subreddit=subreddit,
-                    preview_image_url=_get_post_preview(post),
-                    permalink_url=_get_permalink_url(post),
-                    num_comments=post.num_comments,
-                    daily_top=True,
-                ))
-        elif interval == 'weekly' and not SubredditPost.query.filter(
-            SubredditPost.id == post.id,
-            SubredditPost.weekly_top.is_(True),
-        ).one_or_none():
-            existing_post = SubredditPost.query.get(post.id)
-            if existing_post:
-                existing_post.weekly_top = True
-                posts.append(existing_post)
-            else:
-                logging.info(f'Scraping weekly top post: {post.id}')
-                posts.append(SubredditPost(
-                    id=post.id,
-                    url=post.url,
-                    title=post.title,
-                    subreddit=subreddit,
-                    preview_image_url=_get_post_preview(post),
-                    permalink_url=_get_permalink_url(post),
-                    num_comments=post.num_comments,
-                    weekly_top=True,
-                ))
-    db.session.add_all(posts)
-    if interval == 'daily':
-        subreddit.last_scraped_daily = datetime.utcnow()
-    elif interval == 'weekly':
-        subreddit.last_scraped_weekly = datetime.utcnow()
+        existing_post = SubredditPost.query.get(post.id)
+        if existing_post:
+            if any(sr.interval == interval
+                   for sr in existing_post.scrape_records):
+                continue
+            existing_post.daily_top = True
+            existing_post.scraped_at = datetime.utcnow()
+            existing_post.num_comments = post.num_comments
+            posts.append(existing_post)
+        else:
+            logging.info(f'Scraping daily top post: {post.id}')
+            posts.append(SubredditPost(
+                id=post.id,
+                url=post.url,
+                title=post.title,
+                subreddit=subreddit,
+                preview_image_url=_get_post_preview(post),
+                permalink_url=_get_permalink_url(post),
+                num_comments=post.num_comments,
+            ))
+    scrape_record = ScrapeRecord(
+        interval=interval,
+        subreddit=subreddit,
+        scrape_record_subreddit_posts=[
+            ScrapeRecordSubredditPost(
+                ordinal=i,
+                subreddit_post=subreddit_post
+            )
+            for i, subreddit_post in enumerate(posts)
+        ]
+    )
+    db.session.add(scrape_record)
     db.session.commit()
-    return posts
+    return scrape_record
 
 
 def _get_post_preview(post):

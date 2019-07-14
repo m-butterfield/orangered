@@ -7,7 +7,16 @@ import uuid
 
 from freezegun import freeze_time
 
-from app import app, db, Account, EmailEvent, Subreddit, SubredditPost
+from app import (
+    app,
+    db,
+    Account,
+    EmailEvent,
+    ScrapeRecord,
+    ScrapeRecordSubredditPost,
+    Subreddit,
+    SubredditPost,
+)
 from utils import insert_subreddits
 from utils import _scrape_posts, _send_emails
 
@@ -217,131 +226,187 @@ class FakeReddit:
 
 class EmailTests(BaseTestCase):
 
+    def _add_accounts(self, day_of_week=None):
+        db.session.add_all([
+            # user account with some subscriptions
+            Account(
+                email='bob@aol.com',
+                email_events=[EmailEvent(
+                    account_email='bob@aol.com',
+                    time_of_day=time(12),
+                    day_of_week=day_of_week,
+                    subreddits=Subreddit.query.filter(Subreddit.name.in_(
+                        ['aviation', 'spacex', 'running'])).all(),
+                )],
+            ),
+            # deactivated account
+            Account(
+                email='bob2@aol.com',
+                active=False,
+                email_events=[EmailEvent(
+                    account_email='bob@aol.com',
+                    time_of_day=time(12),
+                    day_of_week=day_of_week,
+                    subreddits=Subreddit.query.filter(Subreddit.name.in_(
+                        ['programming', 'askreddit'])).all(),
+                )],
+            ),
+            # account that already received their email for today
+            Account(
+                email='bob3@aol.com',
+                last_email=datetime.utcnow() - timedelta(minutes=10),
+                email_events=[EmailEvent(
+                    account_email='bob@aol.com',
+                    time_of_day=time(12),
+                    day_of_week=day_of_week,
+                    subreddits=Subreddit.query.filter(Subreddit.name.in_(
+                        ['analog', 'finance'])).all(),
+                )],
+            ),
+            # account expecting different interval from the rest
+            Account(
+                email='bob4@aol.com',
+                email_events=[EmailEvent(
+                    account_email='bob@aol.com',
+                    time_of_day=time(12),
+                    day_of_week=6 if day_of_week is None else None,
+                    subreddits=Subreddit.query.filter(Subreddit.name.in_(
+                        ['aviation', 'spacex', 'running'])).all(),
+                )],
+            ),
+        ])
+
+    def _add_posts(self, now, interval='daily'):
+        db.session.add_all([
+            # last scraped past one day for 'running' so scraping should happen
+            ScrapeRecord(
+                interval=interval,
+                scrape_time=datetime.utcnow() - timedelta(days=2),
+                subreddit_name='running',
+            ),
+            # aviation has already been scraped with existing scraped posts
+            ScrapeRecord(
+                interval=interval,
+                scrape_time=now,
+                subreddit_name='aviation',
+                scrape_record_subreddit_posts=[
+                    ScrapeRecordSubredditPost(
+                        ordinal=0,
+                        subreddit_post=SubredditPost(
+                            id=str(uuid.uuid4()),
+                            subreddit_name='aviation',
+                            title='aviation post 1',
+                            url='http://example.com',
+                            num_comments=23,
+                        ),
+                    ),
+                    ScrapeRecordSubredditPost(
+                        ordinal=1,
+                        subreddit_post=SubredditPost(
+                            id=str(uuid.uuid4()),
+                            subreddit_name='aviation',
+                            title='aviation post 2',
+                            url='http://example.com',
+                            num_comments=23,
+                        ),
+                    ),
+                ],
+            ),
+            # this post from a previous day shouldn't show up in the result
+            ScrapeRecord(
+                interval=interval,
+                scrape_time=datetime.utcnow() - timedelta(days=1),
+                subreddit_name='aviation',
+                scrape_record_subreddit_posts=[
+                    ScrapeRecordSubredditPost(
+                        ordinal=0,
+                        subreddit_post=SubredditPost(
+                            id=str(uuid.uuid4()),
+                            subreddit_name='aviation',
+                            title='aviation post 3',
+                            url='http://example.com',
+                            scraped_at=datetime.utcnow() - timedelta(days=1),
+                            num_comments=23,
+                        ),
+                    ),
+                ],
+            ),
+            # spacex post from previous day that shows up from reddit again
+            ScrapeRecord(
+                interval=interval,
+                scrape_time=datetime.utcnow() - timedelta(days=1),
+                subreddit_name='spacex',
+                scrape_record_subreddit_posts=[
+                    ScrapeRecordSubredditPost(
+                        ordinal=0,
+                        subreddit_post=SubredditPost(
+                            id='spacex_1',
+                            subreddit_name='spacex',
+                            title='spacex post 1',
+                            url='http://example.com',
+                            scraped_at=datetime.utcnow() - timedelta(days=1),
+                            num_comments=23,
+                        ),
+                    ),
+                ],
+            ),
+            # spacex post we already scraped from different interval scrape
+            ScrapeRecord(
+                interval='weekly' if interval == 'daily' else 'daily',
+                scrape_time=datetime.utcnow() - timedelta(days=1),
+                subreddit_name='spacex',
+                scrape_record_subreddit_posts=[
+                    ScrapeRecordSubredditPost(
+                        ordinal=0,
+                        subreddit_post=SubredditPost(
+                            id='spacex_2',
+                            subreddit_name='spacex',
+                            title='spacex post 2',
+                            url='http://example.com',
+                            scraped_at=datetime.utcnow() - timedelta(days=1),
+                            num_comments=16,
+                        ),
+                    ),
+                ],
+            ),
+        ])
+
     @mock.patch('utils.Template')
     @mock.patch('utils._send_email')
     @freeze_time("2019-06-08 12:00:00")
     def test_scrape_and_send_daily_emails(self, fake_send_email, fake_template):
-        # user account with some subscriptions
-        db.session.add(Account(
-            email='bob@aol.com',
-            email_events=[EmailEvent(
-                account_email='bob@aol.com',
-                time_of_day=time(12),
-                subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                    ['aviation', 'spacex', 'running'])).all(),
-            )],
-        ))
-        # deactivated account
-        db.session.add(Account(
-            email='bob2@aol.com',
-            active=False,
-            email_events=[EmailEvent(
-                account_email='bob@aol.com',
-                time_of_day=time(12),
-                subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                    ['programming', 'askreddit'])).all(),
-            )],
-        ))
-        # account that already received their email for today
-        db.session.add(Account(
-            email='bob3@aol.com',
-            last_email=datetime.utcnow() - timedelta(minutes=10),
-            email_events=[EmailEvent(
-                account_email='bob@aol.com',
-                time_of_day=time(12),
-                subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                    ['analog', 'finance'])).all(),
-            )],
-        ))
-        # account expecting only weekly emails
-        db.session.add(Account(
-            email='bob4@aol.com',
-            email_events=[EmailEvent(
-                account_email='bob@aol.com',
-                time_of_day=time(12),
-                day_of_week=6,
-                subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                    ['aviation', 'spacex', 'running'])).all(),
-            )],
-        ))
-
-        # spacex will have last_scraped = None so scraping should happen
-        self.assertIsNone(Subreddit.query.get('spacex').last_scraped_daily)
-        # set last scraped past one day for running so scraping should happen
-        Subreddit.query.get('running').last_scraped_daily = (
-                datetime.utcnow() - timedelta(days=2))
-        # aviation has already been scraped so add some existing scraped posts
         now = datetime.utcnow()
-        Subreddit.query.get('aviation').last_scraped_daily = now
-        # add existing posts for aviation
-        db.session.add_all([
-            SubredditPost(
-                id=str(uuid.uuid4()),
-                subreddit_name='aviation',
-                title='aviation post 1',
-                url='http://example.com',
-                scraped_at=datetime.utcnow(),
-                num_comments=23,
-                daily_top=True,
-            ),
-            SubredditPost(
-                id=str(uuid.uuid4()),
-                subreddit_name='aviation',
-                title='aviation post 2',
-                url='http://example.com',
-                scraped_at=datetime.utcnow(),
-                num_comments=23,
-                daily_top=True,
-            ),
-            SubredditPost(
-                id=str(uuid.uuid4()),
-                subreddit_name='aviation',
-                title='aviation post 3',
-                url='http://example.com',
-                # this post from a previous day shouldn't show up in the result
-                scraped_at=datetime.utcnow() - timedelta(days=1),
-                num_comments=23,
-                daily_top=True,
-            ),
-            # spacex post from previous day that shows up again
-            SubredditPost(
-                id='spacex_1',
-                subreddit_name='spacex',
-                title='aviation post 3',
-                url='http://example.com',
-                scraped_at=datetime.utcnow() - timedelta(days=1),
-                num_comments=23,
-                daily_top=True,
-            ),
-            # spacex post we already scraped from weekly scrape
-            SubredditPost(
-                id='spacex_2',
-                subreddit_name='spacex',
-                title='aviation post 3',
-                url='http://example.com',
-                scraped_at=datetime.utcnow() - timedelta(days=1),
-                num_comments=23,
-                weekly_top=True
-            ),
-        ])
+        self._add_accounts()
+        self._add_posts(now)
         db.session.commit()
 
         with mock.patch('utils.reddit_client', return_value=FakeReddit(
             interval='day',
         )):
             subreddit_posts = _scrape_posts()
+
         self.assertSetEqual(
             {'aviation', 'spacex', 'running'}, set(subreddit_posts.keys()))
         self.assertEqual(len(subreddit_posts['aviation']), 2)
+        self.assertEqual(len(ScrapeRecord.query.filter(
+            ScrapeRecord.subreddit_name == 'aviation').all()), 2)
+        self.assertEqual(len(ScrapeRecord.query.filter(
+            ScrapeRecord.subreddit_name == 'spacex').all()), 3)
         self.assertEqual(len(subreddit_posts['spacex']), 4)
+        self.assertEqual(len(ScrapeRecord.query.filter(
+            ScrapeRecord.subreddit_name == 'running').all()), 2)
         self.assertEqual(len(subreddit_posts['running']), 5)
-        self.assertTrue(SubredditPost.query.get('spacex_2').daily_top)
-        self.assertTrue(SubredditPost.query.get('spacex_3').daily_top)
-        self.assertIsNotNone(Subreddit.query.get('spacex').last_scraped_daily)
-        self.assertGreaterEqual(
-            Subreddit.query.get('running').last_scraped_daily, now)
-        self.assertEqual(
-            Subreddit.query.get('aviation').last_scraped_daily, now)
+
+        spacex_2 = SubredditPost.query.get('spacex_2')
+        self.assertEqual(spacex_2.num_comments, 23)
+        self.assertGreaterEqual(spacex_2.scraped_at, now)
+        sr_1, sr_2 = spacex_2.scrape_records
+        self.assertEqual(sr_1.interval, 'weekly')
+        self.assertEqual(sr_2.interval, 'daily')
+
+        spacex_3 = SubredditPost.query.get('spacex_3')
+        sr_3, = spacex_3.scrape_records
+        self.assertEqual(sr_2, sr_3)
 
         _send_emails(subreddit_posts)
         db.session.add_all(chain.from_iterable(subreddit_posts.values()))
@@ -364,129 +429,38 @@ class EmailTests(BaseTestCase):
     @mock.patch('utils._send_email')
     @freeze_time("2019-06-09 12:00:00")
     def test_scrape_and_send_weekly_emails(self, fake_send_email, fake_template):
-        # user account with some subscriptions
-        db.session.add(Account(
-            email='bob@aol.com',
-            email_events=[EmailEvent(
-                account_email='bob@aol.com',
-                time_of_day=time(12),
-                day_of_week=6,
-                subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                    ['aviation', 'spacex', 'running'])).all(),
-            )],
-        ))
-        # deactivated account
-        db.session.add(Account(
-            email='bob2@aol.com',
-            active=False,
-            email_events=[EmailEvent(
-                account_email='bob@aol.com',
-                time_of_day=time(12),
-                day_of_week=6,
-                subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                    ['programming', 'askreddit'])).all(),
-            )],
-        ))
-        # account that already received their email for today
-        db.session.add(Account(
-            email='bob3@aol.com',
-            last_email=datetime.utcnow() - timedelta(minutes=10),
-            email_events=[EmailEvent(
-                account_email='bob@aol.com',
-                time_of_day=time(12),
-                day_of_week=6,
-                subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                    ['analog', 'finance'])).all(),
-            )],
-        ))
-        # account expecting only daily emails
-        db.session.add(Account(
-            email='bob4@aol.com',
-            email_events=[EmailEvent(
-                account_email='bob@aol.com',
-                time_of_day=time(12),
-                subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                    ['aviation', 'spacex', 'running'])).all(),
-            )],
-        ))
-
-        # spacex will have last_scraped = None so scraping should happen
-        self.assertIsNone(Subreddit.query.get('spacex').last_scraped_weekly)
-        # set last scraped past one day for running so scraping should happen
-        Subreddit.query.get('running').last_scraped_weekly = (
-                datetime.utcnow() - timedelta(days=2))
-        # aviation has already been scraped so add some existing scraped posts
         now = datetime.utcnow()
-        Subreddit.query.get('aviation').last_scraped_weekly = now
-        # add existing posts for aviation
-        db.session.add_all([
-            SubredditPost(
-                id=str(uuid.uuid4()),
-                subreddit_name='aviation',
-                title='aviation post 1',
-                url='http://example.com',
-                scraped_at=datetime.utcnow(),
-                num_comments=23,
-                weekly_top=True,
-            ),
-            SubredditPost(
-                id=str(uuid.uuid4()),
-                subreddit_name='aviation',
-                title='aviation post 2',
-                url='http://example.com',
-                scraped_at=datetime.utcnow(),
-                num_comments=23,
-                weekly_top=True,
-            ),
-            SubredditPost(
-                id=str(uuid.uuid4()),
-                subreddit_name='aviation',
-                title='aviation post 3',
-                url='http://example.com',
-                # this post from a previous day shouldn't show up in the result
-                scraped_at=datetime.utcnow() - timedelta(days=1),
-                num_comments=23,
-                weekly_top=True,
-            ),
-            # spacex post from previous week that shows up again
-            SubredditPost(
-                id='spacex_1',
-                subreddit_name='spacex',
-                title='aviation post 3',
-                url='http://example.com',
-                scraped_at=datetime.utcnow() - timedelta(days=1),
-                num_comments=23,
-                weekly_top=True,
-            ),
-            # spacex post we already scraped from daily scrape
-            SubredditPost(
-                id='spacex_2',
-                subreddit_name='spacex',
-                title='aviation post 3',
-                url='http://example.com',
-                scraped_at=datetime.utcnow() - timedelta(days=1),
-                num_comments=23,
-                daily_top=True
-            ),
-        ])
+        self._add_accounts(day_of_week=6)
+        self._add_posts(now, interval='weekly')
         db.session.commit()
 
         with mock.patch('utils.reddit_client', return_value=FakeReddit(
-            interval='week',
+                interval='week',
         )):
             subreddit_posts = _scrape_posts('weekly')
+
         self.assertSetEqual(
             {'aviation', 'spacex', 'running'}, set(subreddit_posts.keys()))
         self.assertEqual(len(subreddit_posts['aviation']), 2)
+        self.assertEqual(len(ScrapeRecord.query.filter(
+            ScrapeRecord.subreddit_name == 'aviation').all()), 2)
+        self.assertEqual(len(ScrapeRecord.query.filter(
+            ScrapeRecord.subreddit_name == 'spacex').all()), 3)
         self.assertEqual(len(subreddit_posts['spacex']), 4)
+        self.assertEqual(len(ScrapeRecord.query.filter(
+            ScrapeRecord.subreddit_name == 'running').all()), 2)
         self.assertEqual(len(subreddit_posts['running']), 5)
-        self.assertTrue(SubredditPost.query.get('spacex_2').weekly_top)
-        self.assertTrue(SubredditPost.query.get('spacex_3').weekly_top)
-        self.assertIsNotNone(Subreddit.query.get('spacex').last_scraped_weekly)
-        self.assertGreaterEqual(
-            Subreddit.query.get('running').last_scraped_weekly, now)
-        self.assertEqual(
-            Subreddit.query.get('aviation').last_scraped_weekly, now)
+
+        spacex_2 = SubredditPost.query.get('spacex_2')
+        self.assertEqual(spacex_2.num_comments, 23)
+        self.assertGreaterEqual(spacex_2.scraped_at, now)
+        sr_1, sr_2 = spacex_2.scrape_records
+        self.assertEqual(sr_1.interval, 'daily')
+        self.assertEqual(sr_2.interval, 'weekly')
+
+        spacex_3 = SubredditPost.query.get('spacex_3')
+        sr_3, = spacex_3.scrape_records
+        self.assertEqual(sr_2, sr_3)
 
         _send_emails(subreddit_posts, 'weekly')
         db.session.add_all(chain.from_iterable(subreddit_posts.values()))
