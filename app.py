@@ -57,7 +57,7 @@ else:
 email_event_subreddit = db.Table(
     "email_event_subreddit", db.Model.metadata,
     db.Column("email_event_id", db.Integer, db.ForeignKey(
-        "email_event.id"), primary_key=True),
+        "email_event.id", ondelete="cascade"), primary_key=True),
     db.Column("subreddit_name", db.String(21), db.ForeignKey(
         "subreddit.name", onupdate="cascade"), primary_key=True),
 )
@@ -82,8 +82,6 @@ class Account(db.Model):
 
 class Subreddit(db.Model):
     name = db.Column(db.String(21), primary_key=True)
-    last_scraped_daily = db.Column(db.DateTime)
-    last_scraped_weekly = db.Column(db.DateTime)
 
     def __repr__(self):
         return f'<Subreddit {self.name}>'
@@ -106,14 +104,15 @@ class SubredditPost(db.Model):
     preview_image_url = db.Column(db.String(2000))
     permalink_url = db.Column(db.String(2000))
     num_comments = db.Column(db.Integer, nullable=False)
-    daily_top = db.Column(db.Boolean)
-    weekly_top = db.Column(db.Boolean)
 
     def __repr__(self):
         return f'<SubredditPost {self.id}>'
 
 
 class EmailEvent(db.Model):
+    """
+    Recurring event model for emails to be sent to accounts.
+    """
     id = db.Column(db.Integer, primary_key=True)
     account_email = db.Column(
         db.String(320),
@@ -128,6 +127,45 @@ class EmailEvent(db.Model):
                                  backref='email_events',
                                  order_by='Subreddit.name',
                                  secondary=email_event_subreddit)
+
+
+class ScrapeRecordSubredditPost(db.Model):
+    """
+    The relationship between scrape_records and subreddit_posts
+    """
+    scrape_record_id = db.Column(db.Integer,
+                                 db.ForeignKey('scrape_record.id'),
+                                 primary_key=True)
+    subreddit_post_id = db.Column(db.String(128),
+                                  db.ForeignKey('subreddit_post.id'),
+                                  primary_key=True)
+    ordinal = db.Column(db.Integer, nullable=False)
+
+    scrape_record = db.relationship('ScrapeRecord')
+    subreddit_post = db.relationship('SubredditPost')
+
+
+class ScrapeRecord(db.Model):
+    """
+    A grouping of subreddit posts from a scraping event
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    interval = db.Column(
+        db.Enum('daily', 'weekly', name='interval_enum'), nullable=False)
+    scrape_time = db.Column(db.DateTime,
+                            server_default=db.func.now(),
+                            nullable=False)
+    subreddit_name = db.Column(db.String(21), db.ForeignKey(
+        "subreddit.name", onupdate="cascade"))
+
+    subreddit = db.relationship('Subreddit')
+    scrape_record_subreddit_posts = db.relationship(
+        'ScrapeRecordSubredditPost')
+    subreddit_posts = db.relationship(
+        'SubredditPost',
+        backref='scrape_records',
+        order_by='ScrapeRecordSubredditPost.ordinal',
+        secondary=ScrapeRecordSubredditPost.__table__)
 
 
 @app.context_processor
