@@ -57,7 +57,7 @@ else:
 email_event_subreddit = db.Table(
     "email_event_subreddit", db.Model.metadata,
     db.Column("email_event_id", db.Integer, db.ForeignKey(
-        "email_event.id"), primary_key=True),
+        "email_event.id", ondelete="cascade"), primary_key=True),
     db.Column("subreddit_name", db.String(21), db.ForeignKey(
         "subreddit.name", onupdate="cascade"), primary_key=True),
 )
