@@ -50,11 +50,12 @@ class SignupTests(BaseAppTestCase):
         account = Account.query.get('bob2@aol.com')
         self.assertIsNotNone(account)
         self.assertTrue(account.active)
-        self.assertEqual(
-            set(expected_subreddits), {s.name for s in account.subreddits})
         self.assertEqual(len(account.email_events), 1)
         self.assertEqual(account.email_events[0].time_of_day, time(12))
         self.assertEqual(account.email_events[0].day_of_week, 6)
+        self.assertEqual(
+            set(expected_subreddits),
+            {s.name for s in account.email_events[0].subreddits})
 
         self.client.post('/signup', data={
             'email': 'Bob3@aol.com',
@@ -121,11 +122,12 @@ class ManageTests(BaseAppTestCase):
         })
         self.assertEqual(resp.status_code, 200)
         account = Account.query.get(self.account.email)
-        self.assertEqual(
-            set(expected_subreddits), {s.name for s in account.subreddits})
         self.assertEqual(len(account.email_events), 1)
         self.assertEqual(account.email_events[0].time_of_day, time(12))
         self.assertEqual(account.email_events[0].day_of_week, 6)
+        self.assertEqual(
+            set(expected_subreddits),
+            {s.name for s in account.email_events[0].subreddits})
 
         self.client.post(f'/account/{self.account.uuid}/manage', data={
             'subreddits[]': expected_subreddits,
@@ -222,44 +224,44 @@ class EmailTests(BaseTestCase):
         # user account with some subscriptions
         db.session.add(Account(
             email='bob@aol.com',
-            subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                ['aviation', 'spacex', 'running'])).all(),
             email_events=[EmailEvent(
                 account_email='bob@aol.com',
                 time_of_day=time(12),
+                subreddits=Subreddit.query.filter(Subreddit.name.in_(
+                    ['aviation', 'spacex', 'running'])).all(),
             )],
         ))
         # deactivated account
         db.session.add(Account(
             email='bob2@aol.com',
-            subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                ['programming', 'askreddit'])).all(),
             active=False,
             email_events=[EmailEvent(
                 account_email='bob@aol.com',
                 time_of_day=time(12),
+                subreddits=Subreddit.query.filter(Subreddit.name.in_(
+                    ['programming', 'askreddit'])).all(),
             )],
         ))
         # account that already received their email for today
         db.session.add(Account(
             email='bob3@aol.com',
-            subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                ['analog', 'finance'])).all(),
             last_email=datetime.utcnow() - timedelta(minutes=10),
             email_events=[EmailEvent(
                 account_email='bob@aol.com',
                 time_of_day=time(12),
+                subreddits=Subreddit.query.filter(Subreddit.name.in_(
+                    ['analog', 'finance'])).all(),
             )],
         ))
         # account expecting only weekly emails
         db.session.add(Account(
             email='bob4@aol.com',
-            subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                ['aviation', 'spacex', 'running'])).all(),
             email_events=[EmailEvent(
                 account_email='bob@aol.com',
                 time_of_day=time(12),
                 day_of_week=6,
+                subreddits=Subreddit.query.filter(Subreddit.name.in_(
+                    ['aviation', 'spacex', 'running'])).all(),
             )],
         ))
 
@@ -365,46 +367,46 @@ class EmailTests(BaseTestCase):
         # user account with some subscriptions
         db.session.add(Account(
             email='bob@aol.com',
-            subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                ['aviation', 'spacex', 'running'])).all(),
             email_events=[EmailEvent(
                 account_email='bob@aol.com',
                 time_of_day=time(12),
                 day_of_week=6,
+                subreddits=Subreddit.query.filter(Subreddit.name.in_(
+                    ['aviation', 'spacex', 'running'])).all(),
             )],
         ))
         # deactivated account
         db.session.add(Account(
             email='bob2@aol.com',
-            subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                ['programming', 'askreddit'])).all(),
             active=False,
             email_events=[EmailEvent(
                 account_email='bob@aol.com',
                 time_of_day=time(12),
                 day_of_week=6,
+                subreddits=Subreddit.query.filter(Subreddit.name.in_(
+                    ['programming', 'askreddit'])).all(),
             )],
         ))
         # account that already received their email for today
         db.session.add(Account(
             email='bob3@aol.com',
-            subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                ['analog', 'finance'])).all(),
             last_email=datetime.utcnow() - timedelta(minutes=10),
             email_events=[EmailEvent(
                 account_email='bob@aol.com',
                 time_of_day=time(12),
                 day_of_week=6,
+                subreddits=Subreddit.query.filter(Subreddit.name.in_(
+                    ['analog', 'finance'])).all(),
             )],
         ))
         # account expecting only daily emails
         db.session.add(Account(
             email='bob4@aol.com',
-            subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                ['aviation', 'spacex', 'running'])).all(),
             email_events=[EmailEvent(
                 account_email='bob@aol.com',
                 time_of_day=time(12),
+                subreddits=Subreddit.query.filter(Subreddit.name.in_(
+                    ['aviation', 'spacex', 'running'])).all(),
             )],
         ))
 
