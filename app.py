@@ -54,14 +54,12 @@ else:
     client.setup_logging()
 
 
-account_subreddit = db.Table(
-    "account_subreddit", db.Model.metadata,
-    db.Column("account_email", db.String(320), db.ForeignKey(
-        "account.email", onupdate="cascade"),
-        primary_key=True),
+email_event_subreddit = db.Table(
+    "email_event_subreddit", db.Model.metadata,
+    db.Column("email_event_id", db.Integer, db.ForeignKey(
+        "email_event.id"), primary_key=True),
     db.Column("subreddit_name", db.String(21), db.ForeignKey(
-        "subreddit.name", onupdate="cascade"),
-        primary_key=True),
+        "subreddit.name", onupdate="cascade"), primary_key=True),
 )
 
 
@@ -77,10 +75,6 @@ class Account(db.Model):
     signup_time = db.Column(db.DateTime,
                             server_default=db.func.now(),
                             nullable=False)
-    subreddits = db.relationship('Subreddit',
-                                 backref='accounts',
-                                 order_by='Subreddit.name',
-                                 secondary=account_subreddit)
 
     def __repr__(self):
         return f'<Account {self.email}>'
@@ -130,6 +124,11 @@ class EmailEvent(db.Model):
     time_of_day = db.Column(db.Time, nullable=False)
     day_of_week = db.Column(db.Integer)
 
+    subreddits = db.relationship('Subreddit',
+                                 backref='email_events',
+                                 order_by='Subreddit.name',
+                                 secondary=email_event_subreddit)
+
 
 @app.context_processor
 def add_now():
@@ -175,7 +174,7 @@ def manage(uuid):
         subreddits = request.form.getlist('subreddits[]')
         if len(subreddits) > 10:
             return 'too many subreddits', 400
-        account.subreddits = Subreddit.query.filter(
+        account.email_events[0].subreddits = Subreddit.query.filter(
             Subreddit.name.in_(subreddits)).all()
         account.email_events[0].day_of_week = (
             6 if request.form['email_interval'] == 'weekly' else None)
@@ -185,7 +184,7 @@ def manage(uuid):
         account=account,
         email_interval=(
             'weekly' if account.email_events[0].day_of_week else 'daily'),
-        user_subreddits=[s.name for s in account.subreddits],
+        user_subreddits=[s.name for s in account.email_events[0].subreddits],
         subreddit_info=SUBREDDIT_INFO,
     )
 
@@ -215,11 +214,11 @@ def signup():
     email_interval = request.form['email_interval']
     db.session.add(Account(
         email=email,
-        subreddits=subreddits,
         email_events=[EmailEvent(
             account_email=email,
             time_of_day=datetime.time(12),
             day_of_week=6 if email_interval == 'weekly' else None,
+            subreddits=subreddits,
         )]
     ))
     db.session.commit()

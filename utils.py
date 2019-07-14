@@ -63,7 +63,8 @@ def _send_emails(subreddit_posts, interval='daily'):
         for account in Account.query.join(Account.email_events).filter(
                 *_account_filters(6 if interval == 'weekly' else None)):
             account_subreddit_posts = OrderedDict([
-                (s.name, subreddit_posts[s.name]) for s in account.subreddits])
+                (s.name, subreddit_posts[s.name])
+                for s in account.email_events[0].subreddits])
             _send_email_for_account(account, account_subreddit_posts)
 
 
@@ -238,5 +239,5 @@ def _get_permalink_url(post):
 
 
 def _subreddits_to_scrape(day_of_week):
-    return Subreddit.query.join(Subreddit.accounts).join(
-        Account.email_events).filter(*_account_filters(day_of_week))
+    return Subreddit.query.join(Subreddit.email_events).join(Account).filter(
+        *_account_filters(day_of_week))
