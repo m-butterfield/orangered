@@ -110,7 +110,7 @@ class EmailEventSubreddit(db.Model):
 
     email_event = db.relationship(
         'EmailEvent', backref='email_event_subreddits')
-    subreddit = db.relationship()
+    subreddit = db.relationship('Subreddit')
 
     def __repr__(self):
         return (
