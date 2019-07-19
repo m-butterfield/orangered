@@ -166,8 +166,9 @@ class ScrapeRecord(db.Model):
     scrape_time = db.Column(db.DateTime,
                             server_default=db.func.now(),
                             nullable=False)
-    subreddit_name = db.Column(db.String(21), db.ForeignKey("subreddit.name"))
-    search_term = db.Column(db.String(512))
+    subreddit_name = db.Column(
+        db.String(21), db.ForeignKey("subreddit.name"), nullable=False)
+    search_term = db.Column(db.String(512), nullable=False)
 
     subreddit = db.relationship('Subreddit')
     scrape_record_subreddit_posts = db.relationship(
