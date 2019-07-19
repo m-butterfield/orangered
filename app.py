@@ -54,15 +54,6 @@ else:
     client.setup_logging()
 
 
-email_event_subreddit = db.Table(
-    "email_event_subreddit", db.Model.metadata,
-    db.Column("email_event_id", db.Integer, db.ForeignKey(
-        "email_event.id", ondelete="cascade"), primary_key=True),
-    db.Column("subreddit_name", db.String(21), db.ForeignKey(
-        "subreddit.name", onupdate="cascade"), primary_key=True),
-)
-
-
 class Account(db.Model):
     email = db.Column(db.String(320), primary_key=True)
     uuid = db.Column(
@@ -89,11 +80,9 @@ class Subreddit(db.Model):
 
 class SubredditPost(db.Model):
     id = db.Column(db.String(128), primary_key=True)
-    subreddit_name = db.Column(
-        db.String(21),
-        db.ForeignKey('subreddit.name', onupdate='cascade'),
-        nullable=False,
-    )
+    subreddit_name = db.Column(db.String(21),
+                               db.ForeignKey('subreddit.name'),
+                               nullable=False)
     subreddit = db.relationship('Subreddit')
     title = db.Column(db.String(300), nullable=False)
     url = db.Column(db.String(2000), nullable=False)
@@ -107,6 +96,26 @@ class SubredditPost(db.Model):
 
     def __repr__(self):
         return f'<SubredditPost {self.id}>'
+
+
+class EmailEventSubreddit(db.Model):
+    """
+    The relationship between email events and subreddits, with search terms.
+    """
+    email_event_id = db.Column(db.Integer, db.ForeignKey(
+        "email_event.id", ondelete="cascade"), primary_key=True)
+    subreddit_name = db.Column(db.String(21), db.ForeignKey(
+        "subreddit.name"), primary_key=True)
+    search_term = db.Column(db.String(512), primary_key=True)
+
+    email_event = db.relationship(
+        'EmailEvent', backref='email_event_subreddits')
+    subreddit = db.relationship()
+
+    def __repr__(self):
+        return (
+            f'<EmailEventSubreddit '
+            f'{self.email_event_id} {self.subreddit_name} {self.search_term}>')
 
 
 class EmailEvent(db.Model):
@@ -123,10 +132,8 @@ class EmailEvent(db.Model):
     time_of_day = db.Column(db.Time, nullable=False)
     day_of_week = db.Column(db.Integer)
 
-    subreddits = db.relationship('Subreddit',
-                                 backref='email_events',
-                                 order_by='Subreddit.name',
-                                 secondary=email_event_subreddit)
+    def __repr__(self):
+        return f'<EmailEvent {self.id}>'
 
 
 class ScrapeRecordSubredditPost(db.Model):
@@ -144,6 +151,10 @@ class ScrapeRecordSubredditPost(db.Model):
     scrape_record = db.relationship('ScrapeRecord')
     subreddit_post = db.relationship('SubredditPost')
 
+    def __repr__(self):
+        return (f'<ScrapeRecordSubredditPost '
+                f'{self.scrape_record_id} {self.subreddit_post_id}>')
+
 
 class ScrapeRecord(db.Model):
     """
@@ -155,8 +166,8 @@ class ScrapeRecord(db.Model):
     scrape_time = db.Column(db.DateTime,
                             server_default=db.func.now(),
                             nullable=False)
-    subreddit_name = db.Column(db.String(21), db.ForeignKey(
-        "subreddit.name", onupdate="cascade"))
+    subreddit_name = db.Column(db.String(21), db.ForeignKey("subreddit.name"))
+    search_term = db.Column(db.String(512))
 
     subreddit = db.relationship('Subreddit')
     scrape_record_subreddit_posts = db.relationship(
@@ -166,6 +177,9 @@ class ScrapeRecord(db.Model):
         backref='scrape_records',
         order_by='ScrapeRecordSubredditPost.ordinal',
         secondary=ScrapeRecordSubredditPost.__table__)
+
+    def __repr__(self):
+        return f'<ScrapeRecord {self.id}>'
 
 
 @app.context_processor

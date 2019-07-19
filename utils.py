@@ -163,7 +163,7 @@ def _scrape_new_posts(reddit, subreddit, interval):
             existing_post.num_comments = post.num_comments
             posts.append(existing_post)
         else:
-            logging.info(f'Scraping daily top post: {post.id}')
+            logging.info(f'Scraping post: {post.id}')
             posts.append(SubredditPost(
                 id=post.id,
                 url=post.url,
