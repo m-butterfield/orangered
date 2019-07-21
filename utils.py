@@ -16,6 +16,7 @@ from app import (
     app,
     db,
     EmailEvent,
+    EmailEventSubreddit,
     ScrapeRecord,
     ScrapeRecordSubredditPost,
     Subreddit,
@@ -72,8 +73,9 @@ def _send_emails(subreddit_posts, interval='daily'):
         for account in Account.query.join(Account.email_events).filter(
                 *_account_filters(6 if interval == 'weekly' else None)):
             account_subreddit_posts = OrderedDict([
-                (s.name, subreddit_posts[s.name])
-                for s in account.email_events[0].subreddits])
+                ((e.subreddit_name, e.search_term),
+                 subreddit_posts[(e.subreddit_name, e.search_term)])
+                for e in account.email_events[0].email_event_subreddits])
             _send_email_for_account(account, account_subreddit_posts)
 
 
@@ -88,8 +90,8 @@ def _account_filters(day_of_week):
 
 
 def _send_email_for_account(account, subreddit_posts):
-    logging.info('Sending email to %s with subreddits: %s',
-                 account.email, ', '.join(subreddit_posts.keys()))
+    logging.info('Sending email to %s with subreddit search terms: %s',
+                 account.email, subreddit_posts.keys())
     context = {
         'subreddits': subreddit_posts.items(),
         'email_management_url': url_for('manage', uuid=account.uuid),
@@ -133,26 +135,35 @@ def _scrape_posts(interval='daily'):
     reddit = reddit_client()
     subreddit_posts = {}
     now = datetime.utcnow()
-    for subreddit in _subreddits_to_scrape(
+    for subreddit_name, search_term in _subreddit_terms_to_scrape(
             6 if interval == 'weekly' else None):
         scrape_record = ScrapeRecord.query.filter(
-            ScrapeRecord.subreddit == subreddit,
+            ScrapeRecord.subreddit_name == subreddit_name,
+            ScrapeRecord.search_term == search_term,
             ScrapeRecord.interval == interval,
             ScrapeRecord.scrape_time > now - timedelta(hours=23),
         ).one_or_none()
         if not scrape_record:
             logging.info(f'Scraping new {interval} top posts for '
-                         f'subreddit: {subreddit.name}')
-            scrape_record = _scrape_new_posts(reddit, subreddit, interval)
-        subreddit_posts[subreddit.name] = scrape_record.subreddit_posts
+                         f'subreddit: {subreddit_name} '
+                         f'search_term: {search_term}')
+            scrape_record = _scrape_new_posts(
+                reddit, subreddit_name, search_term, interval)
+        subreddit_posts[(
+            subreddit_name, search_term)] = scrape_record.subreddit_posts
     logging.info('Done scraping subreddit posts')
     return subreddit_posts
 
 
-def _scrape_new_posts(reddit, subreddit, interval):
+def _scrape_new_posts(reddit, subreddit_name, search_term, interval):
     posts = []
-    for post in reddit.subreddit(subreddit.name).top(
-            'day' if interval == 'daily' else 'week', limit=10):
+    time_filter = 'day' if interval == 'daily' else 'week'
+    if search_term:
+        results = reddit.subreddit(subreddit_name).search(
+            search_term, time_filter=time_filter, limit=10)
+    else:
+        results = reddit.subreddit(subreddit_name).top(time_filter, limit=10)
+    for post in results:
         existing_post = SubredditPost.query.get(post.id)
         if existing_post:
             if any(sr.interval == interval
@@ -168,14 +179,15 @@ def _scrape_new_posts(reddit, subreddit, interval):
                 id=post.id,
                 url=post.url,
                 title=post.title,
-                subreddit=subreddit,
+                subreddit_name=subreddit_name,
                 preview_image_url=_get_post_preview(post),
                 permalink_url=_get_permalink_url(post),
                 num_comments=post.num_comments,
             ))
     scrape_record = ScrapeRecord(
         interval=interval,
-        subreddit=subreddit,
+        subreddit_name=subreddit_name,
+        search_term=search_term,
         scrape_record_subreddit_posts=[
             ScrapeRecordSubredditPost(
                 ordinal=i,
@@ -203,6 +215,9 @@ def _get_permalink_url(post):
     return f'https://www.reddit.com{post.permalink}'
 
 
-def _subreddits_to_scrape(day_of_week):
-    return Subreddit.query.join(Subreddit.email_events).join(Account).filter(
+def _subreddit_terms_to_scrape(day_of_week):
+    ees_cols = (
+        EmailEventSubreddit.subreddit_name, EmailEventSubreddit.search_term)
+    return db.session.query(*ees_cols).distinct(*ees_cols).order_by(
+        *ees_cols).join(EmailEventSubreddit.account).filter(
         *_account_filters(day_of_week))

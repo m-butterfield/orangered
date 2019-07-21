@@ -98,26 +98,6 @@ class SubredditPost(db.Model):
         return f'<SubredditPost {self.id}>'
 
 
-class EmailEventSubreddit(db.Model):
-    """
-    The relationship between email events and subreddits, with search terms.
-    """
-    email_event_id = db.Column(db.Integer, db.ForeignKey(
-        "email_event.id", ondelete="cascade"), primary_key=True)
-    subreddit_name = db.Column(db.String(21), db.ForeignKey(
-        "subreddit.name"), primary_key=True)
-    search_term = db.Column(db.String(512), primary_key=True)
-
-    email_event = db.relationship(
-        'EmailEvent', backref='email_event_subreddits')
-    subreddit = db.relationship('Subreddit')
-
-    def __repr__(self):
-        return (
-            f'<EmailEventSubreddit '
-            f'{self.email_event_id} {self.subreddit_name} {self.search_term}>')
-
-
 class EmailEvent(db.Model):
     """
     Recurring event model for emails to be sent to accounts.
@@ -148,6 +128,29 @@ class EmailEvent(db.Model):
             for sn, st in subreddit_search_terms
             if (sn, st) not in current_subreddit_search_terms
         ])
+
+
+class EmailEventSubreddit(db.Model):
+    """
+    The relationship between email events and subreddits, with search terms.
+    """
+    email_event_id = db.Column(db.Integer, db.ForeignKey(
+        "email_event.id", ondelete="cascade"), primary_key=True)
+    subreddit_name = db.Column(db.String(21), db.ForeignKey(
+        "subreddit.name"), primary_key=True)
+    search_term = db.Column(db.String(512), primary_key=True)
+
+    email_event = db.relationship(
+        'EmailEvent', backref='email_event_subreddits')
+    subreddit = db.relationship('Subreddit',
+                                order_by=(subreddit_name, search_term),
+                                backref='email_event_subreddits')
+    account = db.relationship('Account', secondary=EmailEvent.__table__)
+
+    def __repr__(self):
+        return (
+            f'<EmailEventSubreddit '
+            f'{self.email_event_id} {self.subreddit_name} {self.search_term}>')
 
 
 class ScrapeRecordSubredditPost(db.Model):
@@ -241,7 +244,8 @@ def manage(uuid):
         subreddits = request.form.getlist('subreddits[]')
         if len(subreddits) > 10:
             return 'too many subreddits', 400
-        account.email_events[0].update_subreddits((s, '') for s in subreddits)
+        account.email_events[0].update_subreddits([
+            (s, '') for s in subreddits])
         account.email_events[0].day_of_week = (
             6 if request.form['email_interval'] == 'weekly' else None)
         db.session.commit()

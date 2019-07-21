@@ -12,6 +12,7 @@ from app import (
     db,
     Account,
     EmailEvent,
+    EmailEventSubreddit,
     ScrapeRecord,
     ScrapeRecordSubredditPost,
     Subreddit,
@@ -237,8 +238,10 @@ class EmailTests(BaseTestCase):
                     account_email='bob@aol.com',
                     time_of_day=time(12),
                     day_of_week=day_of_week,
-                    subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                        ['aviation', 'spacex', 'running'])).all(),
+                    email_event_subreddits=[
+                        EmailEventSubreddit(subreddit_name=s, search_term='')
+                        for s in ['aviation', 'spacex', 'running']
+                    ],
                 )],
             ),
             # deactivated account
@@ -249,8 +252,10 @@ class EmailTests(BaseTestCase):
                     account_email='bob@aol.com',
                     time_of_day=time(12),
                     day_of_week=day_of_week,
-                    subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                        ['programming', 'askreddit'])).all(),
+                    email_event_subreddits=[
+                        EmailEventSubreddit(subreddit_name=s, search_term='')
+                        for s in ['programming', 'askreddit']
+                    ],
                 )],
             ),
             # account that already received their email for today
@@ -261,8 +266,10 @@ class EmailTests(BaseTestCase):
                     account_email='bob@aol.com',
                     time_of_day=time(12),
                     day_of_week=day_of_week,
-                    subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                        ['analog', 'finance'])).all(),
+                    email_event_subreddits=[
+                        EmailEventSubreddit(subreddit_name=s, search_term='')
+                        for s in ['analog', 'finance']
+                    ],
                 )],
             ),
             # account expecting different interval from the rest
@@ -272,8 +279,10 @@ class EmailTests(BaseTestCase):
                     account_email='bob@aol.com',
                     time_of_day=time(12),
                     day_of_week=6 if day_of_week is None else None,
-                    subreddits=Subreddit.query.filter(Subreddit.name.in_(
-                        ['aviation', 'spacex', 'running'])).all(),
+                    email_event_subreddits=[
+                        EmailEventSubreddit(subreddit_name=s, search_term='')
+                        for s in ['aviation', 'spacex', 'running']
+                    ],
                 )],
             ),
         ])
@@ -285,12 +294,14 @@ class EmailTests(BaseTestCase):
                 interval=interval,
                 scrape_time=datetime.utcnow() - timedelta(days=2),
                 subreddit_name='running',
+                search_term='',
             ),
             # aviation has already been scraped with existing scraped posts
             ScrapeRecord(
                 interval=interval,
                 scrape_time=now,
                 subreddit_name='aviation',
+                search_term='',
                 scrape_record_subreddit_posts=[
                     ScrapeRecordSubredditPost(
                         ordinal=0,
@@ -319,6 +330,7 @@ class EmailTests(BaseTestCase):
                 interval=interval,
                 scrape_time=datetime.utcnow() - timedelta(days=1),
                 subreddit_name='aviation',
+                search_term='',
                 scrape_record_subreddit_posts=[
                     ScrapeRecordSubredditPost(
                         ordinal=0,
@@ -338,6 +350,7 @@ class EmailTests(BaseTestCase):
                 interval=interval,
                 scrape_time=datetime.utcnow() - timedelta(days=1),
                 subreddit_name='spacex',
+                search_term='',
                 scrape_record_subreddit_posts=[
                     ScrapeRecordSubredditPost(
                         ordinal=0,
@@ -357,6 +370,7 @@ class EmailTests(BaseTestCase):
                 interval='weekly' if interval == 'daily' else 'daily',
                 scrape_time=datetime.utcnow() - timedelta(days=1),
                 subreddit_name='spacex',
+                search_term='',
                 scrape_record_subreddit_posts=[
                     ScrapeRecordSubredditPost(
                         ordinal=0,
@@ -388,16 +402,18 @@ class EmailTests(BaseTestCase):
             subreddit_posts = _scrape_posts()
 
         self.assertSetEqual(
-            {'aviation', 'spacex', 'running'}, set(subreddit_posts.keys()))
-        self.assertEqual(len(subreddit_posts['aviation']), 2)
+            {('aviation', ''), ('spacex', ''), ('running', '')},
+            set(subreddit_posts.keys()),
+        )
+        self.assertEqual(len(subreddit_posts[('aviation', '')]), 2)
         self.assertEqual(len(ScrapeRecord.query.filter(
             ScrapeRecord.subreddit_name == 'aviation').all()), 2)
         self.assertEqual(len(ScrapeRecord.query.filter(
             ScrapeRecord.subreddit_name == 'spacex').all()), 3)
-        self.assertEqual(len(subreddit_posts['spacex']), 4)
+        self.assertEqual(len(subreddit_posts[('spacex', '')]), 4)
         self.assertEqual(len(ScrapeRecord.query.filter(
             ScrapeRecord.subreddit_name == 'running').all()), 2)
-        self.assertEqual(len(subreddit_posts['running']), 5)
+        self.assertEqual(len(subreddit_posts[('running', '')]), 5)
 
         spacex_2 = SubredditPost.query.get('spacex_2')
         self.assertEqual(spacex_2.num_comments, 23)
@@ -416,9 +432,9 @@ class EmailTests(BaseTestCase):
             email_management_url=mock.ANY,
             unsubscribe_url=mock.ANY,
             subreddits=OrderedDict([
-                ('aviation', subreddit_posts['aviation']),
-                ('running', subreddit_posts['running']),
-                ('spacex', subreddit_posts['spacex']),
+                (('aviation', ''), subreddit_posts[('aviation', '')]),
+                (('running', ''), subreddit_posts[('running', '')]),
+                (('spacex', ''), subreddit_posts[('spacex', '')]),
             ]).items(),
         )
         fake_send_email.assert_called_once_with(
@@ -442,16 +458,18 @@ class EmailTests(BaseTestCase):
             subreddit_posts = _scrape_posts('weekly')
 
         self.assertSetEqual(
-            {'aviation', 'spacex', 'running'}, set(subreddit_posts.keys()))
-        self.assertEqual(len(subreddit_posts['aviation']), 2)
+            {('aviation', ''), ('spacex', ''), ('running', '')},
+            set(subreddit_posts.keys()),
+        )
+        self.assertEqual(len(subreddit_posts[('aviation', '')]), 2)
         self.assertEqual(len(ScrapeRecord.query.filter(
             ScrapeRecord.subreddit_name == 'aviation').all()), 2)
         self.assertEqual(len(ScrapeRecord.query.filter(
             ScrapeRecord.subreddit_name == 'spacex').all()), 3)
-        self.assertEqual(len(subreddit_posts['spacex']), 4)
+        self.assertEqual(len(subreddit_posts[('spacex', '')]), 4)
         self.assertEqual(len(ScrapeRecord.query.filter(
             ScrapeRecord.subreddit_name == 'running').all()), 2)
-        self.assertEqual(len(subreddit_posts['running']), 5)
+        self.assertEqual(len(subreddit_posts[('running', '')]), 5)
 
         spacex_2 = SubredditPost.query.get('spacex_2')
         self.assertEqual(spacex_2.num_comments, 23)
@@ -470,9 +488,9 @@ class EmailTests(BaseTestCase):
             email_management_url=mock.ANY,
             unsubscribe_url=mock.ANY,
             subreddits=OrderedDict([
-                ('aviation', subreddit_posts['aviation']),
-                ('running', subreddit_posts['running']),
-                ('spacex', subreddit_posts['spacex']),
+                (('aviation', ''), subreddit_posts[('aviation', '')]),
+                (('running', ''), subreddit_posts[('running', '')]),
+                (('spacex', ''), subreddit_posts[('spacex', '')]),
             ]).items(),
         )
         fake_send_email.assert_called_once_with(
