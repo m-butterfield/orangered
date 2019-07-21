@@ -64,7 +64,8 @@ class SignupTests(BaseAppTestCase):
         self.assertEqual(account.email_events[0].day_of_week, 6)
         self.assertEqual(
             set(expected_subreddits),
-            {s.name for s in account.email_events[0].subreddits})
+            {e.subreddit.name for e in
+             account.email_events[0].email_event_subreddits})
 
         self.client.post('/signup', data={
             'email': 'Bob3@aol.com',
@@ -136,7 +137,8 @@ class ManageTests(BaseAppTestCase):
         self.assertEqual(account.email_events[0].day_of_week, 6)
         self.assertEqual(
             set(expected_subreddits),
-            {s.name for s in account.email_events[0].subreddits})
+            {e.subreddit.name for e in
+             account.email_events[0].email_event_subreddits})
 
         self.client.post(f'/account/{self.account.uuid}/manage', data={
             'subreddits[]': expected_subreddits,

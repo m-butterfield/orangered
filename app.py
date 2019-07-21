@@ -135,6 +135,20 @@ class EmailEvent(db.Model):
     def __repr__(self):
         return f'<EmailEvent {self.id}>'
 
+    def update_subreddits(self, subreddit_search_terms):
+        current_subreddit_search_terms = []
+        for e in self.email_event_subreddits:
+            sn_st = (e.subreddit_name, e.search_term)
+            if sn_st in subreddit_search_terms:
+                current_subreddit_search_terms.append(sn_st)
+            else:
+                db.session.delete(e)
+        self.email_event_subreddits.extend([EmailEventSubreddit(
+            subreddit_name=sn, search_term=st)
+            for sn, st in subreddit_search_terms
+            if (sn, st) not in current_subreddit_search_terms
+        ])
+
 
 class ScrapeRecordSubredditPost(db.Model):
     """
@@ -227,8 +241,7 @@ def manage(uuid):
         subreddits = request.form.getlist('subreddits[]')
         if len(subreddits) > 10:
             return 'too many subreddits', 400
-        account.email_events[0].subreddits = Subreddit.query.filter(
-            Subreddit.name.in_(subreddits)).all()
+        account.email_events[0].update_subreddits((s, '') for s in subreddits)
         account.email_events[0].day_of_week = (
             6 if request.form['email_interval'] == 'weekly' else None)
         db.session.commit()
@@ -237,7 +250,8 @@ def manage(uuid):
         account=account,
         email_interval=(
             'weekly' if account.email_events[0].day_of_week else 'daily'),
-        user_subreddits=[s.name for s in account.email_events[0].subreddits],
+        user_subreddits=[e.subreddit.name for e in
+                         account.email_events[0].email_event_subreddits],
         subreddit_info=SUBREDDIT_INFO,
     )
 
@@ -271,7 +285,9 @@ def signup():
             account_email=email,
             time_of_day=datetime.time(12),
             day_of_week=6 if email_interval == 'weekly' else None,
-            subreddits=subreddits,
+            email_event_subreddits=[EmailEventSubreddit(
+                subreddit=subreddit, search_term='',
+            ) for subreddit in subreddits],
         )]
     ))
     db.session.commit()
