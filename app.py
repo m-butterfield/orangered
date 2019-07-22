@@ -116,18 +116,12 @@ class EmailEvent(db.Model):
         return f'<EmailEvent {self.id}>'
 
     def update_subreddits(self, subreddit_search_terms):
-        current_subreddit_search_terms = []
-        for e in self.email_event_subreddits:
-            sn_st = (e.subreddit_name, e.search_term)
-            if sn_st in subreddit_search_terms:
-                current_subreddit_search_terms.append(sn_st)
-            else:
-                db.session.delete(e)
-        self.email_event_subreddits.extend([EmailEventSubreddit(
-            subreddit_name=sn, search_term=st)
-            for sn, st in subreddit_search_terms
-            if (sn, st) not in current_subreddit_search_terms
-        ])
+        # Cannot get SQLAlchemy to play nice with relationships and
+        # compound primary/foreign keys, fix this later using normal orm stuff
+        EmailEventSubreddit.query.filter_by(email_event_id=self.id).delete()
+        db.session.add_all([EmailEventSubreddit(
+            email_event_id=self.id, subreddit_name=sn, search_term=st,
+        ) for sn, st in subreddit_search_terms])
 
 
 class EmailEventSubreddit(db.Model):
@@ -140,11 +134,8 @@ class EmailEventSubreddit(db.Model):
         "subreddit.name"), primary_key=True)
     search_term = db.Column(db.String(512), primary_key=True)
 
-    email_event = db.relationship(
-        'EmailEvent', backref='email_event_subreddits')
-    subreddit = db.relationship('Subreddit',
-                                order_by=(subreddit_name, search_term),
-                                backref='email_event_subreddits')
+    email_event = db.relationship('EmailEvent',
+                                  backref='email_event_subreddits')
     account = db.relationship('Account', secondary=EmailEvent.__table__)
 
     def __repr__(self):
@@ -244,8 +235,9 @@ def manage(uuid):
         subreddits = request.form.getlist('subreddits[]')
         if len(subreddits) > 10:
             return 'too many subreddits', 400
+        subreddits = Subreddit.query.filter(Subreddit.name.in_(subreddits))
         account.email_events[0].update_subreddits([
-            (s, '') for s in subreddits])
+            (s.name, '') for s in subreddits])
         account.email_events[0].day_of_week = (
             6 if request.form['email_interval'] == 'weekly' else None)
         db.session.commit()
@@ -254,7 +246,7 @@ def manage(uuid):
         account=account,
         email_interval=(
             'weekly' if account.email_events[0].day_of_week else 'daily'),
-        user_subreddits=[e.subreddit.name for e in
+        user_subreddits=[e.subreddit_name for e in
                          account.email_events[0].email_event_subreddits],
         subreddit_info=SUBREDDIT_INFO,
     )
@@ -281,7 +273,7 @@ def signup():
     subreddits = request.form.getlist('subreddits[]')
     if len(subreddits) > 10:
         return 'too many subreddits', 400
-    subreddits = Subreddit.query.filter(Subreddit.name.in_(subreddits)).all()
+    subreddits = Subreddit.query.filter(Subreddit.name.in_(subreddits))
     email_interval = request.form['email_interval']
     db.session.add(Account(
         email=email,
@@ -290,8 +282,7 @@ def signup():
             time_of_day=datetime.time(12),
             day_of_week=6 if email_interval == 'weekly' else None,
             email_event_subreddits=[EmailEventSubreddit(
-                subreddit=subreddit, search_term='',
-            ) for subreddit in subreddits],
+                subreddit_name=s.name, search_term='') for s in subreddits],
         )]
     ))
     db.session.commit()

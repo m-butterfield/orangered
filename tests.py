@@ -65,7 +65,7 @@ class SignupTests(BaseAppTestCase):
         self.assertEqual(account.email_events[0].day_of_week, 6)
         self.assertEqual(
             set(expected_subreddits),
-            {e.subreddit.name for e in
+            {e.subreddit_name for e in
              account.email_events[0].email_event_subreddits})
 
         self.client.post('/signup', data={
@@ -138,17 +138,22 @@ class ManageTests(BaseAppTestCase):
         self.assertEqual(account.email_events[0].day_of_week, 6)
         self.assertEqual(
             set(expected_subreddits),
-            {e.subreddit.name for e in
+            {e.subreddit_name for e in
              account.email_events[0].email_event_subreddits})
 
+        # remove one subreddit and switch to daily
         self.client.post(f'/account/{self.account.uuid}/manage', data={
-            'subreddits[]': expected_subreddits,
+            'subreddits[]': expected_subreddits[1:],
             'email_interval': 'daily',
         })
         account = Account.query.get(self.account.email)
         self.assertEqual(len(account.email_events), 1)
         self.assertEqual(account.email_events[0].time_of_day, time(12))
         self.assertIsNone(account.email_events[0].day_of_week)
+        self.assertEqual(
+            set(expected_subreddits[1:]),
+            {e.subreddit_name for e in
+             account.email_events[0].email_event_subreddits})
 
 
 class FakeSubredditPost:
