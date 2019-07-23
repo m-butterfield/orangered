@@ -135,6 +135,7 @@ class EmailEventSubreddit(db.Model):
     search_term = db.Column(db.String(512), primary_key=True)
 
     email_event = db.relationship('EmailEvent',
+                                  order_by=(subreddit_name, search_term),
                                   backref='email_event_subreddits')
     account = db.relationship('Account', secondary=EmailEvent.__table__)
 
