@@ -90,8 +90,12 @@
                     <h1 style="font-family: sans-serif; font-size: 70px; font-weight: normal; margin: 0; Margin-bottom: 15px; color: #FF9612;">orangered</h1>
                     <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 5px;">The best content from your favorite subreddits delivered to your inbox.</p>
                     <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 15px;"><a style="color: #FF9612;" href="{{ email_management_url }}" target="_blank">click here to manage your subreddits</a></p>
-                    {% for subreddit_name, posts in subreddits %}
-                      <h3 style="font-family: sans-serif; font-size: 50px; font-weight: normal; margin: 0; Margin-bottom: 15px; Margin-top: 50px; color: #FF9612;">/r/{{ subreddit_name }}</h3>
+                    {% for subreddit_name_search_term, posts in subreddit_posts %}
+                      {% if subreddit_name_search_term[0] == 'all' %}
+                      <h3 style="font-family: sans-serif; font-size: 50px; font-weight: normal; margin: 0; Margin-bottom: 15px; Margin-top: 50px; color: #FF9612;">search term: '{{ subreddit_name_search_term[1] }}'</h3>
+                      {% else %}
+                      <h3 style="font-family: sans-serif; font-size: 50px; font-weight: normal; margin: 0; Margin-bottom: 15px; Margin-top: 50px; color: #FF9612;">/r/{{ subreddit_name_search_term[0] }}{% if subreddit_name_search_term[1] %} + search term: '{{ subreddit_name_search_term[1] }}'{% endif %}</h3>
+                      {% endif %}
                       {% for post in posts %}
                         {% if post.preview_image_url %}
                         <p style="font-family: sans-serif; font-size: 14px; font-weight: normal; margin: 0; Margin-bottom: 5px;"><a style="color: #2C3E50;" href="{{ post.url }}" target="_blank">{{ post.title }}</a></p>

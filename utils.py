@@ -50,7 +50,7 @@ HTML_TEMPLATE, TEXT_TEMPLATE = _html_template(), _text_template()
 
 
 def insert_subreddits():
-    db.session.add_all([Subreddit(name=s) for s in SUBREDDITS])
+    db.session.add_all([Subreddit(name=s) for s in SUBREDDITS | {'all'}])
     db.session.commit()
 
 
@@ -72,11 +72,19 @@ def _send_emails(subreddit_posts, interval='daily'):
     with app.app_context():
         for account in Account.query.join(Account.email_events).filter(
                 *_account_filters(6 if interval == 'weekly' else None)):
-            account_subreddit_posts = OrderedDict([
-                ((e.subreddit_name, e.search_term),
-                 subreddit_posts[(e.subreddit_name, e.search_term)])
-                for e in account.email_events[0].email_event_subreddits])
-            _send_email_for_account(account, account_subreddit_posts)
+            _send_email_for_account(
+                account, _account_subreddit_posts(account, subreddit_posts))
+
+
+def _account_subreddit_posts(account, subreddit_posts):
+    searches, subreddits = [], []
+    for e in account.email_events[0].email_event_subreddits:
+        if e.subreddit_name == 'all':
+            searches.append(('all', e.search_term))
+        else:
+            subreddits.append((e.subreddit_name, e.search_term))
+    return OrderedDict([
+        (sn_st, subreddit_posts[sn_st]) for sn_st in searches + subreddits])
 
 
 def _account_filters(day_of_week):
@@ -93,7 +101,7 @@ def _send_email_for_account(account, subreddit_posts):
     logging.info('Sending email to %s with subreddit search terms: %s',
                  account.email, subreddit_posts.keys())
     context = {
-        'subreddits': subreddit_posts.items(),
+        'subreddit_posts': subreddit_posts.items(),
         'email_management_url': url_for('manage', uuid=account.uuid),
         'unsubscribe_url': url_for('unsubscribe', uuid=account.uuid),
     }
@@ -159,6 +167,7 @@ def _scrape_new_posts(reddit, subreddit_name, search_term, interval):
     posts = []
     time_filter = 'day' if interval == 'daily' else 'week'
     if search_term:
+        # default is sort='relevance', could try 'top' instead at some point
         results = reddit.subreddit(subreddit_name).search(
             search_term, time_filter=time_filter, limit=10)
     else:
