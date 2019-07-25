@@ -53,6 +53,30 @@ To create cluster:
         --enable-ip-alias \
         --cluster-version 1.12.7-gke.10
 
+To resize the cluster node pool:
+
+    gcloud container node-pools create small-pool \
+        --cluster orangered \
+        --zone us-east4-a \
+        --num-nodes 1 \
+        --machine-type g1-small \
+        --disk-size 10GB
+
+    # cordon all old nodes (run for each old node)
+    kubectl cordon <default-pool node name>
+
+    # drain all old nodes (run for each old node)
+    kubectl drain \
+        --force \
+        --ignore-daemonsets \
+        --delete-local-data \
+        --grace-period=10 \
+        <default-pool node name>
+
+    gcloud container node-pools delete default-pool \
+        --cluster orangered \
+        --zone us-east4-a
+
 To build container:
 
     docker build -t gcr.io/orangered/orangered .
