@@ -227,6 +227,7 @@ def health_check():
 
 @app.route("/account/<uuid>/manage", methods=['GET', 'POST'])
 def manage(uuid):
+    # test updating account with 'all' doesn't delete search
     account = Account.query.filter(Account.uuid == uuid).one_or_none()
     if account is None:
         return 'not found', 404

@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 from datetime import datetime, time, timedelta
 from itertools import chain
 import unittest
@@ -210,37 +210,44 @@ class FakeSubredditPost:
         }
 
 
-class FakeSubreddit:
-
-    def __init__(self, name, interval, search_term=''):
-        self.name = name
-        self.interval = interval
-        self.id = 0
-
-    def top(self, interval, limit):
-        return self.results(interval)
-
-    def search(self, search_term, time_filter, limit):
-        return self.results(time_filter, search_term)
-
-    def results(self, interval, search_term=''):
-        if interval == self.interval:
-            self.id += 5
-            return [FakeSubredditPost(self.name, i, search_term)
-                    for i in range(self.id - 5, self.id)]
-
-
 class FakeReddit:
 
+    _subreddits = {
+        ('all', 'tour de france'),
+        ('spacex', ''),
+        ('spacex', 'elon musk'),
+        ('running', ''),
+    }
+
     def __init__(self, interval):
-        self._subreddits = {
-            'all': FakeSubreddit('all', interval, 'neal stephenson'),
-            'spacex': FakeSubreddit('spacex', interval),
-            'running': FakeSubreddit('running', interval),
-        }
+        self._interval = interval
+        self._current_subreddit_name = ''
+        self._subreddit_post_ids = defaultdict(int)
 
     def subreddit(self, name):
-        return self._subreddits[name]
+        self._current_subreddit_name = name
+        return self
+
+    def top(self, interval, limit):
+        assert limit == 10
+        return self._results(interval)
+
+    def search(self, search_term, time_filter, limit):
+        assert limit == 10
+        return self._results(time_filter, search_term)
+
+    def _results(self, interval, search_term=''):
+        assert interval == self._interval
+        assert (self._current_subreddit_name, search_term) in self._subreddits
+        results = []
+        for _ in range(5):
+            self._subreddit_post_ids[self._current_subreddit_name] += 1
+            results.append(
+                FakeSubredditPost(
+                    self._current_subreddit_name,
+                    self._subreddit_post_ids[self._current_subreddit_name],
+                    search_term))
+        return results
 
 
 class EmailTests(BaseTestCase):
