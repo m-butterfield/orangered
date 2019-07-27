@@ -15,7 +15,6 @@ from app import (
     EmailEventSubreddit,
     ScrapeRecord,
     ScrapeRecordSubredditPost,
-    Subreddit,
     SubredditPost,
 )
 from utils import insert_subreddits
@@ -50,7 +49,7 @@ class BaseAppTestCase(BaseTestCase):
 class SignupTests(BaseAppTestCase):
 
     def test_valid_signup(self):
-        expected_subreddits = ['aviation', 'spacex']
+        expected_subreddits = ['ableton', 'spacex']
         resp = self.client.post('/signup', data={
             'email': 'Bob2@aol.com',
             'subreddits[]': expected_subreddits,
@@ -79,14 +78,14 @@ class SignupTests(BaseAppTestCase):
     def test_account_already_exists(self):
         resp = self.client.post('/signup', data={
             'email': self.account.email,
-            'subreddits[]': ['aviation'],
+            'subreddits[]': ['ableton'],
         })
         self.assertEqual(resp.status_code, 400)
 
     def test_max_10_subreddits(self):
         resp = self.client.post('/signup', data={
             'email': 'bob2@aol.com',
-            'subreddits[]': ['aviation'] * 11,
+            'subreddits[]': ['ableton'] * 11,
         })
         self.assertEqual(resp.status_code, 400)
 
@@ -122,11 +121,11 @@ class ManageTests(BaseAppTestCase):
 
     def test_max_10_subreddits(self):
         resp = self.client.post(f'/account/{self.account.uuid}/manage', data={
-            'subreddits[]': ['aviation'] * 11})
+            'subreddits[]': ['ableton'] * 11})
         self.assertEqual(resp.status_code, 400)
 
     def test_update_account(self):
-        expected_subreddits = ['aviation', 'spacex', 'analog']
+        expected_subreddits = ['ableton', 'spacex', 'analog']
         resp = self.client.post(f'/account/{self.account.uuid}/manage', data={
             'subreddits[]': expected_subreddits,
             'email_interval': 'weekly',
@@ -158,12 +157,14 @@ class ManageTests(BaseAppTestCase):
 
 class FakeSubredditPost:
 
-    def __init__(self, subreddit_name, post_number):
-        self.id = f'{subreddit_name}_{post_number}'
+    def __init__(self, subreddit, post_number, search_term):
+        self.id = f'{subreddit}_{post_number}'
         self.url = 'http://example.com'
-        self.title = f'{subreddit_name} post {post_number}'
+        self.title = (f'subreddit: {subreddit} ' if subreddit != 'all' else ''
+                      f'search term: {search_term} ' if search_term else ''
+                      f'post: {post_number}')
         self.num_comments = 23
-        self.permalink = f'/r/{subreddit_name}/comments/abc123/cool_post/'
+        self.permalink = f'/r/{subreddit}/comments/abc123/cool_post/'
         self.is_self = False
 
     @property
@@ -211,19 +212,29 @@ class FakeSubredditPost:
 
 class FakeSubreddit:
 
-    def __init__(self, name, interval):
+    def __init__(self, name, interval, search_term=''):
         self.name = name
         self.interval = interval
+        self.id = 0
 
-    def top(self, interval, *args, **kwargs):
+    def top(self, interval, limit):
+        return self.results(interval)
+
+    def search(self, search_term, time_filter, limit):
+        return self.results(time_filter, search_term)
+
+    def results(self, interval, search_term=''):
         if interval == self.interval:
-            return [FakeSubredditPost(self.name, i) for i in range(5)]
+            self.id += 5
+            return [FakeSubredditPost(self.name, i, search_term)
+                    for i in range(self.id - 5, self.id)]
 
 
 class FakeReddit:
 
     def __init__(self, interval):
         self._subreddits = {
+            'all': FakeSubreddit('all', interval, 'neal stephenson'),
             'spacex': FakeSubreddit('spacex', interval),
             'running': FakeSubreddit('running', interval),
         }
@@ -244,8 +255,18 @@ class EmailTests(BaseTestCase):
                     time_of_day=time(12),
                     day_of_week=day_of_week,
                     email_event_subreddits=[
-                        EmailEventSubreddit(subreddit_name=s, search_term='')
-                        for s in ['aviation', 'spacex', 'running']
+                        EmailEventSubreddit(subreddit_name='all',
+                                            search_term='neal stephenson'),
+                        EmailEventSubreddit(subreddit_name='all',
+                                            search_term='tour de france'),
+                        EmailEventSubreddit(subreddit_name='ableton',
+                                            search_term=''),
+                        EmailEventSubreddit(subreddit_name='running',
+                                            search_term=''),
+                        EmailEventSubreddit(subreddit_name='spacex',
+                                            search_term=''),
+                        EmailEventSubreddit(subreddit_name='spacex',
+                                            search_term='elon musk'),
                     ],
                 )],
             ),
@@ -286,7 +307,7 @@ class EmailTests(BaseTestCase):
                     day_of_week=6 if day_of_week is None else None,
                     email_event_subreddits=[
                         EmailEventSubreddit(subreddit_name=s, search_term='')
-                        for s in ['aviation', 'spacex', 'running']
+                        for s in ['ableton', 'spacex', 'running']
                     ],
                 )],
             ),
@@ -294,26 +315,33 @@ class EmailTests(BaseTestCase):
 
     def _add_posts(self, now, interval='daily'):
         db.session.add_all([
-            # last scraped past one day for 'running' so scraping should happen
+            # old scrape record for 'running' so scraping should happen
             ScrapeRecord(
                 interval=interval,
                 scrape_time=datetime.utcnow() - timedelta(days=2),
                 subreddit_name='running',
                 search_term='',
             ),
-            # aviation has already been scraped with existing scraped posts
+            # old scrape record for 'tour de france' so scraping should happen
+            ScrapeRecord(
+                interval=interval,
+                scrape_time=datetime.utcnow() - timedelta(days=2),
+                subreddit_name='all',
+                search_term='tour de france',
+            ),
+            # scrape record for neal stephenson with existing posts
             ScrapeRecord(
                 interval=interval,
                 scrape_time=now,
-                subreddit_name='aviation',
-                search_term='',
+                subreddit_name='all',
+                search_term='neal stephenson',
                 scrape_record_subreddit_posts=[
                     ScrapeRecordSubredditPost(
                         ordinal=0,
                         subreddit_post=SubredditPost(
                             id=str(uuid.uuid4()),
-                            subreddit_name='aviation',
-                            title='aviation post 1',
+                            subreddit_name='all',
+                            title='neal stephenson post 1',
                             url='http://example.com',
                             num_comments=23,
                         ),
@@ -322,8 +350,37 @@ class EmailTests(BaseTestCase):
                         ordinal=1,
                         subreddit_post=SubredditPost(
                             id=str(uuid.uuid4()),
-                            subreddit_name='aviation',
-                            title='aviation post 2',
+                            subreddit_name='all',
+                            title='neal stephenson post 2',
+                            url='http://example.com',
+                            num_comments=23,
+                        ),
+                    ),
+                ],
+            ),
+            # scrape record for ableton with existing posts
+            ScrapeRecord(
+                interval=interval,
+                scrape_time=now,
+                subreddit_name='ableton',
+                search_term='',
+                scrape_record_subreddit_posts=[
+                    ScrapeRecordSubredditPost(
+                        ordinal=0,
+                        subreddit_post=SubredditPost(
+                            id=str(uuid.uuid4()),
+                            subreddit_name='ableton',
+                            title='ableton post 1',
+                            url='http://example.com',
+                            num_comments=23,
+                        ),
+                    ),
+                    ScrapeRecordSubredditPost(
+                        ordinal=1,
+                        subreddit_post=SubredditPost(
+                            id=str(uuid.uuid4()),
+                            subreddit_name='ableton',
+                            title='ableton post 2',
                             url='http://example.com',
                             num_comments=23,
                         ),
@@ -334,15 +391,15 @@ class EmailTests(BaseTestCase):
             ScrapeRecord(
                 interval=interval,
                 scrape_time=datetime.utcnow() - timedelta(days=1),
-                subreddit_name='aviation',
+                subreddit_name='ableton',
                 search_term='',
                 scrape_record_subreddit_posts=[
                     ScrapeRecordSubredditPost(
                         ordinal=0,
                         subreddit_post=SubredditPost(
                             id=str(uuid.uuid4()),
-                            subreddit_name='aviation',
-                            title='aviation post 3',
+                            subreddit_name='ableton',
+                            title='ableton post 3',
                             url='http://example.com',
                             scraped_at=datetime.utcnow() - timedelta(days=1),
                             num_comments=23,
@@ -407,18 +464,40 @@ class EmailTests(BaseTestCase):
             subreddit_posts = _scrape_posts()
 
         self.assertSetEqual(
-            {('aviation', ''), ('spacex', ''), ('running', '')},
+            {('all', 'neal stephenson'), ('all', 'tour de france'),
+             ('ableton', ''), ('running', ''), ('spacex', ''),
+             ('spacex', 'elon musk')},
             set(subreddit_posts.keys()),
         )
-        self.assertEqual(len(subreddit_posts[('aviation', '')]), 2)
+        self.assertEqual(len(subreddit_posts[('all', 'neal stephenson')]), 2)
         self.assertEqual(len(ScrapeRecord.query.filter(
-            ScrapeRecord.subreddit_name == 'aviation').all()), 2)
+            ScrapeRecord.subreddit_name == 'all',
+            ScrapeRecord.search_term == 'neal stephenson').all()), 1)
+
+        self.assertEqual(len(subreddit_posts[('all', 'tour de france')]), 5)
         self.assertEqual(len(ScrapeRecord.query.filter(
-            ScrapeRecord.subreddit_name == 'spacex').all()), 3)
+            ScrapeRecord.subreddit_name == 'all',
+            ScrapeRecord.search_term == 'tour de france').all()), 2)
+
+        self.assertEqual(len(subreddit_posts[('ableton', '')]), 2)
+        self.assertEqual(len(ScrapeRecord.query.filter(
+            ScrapeRecord.subreddit_name == 'ableton',
+            ScrapeRecord.search_term == '').all()), 2)
+
         self.assertEqual(len(subreddit_posts[('spacex', '')]), 4)
         self.assertEqual(len(ScrapeRecord.query.filter(
-            ScrapeRecord.subreddit_name == 'running').all()), 2)
+            ScrapeRecord.subreddit_name == 'spacex',
+            ScrapeRecord.search_term == '').all()), 3)
+
+        self.assertEqual(len(subreddit_posts[('spacex', 'elon musk')]), 5)
+        self.assertEqual(len(ScrapeRecord.query.filter(
+            ScrapeRecord.subreddit_name == 'spacex',
+            ScrapeRecord.search_term == 'elon musk').all()), 1)
+
         self.assertEqual(len(subreddit_posts[('running', '')]), 5)
+        self.assertEqual(len(ScrapeRecord.query.filter(
+            ScrapeRecord.subreddit_name == 'running',
+            ScrapeRecord.search_term == '').all()), 2)
 
         spacex_2 = SubredditPost.query.get('spacex_2')
         self.assertEqual(spacex_2.num_comments, 23)
@@ -436,10 +515,16 @@ class EmailTests(BaseTestCase):
         fake_template().render.assert_called_with(
             email_management_url=mock.ANY,
             unsubscribe_url=mock.ANY,
-            subreddits=OrderedDict([
-                (('aviation', ''), subreddit_posts[('aviation', '')]),
+            subreddit_posts=OrderedDict([
+                (('all', 'neal stephenson'),
+                 subreddit_posts[('all', 'neal stephenson')]),
+                (('all', 'tour de france'),
+                 subreddit_posts[('all', 'tour de france')]),
+                (('ableton', ''), subreddit_posts[('ableton', '')]),
                 (('running', ''), subreddit_posts[('running', '')]),
                 (('spacex', ''), subreddit_posts[('spacex', '')]),
+                (('spacex', 'elon musk'),
+                 subreddit_posts[('spacex', 'elon musk')]),
             ]).items(),
         )
         fake_send_email.assert_called_once_with(
@@ -458,23 +543,45 @@ class EmailTests(BaseTestCase):
         db.session.commit()
 
         with mock.patch('utils.reddit_client', return_value=FakeReddit(
-                interval='week',
+            interval='week',
         )):
             subreddit_posts = _scrape_posts('weekly')
 
         self.assertSetEqual(
-            {('aviation', ''), ('spacex', ''), ('running', '')},
+            {('all', 'neal stephenson'), ('all', 'tour de france'),
+             ('ableton', ''), ('running', ''), ('spacex', ''),
+             ('spacex', 'elon musk')},
             set(subreddit_posts.keys()),
         )
-        self.assertEqual(len(subreddit_posts[('aviation', '')]), 2)
+        self.assertEqual(len(subreddit_posts[('all', 'neal stephenson')]), 2)
         self.assertEqual(len(ScrapeRecord.query.filter(
-            ScrapeRecord.subreddit_name == 'aviation').all()), 2)
+            ScrapeRecord.subreddit_name == 'all',
+            ScrapeRecord.search_term == 'neal stephenson').all()), 1)
+
+        self.assertEqual(len(subreddit_posts[('all', 'tour de france')]), 5)
         self.assertEqual(len(ScrapeRecord.query.filter(
-            ScrapeRecord.subreddit_name == 'spacex').all()), 3)
+            ScrapeRecord.subreddit_name == 'all',
+            ScrapeRecord.search_term == 'tour de france').all()), 2)
+
+        self.assertEqual(len(subreddit_posts[('ableton', '')]), 2)
+        self.assertEqual(len(ScrapeRecord.query.filter(
+            ScrapeRecord.subreddit_name == 'ableton',
+            ScrapeRecord.search_term == '').all()), 2)
+
         self.assertEqual(len(subreddit_posts[('spacex', '')]), 4)
         self.assertEqual(len(ScrapeRecord.query.filter(
-            ScrapeRecord.subreddit_name == 'running').all()), 2)
+            ScrapeRecord.subreddit_name == 'spacex',
+            ScrapeRecord.search_term == '').all()), 3)
+
+        self.assertEqual(len(subreddit_posts[('spacex', 'elon musk')]), 5)
+        self.assertEqual(len(ScrapeRecord.query.filter(
+            ScrapeRecord.subreddit_name == 'spacex',
+            ScrapeRecord.search_term == 'elon musk').all()), 1)
+
         self.assertEqual(len(subreddit_posts[('running', '')]), 5)
+        self.assertEqual(len(ScrapeRecord.query.filter(
+            ScrapeRecord.subreddit_name == 'running',
+            ScrapeRecord.search_term == '').all()), 2)
 
         spacex_2 = SubredditPost.query.get('spacex_2')
         self.assertEqual(spacex_2.num_comments, 23)
@@ -492,10 +599,16 @@ class EmailTests(BaseTestCase):
         fake_template().render.assert_called_with(
             email_management_url=mock.ANY,
             unsubscribe_url=mock.ANY,
-            subreddits=OrderedDict([
-                (('aviation', ''), subreddit_posts[('aviation', '')]),
+            subreddit_posts=OrderedDict([
+                (('all', 'neal stephenson'),
+                 subreddit_posts[('all', 'neal stephenson')]),
+                (('all', 'tour de france'),
+                 subreddit_posts[('all', 'tour de france')]),
+                (('ableton', ''), subreddit_posts[('ableton', '')]),
                 (('running', ''), subreddit_posts[('running', '')]),
                 (('spacex', ''), subreddit_posts[('spacex', '')]),
+                (('spacex', 'elon musk'),
+                 subreddit_posts[('spacex', 'elon musk')]),
             ]).items(),
         )
         fake_send_email.assert_called_once_with(
