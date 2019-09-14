@@ -13,7 +13,7 @@ import google.cloud.logging
 
 import requests
 
-from subreddits import SUBREDDIT_INFO
+from subreddits import SUBREDDIT_INFO, SUBREDDITS
 
 
 RECAPTCHA_SITE_KEY = os.environ.get('RECAPTCHA_SITE_KEY')
@@ -212,6 +212,7 @@ def index():
     return render_template('index.html',
                            cache_timestamp=str(int(cache_time)),
                            subreddit_info=SUBREDDIT_INFO,
+                           subreddit_names=sorted(SUBREDDITS),
                            recaptcha_site_key=RECAPTCHA_SITE_KEY)
 
 
@@ -227,7 +228,6 @@ def health_check():
 
 @app.route("/account/<uuid>/manage", methods=['GET', 'POST'])
 def manage(uuid):
-    # test updating account with 'all' doesn't delete search
     account = Account.query.filter(Account.uuid == uuid).one_or_none()
     if account is None:
         return 'not found', 404

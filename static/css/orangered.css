@@ -269,6 +269,7 @@ header.masthead h2 {
 }
 
 .floating-label-form-group input,
+.floating-label-form-group select,
 .floating-label-form-group textarea {
   font-size: 1.5em;
   position: relative;
@@ -290,7 +291,6 @@ header.masthead h2 {
   margin: 0;
   -webkit-transition: top 0.3s ease, opacity 0.3s ease;
   transition: top 0.3s ease, opacity 0.3s ease;
-  vertical-align: middle;
   vertical-align: baseline;
   opacity: 0;
 }
@@ -374,6 +374,19 @@ a:focus, a:hover, a:active {
 
 .search-choice span {
   font-size: 1.5em;
+}
+
+.chosen-single {
+  font-size: 1.5em;
+  padding: .5rem 0 .5rem .75rem;
+}
+
+.chosen-container-active.chosen-with-drop .chosen-single div:after {
+  top: .5rem;
+}
+
+.chosen-container-single .chosen-single div:after {
+  top: .5rem;
 }
 
 .search-field {

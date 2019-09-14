@@ -50,9 +50,12 @@ class SignupTests(BaseAppTestCase):
 
     def test_valid_signup(self):
         expected_subreddits = ['ableton', 'spacex']
+        expected_search_terms = [
+            ('all', 'neal stephenson'), ('spacex', 'elon musk')]
         resp = self.client.post('/signup', data={
             'email': 'Bob2@aol.com',
             'subreddits[]': expected_subreddits,
+            'search_terms[]': expected_search_terms,
             'email_interval': 'weekly',
         })
         self.assertEqual(resp.status_code, 201)
