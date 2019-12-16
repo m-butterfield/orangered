@@ -13,7 +13,7 @@ import google.cloud.logging
 
 import requests
 
-from subreddits import SUBREDDIT_INFO
+from subreddits import SUBREDDIT_INFO, SUBREDDITS
 
 
 RECAPTCHA_SITE_KEY = os.environ.get('RECAPTCHA_SITE_KEY')
@@ -54,15 +54,6 @@ else:
     client.setup_logging()
 
 
-email_event_subreddit = db.Table(
-    "email_event_subreddit", db.Model.metadata,
-    db.Column("email_event_id", db.Integer, db.ForeignKey(
-        "email_event.id", ondelete="cascade"), primary_key=True),
-    db.Column("subreddit_name", db.String(21), db.ForeignKey(
-        "subreddit.name", onupdate="cascade"), primary_key=True),
-)
-
-
 class Account(db.Model):
     email = db.Column(db.String(320), primary_key=True)
     uuid = db.Column(
@@ -89,11 +80,9 @@ class Subreddit(db.Model):
 
 class SubredditPost(db.Model):
     id = db.Column(db.String(128), primary_key=True)
-    subreddit_name = db.Column(
-        db.String(21),
-        db.ForeignKey('subreddit.name', onupdate='cascade'),
-        nullable=False,
-    )
+    subreddit_name = db.Column(db.String(21),
+                               db.ForeignKey('subreddit.name'),
+                               nullable=False)
     subreddit = db.relationship('Subreddit')
     title = db.Column(db.String(300), nullable=False)
     url = db.Column(db.String(2000), nullable=False)
@@ -123,10 +112,37 @@ class EmailEvent(db.Model):
     time_of_day = db.Column(db.Time, nullable=False)
     day_of_week = db.Column(db.Integer)
 
-    subreddits = db.relationship('Subreddit',
-                                 backref='email_events',
-                                 order_by='Subreddit.name',
-                                 secondary=email_event_subreddit)
+    def __repr__(self):
+        return f'<EmailEvent {self.id}>'
+
+    def update_subreddits(self, subreddit_search_terms):
+        # Cannot get SQLAlchemy to play nice with relationships and
+        # compound primary/foreign keys, fix this later using normal orm stuff
+        EmailEventSubreddit.query.filter_by(email_event_id=self.id).delete()
+        db.session.add_all([EmailEventSubreddit(
+            email_event_id=self.id, subreddit_name=sn, search_term=st,
+        ) for sn, st in subreddit_search_terms])
+
+
+class EmailEventSubreddit(db.Model):
+    """
+    The relationship between email events and subreddits, with search terms.
+    """
+    email_event_id = db.Column(db.Integer, db.ForeignKey(
+        "email_event.id", ondelete="cascade"), primary_key=True)
+    subreddit_name = db.Column(db.String(21), db.ForeignKey(
+        "subreddit.name"), primary_key=True)
+    search_term = db.Column(db.String(512), primary_key=True)
+
+    email_event = db.relationship('EmailEvent',
+                                  order_by=(subreddit_name, search_term),
+                                  backref='email_event_subreddits')
+    account = db.relationship('Account', secondary=EmailEvent.__table__)
+
+    def __repr__(self):
+        return (
+            f'<EmailEventSubreddit '
+            f'{self.email_event_id} {self.subreddit_name} {self.search_term}>')
 
 
 class ScrapeRecordSubredditPost(db.Model):
@@ -144,6 +160,10 @@ class ScrapeRecordSubredditPost(db.Model):
     scrape_record = db.relationship('ScrapeRecord')
     subreddit_post = db.relationship('SubredditPost')
 
+    def __repr__(self):
+        return (f'<ScrapeRecordSubredditPost '
+                f'{self.scrape_record_id} {self.subreddit_post_id}>')
+
 
 class ScrapeRecord(db.Model):
     """
@@ -155,8 +175,9 @@ class ScrapeRecord(db.Model):
     scrape_time = db.Column(db.DateTime,
                             server_default=db.func.now(),
                             nullable=False)
-    subreddit_name = db.Column(db.String(21), db.ForeignKey(
-        "subreddit.name", onupdate="cascade"))
+    subreddit_name = db.Column(
+        db.String(21), db.ForeignKey("subreddit.name"), nullable=False)
+    search_term = db.Column(db.String(512), nullable=False)
 
     subreddit = db.relationship('Subreddit')
     scrape_record_subreddit_posts = db.relationship(
@@ -166,6 +187,9 @@ class ScrapeRecord(db.Model):
         backref='scrape_records',
         order_by='ScrapeRecordSubredditPost.ordinal',
         secondary=ScrapeRecordSubredditPost.__table__)
+
+    def __repr__(self):
+        return f'<ScrapeRecord {self.id}>'
 
 
 @app.context_processor
@@ -188,6 +212,7 @@ def index():
     return render_template('index.html',
                            cache_timestamp=str(int(cache_time)),
                            subreddit_info=SUBREDDIT_INFO,
+                           subreddit_names=sorted(SUBREDDITS),
                            recaptcha_site_key=RECAPTCHA_SITE_KEY)
 
 
@@ -212,8 +237,9 @@ def manage(uuid):
         subreddits = request.form.getlist('subreddits[]')
         if len(subreddits) > 10:
             return 'too many subreddits', 400
-        account.email_events[0].subreddits = Subreddit.query.filter(
-            Subreddit.name.in_(subreddits)).all()
+        subreddits = Subreddit.query.filter(Subreddit.name.in_(subreddits))
+        account.email_events[0].update_subreddits([
+            (s.name, '') for s in subreddits])
         account.email_events[0].day_of_week = (
             6 if request.form['email_interval'] == 'weekly' else None)
         db.session.commit()
@@ -222,7 +248,8 @@ def manage(uuid):
         account=account,
         email_interval=(
             'weekly' if account.email_events[0].day_of_week else 'daily'),
-        user_subreddits=[s.name for s in account.email_events[0].subreddits],
+        user_subreddits=[e.subreddit_name for e in
+                         account.email_events[0].email_event_subreddits],
         subreddit_info=SUBREDDIT_INFO,
     )
 
@@ -248,7 +275,7 @@ def signup():
     subreddits = request.form.getlist('subreddits[]')
     if len(subreddits) > 10:
         return 'too many subreddits', 400
-    subreddits = Subreddit.query.filter(Subreddit.name.in_(subreddits)).all()
+    subreddits = Subreddit.query.filter(Subreddit.name.in_(subreddits))
     email_interval = request.form['email_interval']
     db.session.add(Account(
         email=email,
@@ -256,7 +283,8 @@ def signup():
             account_email=email,
             time_of_day=datetime.time(12),
             day_of_week=6 if email_interval == 'weekly' else None,
-            subreddits=subreddits,
+            email_event_subreddits=[EmailEventSubreddit(
+                subreddit_name=s.name, search_term='') for s in subreddits],
         )]
     ))
     db.session.commit()

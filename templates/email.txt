@@ -2,8 +2,12 @@ Orangered - The best content from your favorite subreddits delivered to your inb
 Go here to manage your subreddits: {{ email_management_url }}
 Need help? Contact help@orangered.io
 
-{% for subreddit_name, posts in subreddits %}
-/r/{{ subreddit_name }}:
+{% for subreddit_name_search_term, posts in subreddit_posts %}
+{% if subreddit_name_search_term[0] == 'all' %}
+Search term: '{{ subreddit_name_search_term[1] }}'
+{% else %}
+/r/{{ subreddit_name_search_term[0] }}{% if subreddit_name_search_term[1] %} + search term: '{{ subreddit_name_search_term[1] }}'{% endif %}:
+{% endif %}
 {% for post in posts %}
 - {{ post.title }}: {{ post.url }}
 {% endfor %}
