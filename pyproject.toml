@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "orangered"
+version = "0.1.0"
+description = ""
+authors = ["Matt Butterfield <matt@mattbutterfield.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Flask = "^2.0.2"
+psycopg2 = "^2.9.3"
+SQLAlchemy = "^1.4.31"
+freezegun = "^1.1.0"
+praw = "^7.5.0"
+
+[tool.poetry.dev-dependencies]
+ipdb = "^0.13.9"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
