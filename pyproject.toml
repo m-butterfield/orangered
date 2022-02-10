@@ -11,6 +11,7 @@ psycopg2 = "^2.9.3"
 SQLAlchemy = "^1.4.31"
 freezegun = "^1.1.0"
 praw = "^7.5.0"
+Flask-SQLAlchemy = "^2.5.1"
 
 [tool.poetry.dev-dependencies]
 ipdb = "^0.13.9"
