@@ -34,7 +34,7 @@ resource "google_cloud_run_service" "orangered" {
           name = "PGHOST"
           value_from {
             secret_key_ref {
-              name = google_secret_manager_secret.orangered_db_ip.secret_id
+              name = google_secret_manager_secret.orangered_db_host.secret_id
               key  = "latest"
             }
           }

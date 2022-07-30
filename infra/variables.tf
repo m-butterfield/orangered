@@ -11,7 +11,7 @@ variable "db_password" {
   sensitive = true
 }
 
-variable "db_ip" {
+variable "db_host" {
   type      = string
   sensitive = true
 }

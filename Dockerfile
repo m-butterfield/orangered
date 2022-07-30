@@ -14,6 +14,8 @@ RUN poetry install --no-interaction --no-ansi -vvv
 
 FROM python as server
 ENV PATH="/orangered/.venv/bin:$PATH"
+RUN apt-get update \
+    && apt-get -y install libpq-dev
 COPY --from=poetry /orangered /orangered
 COPY . /orangered
 CMD gunicorn -w 4 -b :8000 app:app

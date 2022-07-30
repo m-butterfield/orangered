@@ -17,21 +17,21 @@ resource "google_secret_manager_secret_iam_member" "cloud_run_orangered_db_passw
   member    = "serviceAccount:${google_service_account.orangered_cloud_run.email}"
 }
 
-resource "google_secret_manager_secret" "orangered_db_ip" {
-  secret_id = "orangered-db-ip"
+resource "google_secret_manager_secret" "orangered_db_host" {
+  secret_id = "orangered-db-host"
   replication {
     automatic = true
   }
 }
 
-resource "google_secret_manager_secret_version" "orangered_db_ip_v1" {
-  secret      = google_secret_manager_secret.orangered_db_ip.name
-  secret_data = var.db_ip
+resource "google_secret_manager_secret_version" "orangered_db_host_v1" {
+  secret      = google_secret_manager_secret.orangered_db_host.name
+  secret_data = var.db_host
 }
 
-resource "google_secret_manager_secret_iam_member" "cloud_run_orangered_db_ip" {
+resource "google_secret_manager_secret_iam_member" "cloud_run_orangered_db_host" {
   project   = var.project
-  secret_id = google_secret_manager_secret.orangered_db_ip.secret_id
+  secret_id = google_secret_manager_secret.orangered_db_host.secret_id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.orangered_cloud_run.email}"
 }
