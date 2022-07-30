@@ -23,13 +23,13 @@ def _psql_uri():
     password = os.environ.get("PGPASSWORD")
     if username and password:
         return (
-            f"postgres://{username}:{password}@"
+            f"postgresql+psycopg2://{username}:{password}@"
             f'{os.environ.get("PGHOST")}:5432/'
             f'{os.environ.get("PGDATABASE")}'
         )
     else:
         return (
-            f'postgres://{os.environ.get("PGHOST")}:5432/'
+            f'postgresql+psycopg2://{os.environ.get("PGHOST")}:5432/'
             f'{os.environ.get("PGDATABASE")}'
         )
 
