@@ -10,7 +10,7 @@ export PGDATABASE=orangered
 
 deploy: docker-build docker-push
 	$(deployservercommand)
-	#$(deployworkercommand)
+	$(deployworkercommand)
 
 deploy-server: docker-build docker-push
 	$(deployservercommand)

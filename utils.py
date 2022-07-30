@@ -10,6 +10,7 @@ from jinja2 import Template
 import praw
 
 import requests
+from requests.auth import HTTPBasicAuth
 
 from app import (
     Account,
@@ -25,8 +26,9 @@ from app import (
 from subreddits import SUBREDDITS
 
 
-MAILGUN_API_URL = "https://api.mailgun.net/v3/orangered.email/messages"
-MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY")
+MAILJET_API_URL = "https://api.mailjet.com/v3.1/send"
+MAILJET_API_KEY = os.environ.get("MAILJET_API_KEY")
+MAILJET_SECRET_KEY = os.environ.get("MAILJET_SECRET_KEY")
 
 
 REDDIT_CLIENT_ID = os.environ.get("REDDIT_CLIENT_ID")
@@ -118,16 +120,26 @@ def _send_email(email, html, text):
     if app.config["DEBUG"]:
         return _save_test_emails(html, text)
     resp = requests.post(
-        MAILGUN_API_URL,
-        auth=("api", MAILGUN_API_KEY),
-        data={
-            "from": "Orangered <no-reply@orangered.email>",
-            "to": [email],
-            "subject": (
-                "Orangered - " "The best content from your favorite subreddits"
-            ),
-            "html": html,
-            "text": text,
+        MAILJET_API_URL,
+        auth=HTTPBasicAuth(MAILJET_API_KEY, MAILJET_SECRET_KEY),
+        json={
+            "Messages": [
+                {
+                    "From": {
+                        "Email": "no-reply@orangered.email",
+                    },
+                    "To": [
+                        {
+                            "Email": email,
+                        }
+                    ],
+                    "Subject": (
+                        "Orangered - " "The best content from your favorite subreddits"
+                    ),
+                    "TextPart": text,
+                    "HTMLPart": html,
+                },
+            ],
         },
     )
     resp.raise_for_status()

@@ -73,3 +73,79 @@ resource "google_secret_manager_secret_iam_member" "cloud_run_orangered_recaptch
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.orangered_cloud_run.email}"
 }
+
+resource "google_secret_manager_secret" "orangered_mailjet_api_key" {
+  secret_id = "orangered-mailjet-api-key"
+  replication {
+    automatic = true
+  }
+}
+
+resource "google_secret_manager_secret_version" "orangered_mailjet_api_key_v1" {
+  secret      = google_secret_manager_secret.orangered_mailjet_api_key.name
+  secret_data = var.mailjet_api_key
+}
+
+resource "google_secret_manager_secret_iam_member" "cloud_run_orangered_mailjet_api_key" {
+  project   = var.project
+  secret_id = google_secret_manager_secret.orangered_mailjet_api_key.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.orangered_cloud_run.email}"
+}
+
+resource "google_secret_manager_secret" "orangered_mailjet_secret_key" {
+  secret_id = "orangered-mailjet-secret-key"
+  replication {
+    automatic = true
+  }
+}
+
+resource "google_secret_manager_secret_version" "orangered_mailjet_secret_key_v1" {
+  secret      = google_secret_manager_secret.orangered_mailjet_secret_key.name
+  secret_data = var.mailjet_secret_key
+}
+
+resource "google_secret_manager_secret_iam_member" "cloud_run_orangered_mailjet_secret_key" {
+  project   = var.project
+  secret_id = google_secret_manager_secret.orangered_mailjet_secret_key.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.orangered_cloud_run.email}"
+}
+
+resource "google_secret_manager_secret" "orangered_reddit_client_id" {
+  secret_id = "orangered-reddit-client-id"
+  replication {
+    automatic = true
+  }
+}
+
+resource "google_secret_manager_secret_version" "orangered_reddit_client_id_v1" {
+  secret      = google_secret_manager_secret.orangered_reddit_client_id.name
+  secret_data = var.reddit_client_id
+}
+
+resource "google_secret_manager_secret_iam_member" "cloud_run_orangered_reddit_client_id" {
+  project   = var.project
+  secret_id = google_secret_manager_secret.orangered_reddit_client_id.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.orangered_cloud_run.email}"
+}
+
+resource "google_secret_manager_secret" "orangered_reddit_client_secret" {
+  secret_id = "orangered-reddit-client-secret"
+  replication {
+    automatic = true
+  }
+}
+
+resource "google_secret_manager_secret_version" "orangered_reddit_client_secret_v1" {
+  secret      = google_secret_manager_secret.orangered_reddit_client_secret.name
+  secret_data = var.reddit_client_secret
+}
+
+resource "google_secret_manager_secret_iam_member" "cloud_run_orangered_reddit_client_secret" {
+  project   = var.project
+  secret_id = google_secret_manager_secret.orangered_reddit_client_secret.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.orangered_cloud_run.email}"
+}
