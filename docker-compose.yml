@@ -1,0 +1,8 @@
+version: "3.9"
+services:
+  server:
+    build:
+      context: ./
+      target: server
+    image: "gcr.io/mattbutterfield/orangered.email"
+    platform: linux/amd64

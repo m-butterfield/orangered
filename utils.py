@@ -25,7 +25,7 @@ from app import (
 from subreddits import SUBREDDITS
 
 
-MAILGUN_API_URL = "https://api.mailgun.net/v3/orangered.io/messages"
+MAILGUN_API_URL = "https://api.mailgun.net/v3/orangered.email/messages"
 MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY")
 
 
@@ -121,7 +121,7 @@ def _send_email(email, html, text):
         MAILGUN_API_URL,
         auth=("api", MAILGUN_API_KEY),
         data={
-            "from": "Orangered <no-reply@orangered.io>",
+            "from": "Orangered <no-reply@orangered.email>",
             "to": [email],
             "subject": (
                 "Orangered - " "The best content from your favorite subreddits"

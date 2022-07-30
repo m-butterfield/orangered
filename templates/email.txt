@@ -1,6 +1,6 @@
 Orangered - The best content from your favorite subreddits delivered to your inbox
 Go here to manage your subreddits: {{ email_management_url }}
-Need help? Contact help@orangered.io
+Need help? Contact help@orangered.email
 
 {% for subreddit_name, posts in subreddits %}
 /r/{{ subreddit_name }}:

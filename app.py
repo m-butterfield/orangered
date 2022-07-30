@@ -39,7 +39,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     SERVER_NAME = os.environ.get("SERVER_NAME")
-    PREFERRED_URL_SCHEME = "https" if SERVER_NAME == "orangered.io" else "http"
+    PREFERRED_URL_SCHEME = "https" if SERVER_NAME == "orangered.email" else "http"
 
 
 app = Flask(__name__)

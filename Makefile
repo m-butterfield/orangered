@@ -1,6 +1,6 @@
 cloudrunbasecommand := gcloud run deploy --project=mattbutterfield --region=us-central1 --platform=managed
-deployservercommand := $(cloudrunbasecommand) --image=gcr.io/mattbutterfield/mattbutterfield.com mattbutterfield
-deployworkercommand := $(cloudrunbasecommand) --image=gcr.io/mattbutterfield/mattbutterfield.com-worker mattbutterfield-worker
+deployservercommand := $(cloudrunbasecommand) --image=gcr.io/mattbutterfield/orangered.email orangered
+deployworkercommand := $(cloudrunbasecommand) --image=gcr.io/mattbutterfield/orangered.email orangered-worker
 
 terraformbasecommand := cd infra && terraform
 terraformvarsarg := -var-file=secrets.tfvars
@@ -12,38 +12,23 @@ deploy: docker-build docker-push
 	$(deployservercommand)
 	$(deployworkercommand)
 
-deploy-server: docker-build-server docker-push-server
+deploy-server: docker-build docker-push
 	$(deployservercommand)
 
-deploy-worker: docker-build-worker docker-push-worker
+deploy-worker: docker-build docker-push
 	$(deployworkercommand)
 
 docker-build:
 	docker-compose build
 
-docker-build-server:
-	docker-compose build server
-
-docker-build-worker:
-	docker-compose build worker
-
 docker-push:
 	docker-compose push
-
-docker-push-server:
-	docker-compose push server
-
-docker-push-worker:
-	docker-compose push worker
 
 reset-db:
 	dropdb --if-exists orangered
 	createdb orangered
 	python -c 'from app import db; db.create_all()'
 	python -c 'from utils import insert_subreddits; insert_subreddits()'
-
-migrate:
-	go run cmd/migrate/main.go
 
 fmt:
 	black .

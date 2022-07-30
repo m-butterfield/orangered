@@ -1,4 +1,4 @@
-<a href="http://orangered.io">orangered.io</a>
+<a href="http://orangered.email">orangered.email</a>
 
 ## development
 
