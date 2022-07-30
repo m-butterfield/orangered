@@ -181,16 +181,6 @@ def add_now():
     return {"now": datetime.datetime.utcnow()}
 
 
-@app.before_request
-def https_redirect():
-    if (
-        request.headers.get("X-Forwarded-Proto", "http") != "https"
-        and request.endpoint != "health_check"
-        and not app.config["DEBUG"]
-    ):
-        return redirect(request.url.replace("http://", "https://", 1), code=301)
-
-
 @app.route("/")
 def index():
     cache_time = time.time() if app.config["DEBUG"] else APP_START_TIME

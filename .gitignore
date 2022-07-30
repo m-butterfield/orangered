@@ -1,2 +1,4 @@
 test_email.html
 test_email.txt
+.terraform
+secrets.tfvars
