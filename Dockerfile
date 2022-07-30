@@ -1,14 +1,19 @@
-FROM python:3.7-alpine
-
-RUN apk update && apk add libpq
-RUN apk add --virtual .build-deps gcc g++ python-dev musl-dev postgresql-dev
-
-COPY ./requirements.txt /orangered/requirements.txt
+FROM python:3.10-slim as python
+ENV PYTHONUNBUFFERED=true
 WORKDIR /orangered
 
-RUN pip install -r requirements.txt
-RUN apk del .build-deps
+FROM python as poetry
+ENV POETRY_HOME=/opt/poetry
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+ENV PATH="$POETRY_HOME/bin:$PATH"
+RUN apt-get update \
+    && apt-get -y install libpq-dev gcc
+RUN python -c 'from urllib.request import urlopen; print(urlopen("https://install.python-poetry.org").read().decode())' | python -
+COPY ./pyproject.toml /orangered/pyproject.toml
+RUN poetry install --no-interaction --no-ansi -vvv
 
+FROM python as server
+ENV PATH="/orangered/.venv/bin:$PATH"
+COPY --from=poetry /orangered /orangered
 COPY . /orangered
-
-CMD gunicorn -b 0.0.0.0:5000 app:app
+CMD gunicorn -w 4 -b :8000 app:app
