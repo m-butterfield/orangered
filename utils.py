@@ -9,8 +9,8 @@ from jinja2 import Template
 
 import praw
 
-import requests
-from requests.auth import HTTPBasicAuth
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
 from app import (
     Account,
@@ -26,15 +26,11 @@ from app import (
 from subreddits import SUBREDDITS
 
 
-MAILJET_API_URL = "https://api.mailjet.com/v3.1/send"
-MAILJET_API_KEY = os.environ.get("MAILJET_API_KEY")
-MAILJET_SECRET_KEY = os.environ.get("MAILJET_SECRET_KEY")
-
-
 REDDIT_CLIENT_ID = os.environ.get("REDDIT_CLIENT_ID")
 REDDIT_CLIENT_SECRET = os.environ.get("REDDIT_CLIENT_SECRET")
 REDDIT_USERNAME = os.environ.get("REDDIT_USERNAME")
 REDDIT_PASSWORD = os.environ.get("REDDIT_PASSWORD")
+SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
 
 
 def _html_template():
@@ -119,30 +115,15 @@ def _send_email_for_account(account, subreddit_posts):
 def _send_email(email, html, text):
     if app.config["DEBUG"]:
         return _save_test_emails(html, text)
-    resp = requests.post(
-        MAILJET_API_URL,
-        auth=HTTPBasicAuth(MAILJET_API_KEY, MAILJET_SECRET_KEY),
-        json={
-            "Messages": [
-                {
-                    "From": {
-                        "Email": "no-reply@orangered.email",
-                    },
-                    "To": [
-                        {
-                            "Email": email,
-                        }
-                    ],
-                    "Subject": (
-                        "Orangered - " "The best content from your favorite subreddits"
-                    ),
-                    "TextPart": text,
-                    "HTMLPart": html,
-                },
-            ],
-        },
+    SendGridAPIClient(os.environ.get("SENDGRID_API_KEY")).send(
+        Mail(
+            from_email="no-reply@orangered.email",
+            to_emails=email,
+            subject="Orangered - " "The best content from your favorite subreddits",
+            html_content=html,
+            plain_text_content=text,
+        )
     )
-    resp.raise_for_status()
 
 
 def _save_test_emails(html, text):
