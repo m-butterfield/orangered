@@ -62,11 +62,11 @@ resource "google_cloud_run_service" "orangered" {
     }
     metadata {
       annotations = {
-        "run.googleapis.com/cloudsql-instances"    = google_sql_database_instance.mattbutterfield.connection_name
-        "autoscaling.knative.dev/maxScale"         = "100"
-        "client.knative.dev/user-image"            = "gcr.io/mattbutterfield/orangered.email"
-        "run.googleapis.com/client-name"           = "gcloud"
-        "run.googleapis.com/client-version"        = "394.0.0"
+        "run.googleapis.com/cloudsql-instances" = google_sql_database_instance.mattbutterfield.connection_name
+        "autoscaling.knative.dev/maxScale"      = "100"
+        "client.knative.dev/user-image"         = "gcr.io/mattbutterfield/orangered.email"
+        "run.googleapis.com/client-name"        = "gcloud"
+        "run.googleapis.com/client-version"     = "394.0.0"
       }
     }
   }
@@ -100,4 +100,13 @@ resource "google_cloud_run_domain_mapping" "orangered" {
   spec {
     route_name = google_cloud_run_service.orangered.name
   }
+}
+
+# note: we need this to invoke the cloud run job that sends the emails, triggered by the send-emails scheduler
+# cloud run jobs are not supported by terraform yet so I created it in the console, it is very similar to the cloud
+# run service above just with a different command to start it and different env variables for scraping and sending.
+resource "google_project_iam_member" "mattbutterfield_cloud_run_invoker" {
+  project = var.project
+  role    = "roles/run.invoker"
+  member  = "serviceAccount:${google_service_account.orangered_cloud_run.email}"
 }

@@ -9,7 +9,7 @@ from jinja2 import Template
 
 import praw
 
-import requests
+from sendgrid import From, Mail, SendGridAPIClient
 
 from app import (
     Account,
@@ -25,14 +25,11 @@ from app import (
 from subreddits import SUBREDDITS
 
 
-MAILGUN_API_URL = "https://api.mailgun.net/v3/orangered.email/messages"
-MAILGUN_API_KEY = os.environ.get("MAILGUN_API_KEY")
-
-
 REDDIT_CLIENT_ID = os.environ.get("REDDIT_CLIENT_ID")
 REDDIT_CLIENT_SECRET = os.environ.get("REDDIT_CLIENT_SECRET")
 REDDIT_USERNAME = os.environ.get("REDDIT_USERNAME")
 REDDIT_PASSWORD = os.environ.get("REDDIT_PASSWORD")
+SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
 
 
 def _html_template():
@@ -117,20 +114,15 @@ def _send_email_for_account(account, subreddit_posts):
 def _send_email(email, html, text):
     if app.config["DEBUG"]:
         return _save_test_emails(html, text)
-    resp = requests.post(
-        MAILGUN_API_URL,
-        auth=("api", MAILGUN_API_KEY),
-        data={
-            "from": "Orangered <no-reply@orangered.email>",
-            "to": [email],
-            "subject": (
-                "Orangered - " "The best content from your favorite subreddits"
-            ),
-            "html": html,
-            "text": text,
-        },
+    SendGridAPIClient(os.environ.get("SENDGRID_API_KEY")).send(
+        Mail(
+            from_email=From("postman@orangered.email", "Orangered"),
+            to_emails=email,
+            subject="Orangered - " "The best content from your favorite subreddits",
+            html_content=html,
+            plain_text_content=text,
+        )
     )
-    resp.raise_for_status()
 
 
 def _save_test_emails(html, text):
