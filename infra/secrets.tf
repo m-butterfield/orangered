@@ -74,40 +74,21 @@ resource "google_secret_manager_secret_iam_member" "cloud_run_orangered_recaptch
   member    = "serviceAccount:${google_service_account.orangered_cloud_run.email}"
 }
 
-resource "google_secret_manager_secret" "orangered_mailjet_api_key" {
-  secret_id = "orangered-mailjet-api-key"
+resource "google_secret_manager_secret" "orangered_sendgrid_api_key" {
+  secret_id = "orangered-sendgrid-api-key"
   replication {
     automatic = true
   }
 }
 
-resource "google_secret_manager_secret_version" "orangered_mailjet_api_key_v1" {
-  secret      = google_secret_manager_secret.orangered_mailjet_api_key.name
-  secret_data = var.mailjet_api_key
+resource "google_secret_manager_secret_version" "orangered_sendgrid_api_key_v1" {
+  secret      = google_secret_manager_secret.orangered_sendgrid_api_key.name
+  secret_data = var.sendgrid_api_key
 }
 
-resource "google_secret_manager_secret_iam_member" "cloud_run_orangered_mailjet_api_key" {
+resource "google_secret_manager_secret_iam_member" "cloud_run_orangered_sendgrid_api_key" {
   project   = var.project
-  secret_id = google_secret_manager_secret.orangered_mailjet_api_key.secret_id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.orangered_cloud_run.email}"
-}
-
-resource "google_secret_manager_secret" "orangered_mailjet_secret_key" {
-  secret_id = "orangered-mailjet-secret-key"
-  replication {
-    automatic = true
-  }
-}
-
-resource "google_secret_manager_secret_version" "orangered_mailjet_secret_key_v1" {
-  secret      = google_secret_manager_secret.orangered_mailjet_secret_key.name
-  secret_data = var.mailjet_secret_key
-}
-
-resource "google_secret_manager_secret_iam_member" "cloud_run_orangered_mailjet_secret_key" {
-  project   = var.project
-  secret_id = google_secret_manager_secret.orangered_mailjet_secret_key.secret_id
+  secret_id = google_secret_manager_secret.orangered_sendgrid_api_key.secret_id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.orangered_cloud_run.email}"
 }

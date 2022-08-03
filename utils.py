@@ -9,8 +9,7 @@ from jinja2 import Template
 
 import praw
 
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+from sendgrid import From, Mail, SendGridAPIClient
 
 from app import (
     Account,
@@ -117,7 +116,7 @@ def _send_email(email, html, text):
         return _save_test_emails(html, text)
     SendGridAPIClient(os.environ.get("SENDGRID_API_KEY")).send(
         Mail(
-            from_email="no-reply@orangered.email",
+            from_email=From("postman@orangered.email", "Orangered"),
             to_emails=email,
             subject="Orangered - " "The best content from your favorite subreddits",
             html_content=html,

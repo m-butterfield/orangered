@@ -1,22 +1,18 @@
 cloudrunbasecommand := gcloud run deploy --project=mattbutterfield --region=us-central1 --platform=managed
 deployservercommand := $(cloudrunbasecommand) --image=gcr.io/mattbutterfield/orangered.email orangered
-deployworkercommand := $(cloudrunbasecommand) --image=gcr.io/mattbutterfield/orangered.email orangered-worker
 
 terraformbasecommand := cd infra && terraform
 terraformvarsarg := -var-file=secrets.tfvars
 
 export PGHOST=localhost
 export PGDATABASE=orangered
+export FLASK_DEBUG=1
 
 deploy: docker-build docker-push
 	$(deployservercommand)
-	$(deployworkercommand)
 
 deploy-server: docker-build docker-push
 	$(deployservercommand)
-
-deploy-worker: docker-build docker-push
-	$(deployworkercommand)
 
 docker-build:
 	docker-compose build
@@ -35,15 +31,14 @@ fmt:
 	cd infra/ && terraform fmt
 
 run-server: export FLASK_APP=app.py
-run-server: export FLASK_DEBUG=1
 run-server:
 	flask run -p 8000
 
-run-worker: export FLASK_APP=worker.py
-run-worker: export FLASK_DEBUG=1
-run-worker:
-	flask run -p 8001
+send-test-emails: export SERVER_NAME=localhost
+send-test-emails:
+	./send_emails
 
+test: export SERVER_NAME=orangered.email
 test: export PGDATABASE=orangered_test
 test:
 	dropdb --if-exists orangered_test

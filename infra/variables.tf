@@ -26,12 +26,7 @@ variable "recaptcha_secret_key" {
   sensitive = true
 }
 
-variable "mailjet_api_key" {
-  type      = string
-  sensitive = true
-}
-
-variable "mailjet_secret_key" {
+variable "sendgrid_api_key" {
   type      = string
   sensitive = true
 }
