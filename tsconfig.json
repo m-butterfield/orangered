@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "outDir": "./static/js/dist/",
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "module": "es6",
+    "target": "es6",
+    "moduleResolution": "node",
+    "jsx": "react",
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "static/ts"
+  }
+}

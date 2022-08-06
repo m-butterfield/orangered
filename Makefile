@@ -28,11 +28,15 @@ reset-db:
 
 fmt:
 	black .
+	yarn run eslint static/ts/ --fix
 	cd infra/ && terraform fmt
 
 run-server: export FLASK_APP=app.py
 run-server:
 	flask run -p 8000
+
+run-webpack:
+	yarn run webpack --mode development --watch
 
 send-test-emails: export SERVER_NAME=localhost
 send-test-emails:
@@ -56,4 +60,5 @@ tf-refresh:
 
 update-deps:
 	poetry update
+	yarn upgrade
 	cd infra && terraform init -upgrade && cd -
