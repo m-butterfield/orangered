@@ -1,12 +1,6 @@
 #!/usr/bin/env python3
-from utils import reddit_client
+from utils import scrape_subreddits
 
 
-def search_subreddits(query):
-    reddit = reddit_client()
-    result = reddit.subreddits.search_by_name(query)
-    pass
-
-
-if __name__ == '__main__':
-    search_subreddits("pelo")
+if __name__ == "__main__":
+    scrape_subreddits()
