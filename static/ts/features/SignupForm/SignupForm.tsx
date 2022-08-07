@@ -6,7 +6,7 @@ import {
   selectEmail,
 } from "features/SignupForm/signupFormSlice";
 import {
-  AppBar,
+  AppBar, Autocomplete,
   Box,
   Button,
   Container,
@@ -107,6 +107,15 @@ export function SignupForm() {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => dispatch(updateEmail(e.target.value))}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Autocomplete
+                disablePortal
+                id="combo-box-demo"
+                options={[1,2,3]}
+                sx={{width: 300}}
+                renderInput={(params) => <TextField {...params} label="Movie" />}
               />
             </Grid>
           </Grid>
