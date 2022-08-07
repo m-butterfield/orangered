@@ -12,20 +12,15 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
+    "@emotion/react": "^11.10.0",
+    "@emotion/styled": "^11.10.0",
+    "@mui/material": "^5.9.3",
     "@reduxjs/toolkit": "^1.8.3",
     "@types/react-dom": "^18.0.6",
-    "bootstrap": "^5.2.0",
     "react": "^18.2.0",
-    "react-bootstrap": "^2.5.0",
     "react-dom": "^18.2.0",
     "react-redux": "^8.0.2",
     "react-scripts": "^5.0.1",
     "redux": "^4.2.0"
-  },
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
-  ]
+  }
 }

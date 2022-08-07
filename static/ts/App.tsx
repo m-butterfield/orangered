@@ -1,12 +1,13 @@
 import React from "react";
-import {Form} from "features/form/Form";
+import {SignupForm} from "features/SignupForm/SignupForm";
+import {Footer} from "Footer";
 import "App.css";
 
 function App() {
   return (
     <div className="App">
-      Hey.
-      <Form></Form>
+      <SignupForm></SignupForm>
+      <Footer></Footer>
     </div>
   );
 }

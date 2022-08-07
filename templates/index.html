@@ -3,6 +3,7 @@
 {% block body_content %}
 <div id="root"></div>
 {% endblock %}
+
 {% block extra_js %}
 <script type="text/javascript" src="{{ url_for('static', filename='js/dist/bundle.js') }}"></script>
 {% if not config['DEBUG'] %}
