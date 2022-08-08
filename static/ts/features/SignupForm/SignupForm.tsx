@@ -2,7 +2,7 @@ import React from "react";
 import {useAppSelector, useAppDispatch} from "app/hooks";
 import {
   updateEmail,
-  selectEmail,
+  selectFormValues, updateSubreddits, updateFrequency,
 } from "features/SignupForm/signupFormSlice";
 import {
   AppBar, Autocomplete,
@@ -17,10 +17,10 @@ import {
 } from "@mui/material";
 import mailImg from "img/mail_orange.png";
 
-declare const subreddits: string[];
+declare const allSubreddits: string[];
 
 export function SignupForm() {
-  const email = useAppSelector(selectEmail);
+  const {email, subreddits, emailFrequency} = useAppSelector(selectFormValues);
   const dispatch = useAppDispatch();
 
   return (
@@ -114,8 +114,10 @@ export function SignupForm() {
                 disablePortal
                 multiple
                 fullWidth
+                value={subreddits}
                 id="combo-box-demo"
-                options={subreddits}
+                options={allSubreddits}
+                onChange={(_, newValue) => dispatch(updateSubreddits(newValue))}
                 renderInput={(params) => <TextField {...params} required label="Subreddits" />}
               />
             </Grid>
@@ -123,11 +125,20 @@ export function SignupForm() {
               <FormControl>
                 <FormLabel>Email Frequency</FormLabel>
                 <RadioGroup
-                  defaultValue="daily"
                   name="radio-buttons-group"
                 >
-                  <FormControlLabel value="daily" control={<Radio />} label="Daily" />
-                  <FormControlLabel value="weekly" control={<Radio />} label="Weekly" />
+                  <FormControlLabel value="daily" control={
+                    <Radio
+                      checked={emailFrequency === "daily"}
+                      onChange={(_, val) => val && updateFrequency("daily")}
+                    />
+                  } label="Daily" />
+                  <FormControlLabel value="weekly" control={
+                    <Radio
+                      checked={emailFrequency === "weekly"}
+                      onChange={(_, val) => val && updateFrequency("weekly")}
+                    />
+                  } label="Weekly" />
                 </RadioGroup>
               </FormControl>
             </Grid>

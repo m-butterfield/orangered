@@ -6,7 +6,7 @@
 
 {% block extra_js %}
 <script>
-window.subreddits = {{ subreddits | tojson }};
+window.allSubreddits = {{ subreddits | tojson }};
 </script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/dist/bundle.js') }}"></script>
 

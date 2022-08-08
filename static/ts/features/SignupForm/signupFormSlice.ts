@@ -4,10 +4,14 @@ import {fetchSubreddits} from "features/SignupForm/signupFormAPI";
 
 export interface SignupFormState {
   email: string;
+  subreddits: string[];
+  emailFrequency: string;
 }
 
 const initialState: SignupFormState = {
   email: "",
+  subreddits: [],
+  emailFrequency: "daily",
 };
 
 // The function below is called a thunk and allows us to perform async logic. It
@@ -31,6 +35,12 @@ export const signupFormSlice = createSlice({
     updateEmail: (state, action: PayloadAction<string>) => {
       state.email = action.payload;
     },
+    updateSubreddits: (state, action: PayloadAction<string[]>) => {
+      state.subreddits = action.payload;
+    },
+    updateFrequency: (state, action: PayloadAction<string>) => {
+      state.emailFrequency = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -47,11 +57,11 @@ export const signupFormSlice = createSlice({
   },
 });
 
-export const {updateEmail} = signupFormSlice.actions;
+export const {updateEmail, updateSubreddits, updateFrequency} = signupFormSlice.actions;
 
 // The function below is called a selector and allows us to select a value from
 // the state. Selectors can also be defined inline where they're used instead of
 // in the slice file. For example: `useSelector((state: RootState) => state.counter.value)`
-export const selectEmail = (state: RootState) => state.form.email;
+export const selectFormValues = (state: RootState) => state.form;
 
 export default signupFormSlice.reducer;
