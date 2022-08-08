@@ -18,6 +18,8 @@ import {
 } from "@mui/material";
 import mailImg from "img/mail_orange.png";
 
+declare const subreddits: string[];
+
 export function SignupForm() {
   const email = useAppSelector(selectEmail);
   const dispatch = useAppDispatch();
@@ -113,7 +115,7 @@ export function SignupForm() {
               <Autocomplete
                 disablePortal
                 id="combo-box-demo"
-                options={[1,2,3]}
+                options={subreddits}
                 sx={{width: 300}}
                 renderInput={(params) => <TextField {...params} label="Movie" />}
               />

@@ -11,6 +11,8 @@ from flask_sqlalchemy import SQLAlchemy
 
 import requests
 
+from subreddits import SUBREDDITS
+
 
 RECAPTCHA_SITE_KEY = os.environ.get("RECAPTCHA_SITE_KEY")
 RECAPTCHA_SECRET = os.environ.get("RECAPTCHA_SECRET_KEY")
@@ -182,10 +184,10 @@ def add_now():
 
 @app.route("/")
 def index():
-    cache_time = time.time() if app.config["DEBUG"] else APP_START_TIME
     return render_template(
         "index.html",
         recaptcha_site_key=RECAPTCHA_SITE_KEY,
+        subreddits=SUBREDDITS,
     )
 
 
