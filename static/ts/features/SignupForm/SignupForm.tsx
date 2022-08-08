@@ -1,7 +1,6 @@
 import React from "react";
 import {useAppSelector, useAppDispatch} from "app/hooks";
 import {
-  getSubreddits,
   updateEmail,
   selectEmail,
 } from "features/SignupForm/signupFormSlice";
@@ -23,7 +22,6 @@ declare const subreddits: string[];
 export function SignupForm() {
   const email = useAppSelector(selectEmail);
   const dispatch = useAppDispatch();
-  // can eventually dispatch getSubreddits
 
   return (
     <>
@@ -114,10 +112,11 @@ export function SignupForm() {
             <Grid item xs={12}>
               <Autocomplete
                 disablePortal
+                multiple
+                fullWidth
                 id="combo-box-demo"
                 options={subreddits}
-                sx={{width: 300}}
-                renderInput={(params) => <TextField {...params} label="Movie" />}
+                renderInput={(params) => <TextField {...params} label="Subreddits" />}
               />
             </Grid>
           </Grid>
