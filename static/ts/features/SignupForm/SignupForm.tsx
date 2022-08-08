@@ -8,9 +8,9 @@ import {
   AppBar, Autocomplete,
   Box,
   Button,
-  Container,
+  Container, FormControl, FormControlLabel, FormLabel,
   Grid,
-  Link,
+  Link, Radio, RadioGroup,
   TextField,
   Toolbar,
   Typography
@@ -116,8 +116,20 @@ export function SignupForm() {
                 fullWidth
                 id="combo-box-demo"
                 options={subreddits}
-                renderInput={(params) => <TextField {...params} label="Subreddits" />}
+                renderInput={(params) => <TextField {...params} required label="Subreddits" />}
               />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl>
+                <FormLabel>Email Frequency</FormLabel>
+                <RadioGroup
+                  defaultValue="daily"
+                  name="radio-buttons-group"
+                >
+                  <FormControlLabel value="daily" control={<Radio />} label="Daily" />
+                  <FormControlLabel value="weekly" control={<Radio />} label="Weekly" />
+                </RadioGroup>
+              </FormControl>
             </Grid>
           </Grid>
           <Button
