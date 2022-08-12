@@ -4,7 +4,9 @@ import {
   updateEmail,
   selectFormValues, updateSubreddits, updateFrequency,
 } from "features/SignupForm/signupFormSlice";
+import {EmailFrequency, SignupData} from "features/SignupForm/types";
 import {
+  Alert,
   AppBar, Autocomplete,
   Box,
   Button,
@@ -18,11 +20,28 @@ import {
 import mailImg from "img/mail_orange.png";
 
 declare const allSubreddits: string[];
+declare const recaptchaToken: string;
+declare const recaptchaRefresh: () => void;
+
+const submit = async (data: SignupData): Promise<string> => {
+  const response = await fetch("/signup", {
+    method: "POST",
+    headers: new Headers({"Content-Type": "application/json"}),
+    body: JSON.stringify(data),
+  });
+  if (response.ok) {
+    return "";
+  }
+  return await response.text();
+};
 
 export function SignupForm() {
   const {email, subreddits, emailFrequency} = useAppSelector(selectFormValues);
   const dispatch = useAppDispatch();
   const [subredditWarning, setSubredditWarning] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const emailValid = /\S+@\S+/.test(email);
   const subredditsValid = subreddits.length > 0 && subreddits.length <= 10;
@@ -149,13 +168,13 @@ export function SignupForm() {
                   <FormControlLabel value="daily" control={
                     <Radio
                       checked={emailFrequency === "daily"}
-                      onChange={(_, val) => val && dispatch(updateFrequency("daily"))}
+                      onChange={(_, val) => val && dispatch(updateFrequency(EmailFrequency.Daily))}
                     />
                   } label="Daily" />
                   <FormControlLabel value="weekly" control={
                     <Radio
                       checked={emailFrequency === "weekly"}
-                      onChange={(_, val) => val && dispatch(updateFrequency("weekly"))}
+                      onChange={(_, val) => val && dispatch(updateFrequency(EmailFrequency.Weekly))}
                     />
                   } label="Weekly" />
                 </RadioGroup>
@@ -167,13 +186,31 @@ export function SignupForm() {
             fullWidth
             variant="contained"
             sx={{mt: 3, mb: 2}}
-            disabled={!subredditsValid || !emailValid}
+            disabled={submitting || !subredditsValid || !emailValid}
             onClick={() => {
-              // fetch();
+              if (submitError) setSubmitError("");
+              if (successMessage) setSuccessMessage("");
+              setSubmitting(true);
+              submit({
+                email: email,
+                subreddits: subreddits,
+                captcha_token: recaptchaToken,
+                email_interval: emailFrequency,
+              }).then((errorMessage) => {
+                if (errorMessage) {
+                  setSubmitError(errorMessage);
+                  setSubmitting(false);
+                  recaptchaRefresh();
+                } else {
+                  setSuccessMessage("Success! You will receive your first email soon.");
+                }
+              });
             }}
           >
             Sign Up
           </Button>
+          {submitError && <Alert severity="error">{submitError}</Alert>}
+          {successMessage && <Alert severity="success">{successMessage}</Alert> }
         </Box>
       </Container>
     </>

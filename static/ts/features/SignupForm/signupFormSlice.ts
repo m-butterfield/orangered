@@ -1,17 +1,18 @@
 import {createAsyncThunk, createSlice, PayloadAction} from "@reduxjs/toolkit";
 import {RootState} from "app/store";
 import {fetchSubreddits} from "features/SignupForm/signupFormAPI";
+import {EmailFrequency} from "./types";
 
 export interface SignupFormState {
   email: string;
   subreddits: string[];
-  emailFrequency: string;
+  emailFrequency: EmailFrequency;
 }
 
 const initialState: SignupFormState = {
   email: "",
   subreddits: [],
-  emailFrequency: "daily",
+  emailFrequency: EmailFrequency.Daily,
 };
 
 // The function below is called a thunk and allows us to perform async logic. It
@@ -38,7 +39,7 @@ export const signupFormSlice = createSlice({
     updateSubreddits: (state, action: PayloadAction<string[]>) => {
       state.subreddits = action.payload;
     },
-    updateFrequency: (state, action: PayloadAction<string>) => {
+    updateFrequency: (state, action: PayloadAction<EmailFrequency>) => {
       state.emailFrequency = action.payload;
     },
   },

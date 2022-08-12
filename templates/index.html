@@ -7,23 +7,20 @@
 {% block extra_js %}
 <script>
 window.allSubreddits = {{ subreddits | tojson }};
+window.recaptchaToken = "";
 </script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/dist/bundle.js') }}"></script>
 
 {% if not config['DEBUG'] %}
-<script>
-window.recaptchaSiteKey = '{{ recaptcha_site_key }}';
-</script>
 <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}"></script>
 <script>
 grecaptcha.ready(function() {
-  grecaptcha.execute(recaptchaSiteKey, {action: 'homepage'}).then(function(token) {
-    $('#captcha_input').val(token);
+  window.recaptchaRefresh = () => grecaptcha.execute({{ recaptcha_site_key }}, {action: 'homepage'}).then(function(token) {
+    window.recaptchaToken = token;
   });
+  recaptchaRefresh();
   window.setInterval(function() {
-    grecaptcha.execute(recaptchaSiteKey, {action: 'homepage'}).then(function(token) {
-      $('#captcha_input').val(token);
-    });
+    recaptchaRefresh();
   }, 90000);
 });
 </script>
