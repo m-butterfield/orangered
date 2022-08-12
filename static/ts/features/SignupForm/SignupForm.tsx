@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import {useAppSelector, useAppDispatch} from "app/hooks";
 import {
   updateEmail,
@@ -22,6 +22,10 @@ declare const allSubreddits: string[];
 export function SignupForm() {
   const {email, subreddits, emailFrequency} = useAppSelector(selectFormValues);
   const dispatch = useAppDispatch();
+  const [subredditWarning, setSubredditWarning] = useState("");
+
+  const emailValid = /\S+@\S+/.test(email);
+  const subredditsValid = subreddits.length > 0 && subreddits.length <= 10;
 
   return (
     <>
@@ -117,8 +121,23 @@ export function SignupForm() {
                 value={subreddits}
                 id="combo-box-demo"
                 options={allSubreddits}
-                onChange={(_, newValue) => dispatch(updateSubreddits(newValue))}
-                renderInput={(params) => <TextField {...params} required label="Subreddits" />}
+                onChange={(_, newValue) => {
+                  if (newValue.length > 10) {
+                    setSubredditWarning("Too many subreddits selected. Select a maximum of 10.");
+                  } else if (subredditWarning) {
+                    setSubredditWarning("");
+                  }
+                  dispatch(updateSubreddits(newValue));
+                }}
+                renderInput={(params) => {
+                  return <TextField
+                    {...params}
+                    error={subredditWarning.length > 0}
+                    helperText={subredditWarning}
+                    required
+                    label="Subreddits"
+                  />;
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -130,13 +149,13 @@ export function SignupForm() {
                   <FormControlLabel value="daily" control={
                     <Radio
                       checked={emailFrequency === "daily"}
-                      onChange={(_, val) => val && updateFrequency("daily")}
+                      onChange={(_, val) => val && dispatch(updateFrequency("daily"))}
                     />
                   } label="Daily" />
                   <FormControlLabel value="weekly" control={
                     <Radio
                       checked={emailFrequency === "weekly"}
-                      onChange={(_, val) => val && updateFrequency("weekly")}
+                      onChange={(_, val) => val && dispatch(updateFrequency("weekly"))}
                     />
                   } label="Weekly" />
                 </RadioGroup>
@@ -148,6 +167,10 @@ export function SignupForm() {
             fullWidth
             variant="contained"
             sx={{mt: 3, mb: 2}}
+            disabled={!subredditsValid || !emailValid}
+            onClick={() => {
+              // fetch();
+            }}
           >
             Sign Up
           </Button>
