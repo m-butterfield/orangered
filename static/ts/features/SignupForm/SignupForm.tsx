@@ -1,10 +1,13 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {useAppSelector, useAppDispatch} from "app/hooks";
 import {
   updateEmail,
-  selectFormValues, updateSubreddits, updateFrequency,
+  selectFormValues,
+  updateSubreddits,
+  updateFrequency,
+  updateCaptcha,
 } from "features/SignupForm/signupFormSlice";
-import {SignupData} from "features/SignupForm/types";
+import {SignupFormData} from "features/SignupForm/types";
 import {EmailFrequency} from "types";
 import {
   Alert,
@@ -24,7 +27,7 @@ import {
 } from "@mui/material";
 import mailImg from "img/mail_orange.png";
 
-const submit = async (data: SignupData): Promise<string> => {
+const submit = async (data: SignupFormData): Promise<string> => {
   const response = await fetch("/signup", {
     method: "POST",
     headers: new Headers({"Content-Type": "application/json"}),
@@ -38,13 +41,17 @@ const submit = async (data: SignupData): Promise<string> => {
 
 type signupFormProps = {
   allSubreddits: string[];
-  recaptchaToken: string;
-  recaptchaRefresh: () => void;
+  recaptchaKey: string;
 }
 
+declare const grecaptcha: {
+  ready: (readyFunc: () => void) => void;
+  execute: (key: string, kwargs: {[key: string]: string}) => Promise<string>;
+};
+
 export function SignupForm(props: signupFormProps) {
-  const {allSubreddits, recaptchaToken, recaptchaRefresh} = props;
-  const {email, subreddits, emailFrequency} = useAppSelector(selectFormValues);
+  const {allSubreddits, recaptchaKey} = props;
+  const {email, subreddits, emailInterval, captchaToken} = useAppSelector(selectFormValues);
   const dispatch = useAppDispatch();
   const [subredditWarning, setSubredditWarning] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -53,6 +60,19 @@ export function SignupForm(props: signupFormProps) {
 
   const emailValid = /\S+@\S+/.test(email);
   const subredditsValid = subreddits.length > 0 && subreddits.length <= 10;
+
+  const recaptchaRefresh = () => {
+    typeof grecaptcha !== "undefined" && grecaptcha.execute(recaptchaKey, {action: "homepage"}).then((token) => {
+      updateCaptcha(token);
+    });
+  };
+
+  useEffect(()=>{
+    typeof grecaptcha !== "undefined" && grecaptcha.ready(() => {
+      recaptchaRefresh();
+      setInterval(recaptchaRefresh, 90000);
+    });
+  }, []);
 
   return (
     <>
@@ -148,13 +168,13 @@ export function SignupForm(props: signupFormProps) {
                 >
                   <FormControlLabel value="daily" control={
                     <Radio
-                      checked={emailFrequency === "daily"}
+                      checked={emailInterval === "daily"}
                       onChange={(_, val) => val && dispatch(updateFrequency(EmailFrequency.Daily))}
                     />
                   } label="Daily" />
                   <FormControlLabel value="weekly" control={
                     <Radio
-                      checked={emailFrequency === "weekly"}
+                      checked={emailInterval === "weekly"}
                       onChange={(_, val) => val && dispatch(updateFrequency(EmailFrequency.Weekly))}
                     />
                   } label="Weekly" />
@@ -180,8 +200,8 @@ export function SignupForm(props: signupFormProps) {
                   submit({
                     email: email,
                     subreddits: subreddits,
-                    captchaToken: recaptchaToken,
-                    emailInterval: emailFrequency,
+                    captchaToken: captchaToken,
+                    emailInterval: emailInterval,
                   }).then((errorMessage) => {
                     if (errorMessage) {
                       alert(errorMessage);

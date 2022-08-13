@@ -1,17 +1,13 @@
 import {createSlice, PayloadAction} from "@reduxjs/toolkit";
 import {RootState} from "app/store";
+import {SignupFormData} from "features/SignupForm/types";
 import {EmailFrequency} from "types";
 
-export interface SignupFormState {
-  email: string;
-  subreddits: string[];
-  emailFrequency: EmailFrequency;
-}
-
-const initialState: SignupFormState = {
+const initialState: SignupFormData = {
   email: "",
   subreddits: [],
-  emailFrequency: EmailFrequency.Daily,
+  emailInterval: EmailFrequency.Daily,
+  captchaToken: "",
 };
 
 export const signupFormSlice = createSlice({
@@ -25,12 +21,15 @@ export const signupFormSlice = createSlice({
       state.subreddits = action.payload;
     },
     updateFrequency: (state, action: PayloadAction<EmailFrequency>) => {
-      state.emailFrequency = action.payload;
+      state.emailInterval = action.payload;
+    },
+    updateCaptcha: (state, action: PayloadAction<string>) => {
+      state.captchaToken = action.payload;
     },
   },
 });
 
-export const {updateEmail, updateSubreddits, updateFrequency} = signupFormSlice.actions;
+export const {updateEmail, updateSubreddits, updateFrequency, updateCaptcha} = signupFormSlice.actions;
 
 export const selectFormValues = (state: RootState) => state.form;
 

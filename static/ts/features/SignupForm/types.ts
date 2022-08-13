@@ -1,6 +1,6 @@
 import {EmailFrequency} from "types";
 
-export type SignupData = {
+export type SignupFormData = {
   email: string;
   subreddits: string[];
   captchaToken: string;

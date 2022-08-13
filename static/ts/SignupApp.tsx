@@ -4,8 +4,7 @@ import {Footer} from "Footer";
 import {Header} from "Header";
 
 declare const allSubreddits: string[];
-declare const recaptchaToken: string;
-declare const recaptchaRefresh: () => void;
+declare const recaptchaKey: string;
 
 function SignupApp() {
   return (
@@ -17,8 +16,7 @@ function SignupApp() {
       />
       <SignupForm
         allSubreddits={allSubreddits}
-        recaptchaToken={recaptchaToken}
-        recaptchaRefresh={recaptchaRefresh}
+        recaptchaKey={recaptchaKey}
       ></SignupForm>
       <Footer></Footer>
     </div>
