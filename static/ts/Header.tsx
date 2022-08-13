@@ -9,12 +9,13 @@ export const Header = (props: {links?: HeaderLink[]}) => {
     >
       <Toolbar>
         <Typography variant="h6" sx={{flexGrow: 1}}>
-          <Link underline="hover" color="inherit" href="/">Orangered</Link>
+          <Link underline="hover" color="text.primary" href="/">Orangered</Link>
         </Typography>
         <nav>
           {props.links && props.links.map(link => <Link
             key={`${link.href}-link`}
             variant="button"
+            underline="hover"
             color="text.primary"
             href={`#${link.href}`}
             sx={{my: 1, mx: 1.5}}
