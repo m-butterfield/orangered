@@ -1,57 +1,13 @@
 {% extends 'base.html' %}
 
 {% block body_content %}
-
-<!-- Navigation -->
-<nav class="navbar navbar-expand-lg bg-secondary fixed-top text-uppercase" id="mainNav">
-  <div class="container">
-    <a class="navbar-brand js-scroll-trigger" href="{{ url_for('index') }}">orangered</a>
-  </div>
-</nav>
-
-<!-- Header -->
-<header class="masthead bg-primary text-white text-center" id="manage">
-  <div class="container">
-    <h2 class="text-uppercase mb-0">manage</h2>
-    <hr class="star-light">
-    <div class="row">
-      <div class="col-lg-8 m-auto text-center">
-        <p class="lead">select your subreddits.</p>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-lg-4 mx-auto">
-        <form id="manageForm" novalidate="novalidate">
-          {% include 'subreddit_select.html' %}
-          {% include 'email_interval_radios.html' %}
-          <br>
-          <div id="success"></div>
-          <div class="form-group">
-            <button type="submit" class="btn btn-primary btn-xl" id="manageButton">Save</button>
-          </div>
-        </form>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-lg-8 m-auto text-center">
-        <p class="lead">or</p>
-        <p class="lead">click the button below to unsubscribe</p>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-lg-8 mx-auto">
-        <form action="{{ url_for('unsubscribe', uuid=account.uuid) }}" method="post">
-          <input type="hidden" name="unsubscribe" value="{{ account.active }}">
-          <div class="form-group">
-            <button type="submit" class="btn btn-primary btn-xl">Unsubscribe</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</header>
-
+<div id="root"></div>
 {% endblock %}
+
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/manage.js', cache=cache_timestamp) }}"></script>
+<script>
+window.account = {{ account_info | tojson }}
+window.allSubreddits = {{ subreddits | tojson }};
+</script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/dist/manage.bundle.js') }}"></script>
 {% endblock %}

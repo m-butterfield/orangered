@@ -1,59 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="">
-  <meta name="author" content="">
-
+  <meta name="viewport" content="initial-scale=1, width=device-width" />
   <title>Orangered - The best content from your favorite subreddits delivered to your inbox</title>
-
   <link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/x-icon">
-
-  <link href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet" type="text/css">
-
-  <link href="{{ url_for('static', filename='vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet" type="text/css">
-  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css">
-  <link href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic" rel="stylesheet" type="text/css">
-
-  <link href="{{ url_for('static', filename='vendor/component-chosen/component-chosen.min.css') }}" rel="stylesheet" type="text/css">
-  <link href="{{ url_for('static', filename='vendor/magnific-popup/magnific-popup.css') }}" rel="stylesheet" type="text/css">
-
-  <link href="{{ url_for('static', filename='css/orangered.css', cache=cache_timestamp) }}" rel="stylesheet">
-
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
 </head>
-
-<body id="page-top">
+<body>
 
   {% block body_content %}
   {% endblock %}
-
-  <div class="copyright py-4 text-center text-white">
-    <div class="container">
-      <small><a href="https://app.termly.io/document/privacy-policy/172a28ad-5e1d-477f-bf80-c67d9fd19998" target="_blank">Privacy Policy</a></small><br>
-      <small>Contact: <a href="mailto:help@orangered.email" target="_blank">help@orangered.email</a></small><br>
-      <small>Copyright &copy; Orangered {{ now.year }}</small>
-    </div>
-  </div>
-
-  <div class="scroll-to-top d-lg-none position-fixed ">
-    <a class="js-scroll-trigger d-block text-center text-white rounded" href="#page-top">
-      <i class="fa fa-chevron-up"></i>
-    </a>
-  </div>
-
-  <script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-
-  <script src="{{ url_for('static', filename='vendor/jquery-easing/jquery.easing.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='vendor/magnific-popup/jquery.magnific-popup.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='vendor/chosen/chosen.jquery.min.js') }}"></script>
-
-  <script src="{{ url_for('static', filename='js/jqBootstrapValidation.js') }}"></script>
-
-  <script src="{{ url_for('static', filename='js/orangered.js', cache=cache_timestamp) }}"></script>
 
   {% block extra_js %}
   {% endblock %}
@@ -67,7 +24,5 @@
       gtag('config', 'UA-48100239-7');
   </script>
   {% endif %}
-
 </body>
-
 </html>

@@ -4,5 +4,4 @@
 
 To run the app locally:
 
-    make db
     make run-server

@@ -51,10 +51,10 @@ class SignupTests(BaseAppTestCase):
         expected_subreddits = ["aviation", "spacex"]
         resp = self.client.post(
             "/signup",
-            data={
+            json={
                 "email": "Bob2@aol.com",
-                "subreddits[]": expected_subreddits,
-                "email_interval": "weekly",
+                "subreddits": expected_subreddits,
+                "emailInterval": "weekly",
             },
         )
         self.assertEqual(resp.status_code, 201)
@@ -71,10 +71,10 @@ class SignupTests(BaseAppTestCase):
 
         self.client.post(
             "/signup",
-            data={
+            json={
                 "email": "Bob3@aol.com",
-                "subreddits[]": expected_subreddits,
-                "email_interval": "daily",
+                "subreddits": expected_subreddits,
+                "emailInterval": "daily",
             },
         )
         account = Account.query.get("bob3@aol.com")
@@ -83,9 +83,9 @@ class SignupTests(BaseAppTestCase):
     def test_account_already_exists(self):
         resp = self.client.post(
             "/signup",
-            data={
+            json={
                 "email": self.account.email,
-                "subreddits[]": ["aviation"],
+                "subreddits": ["aviation"],
             },
         )
         self.assertEqual(resp.status_code, 400)
@@ -93,9 +93,9 @@ class SignupTests(BaseAppTestCase):
     def test_max_10_subreddits(self):
         resp = self.client.post(
             "/signup",
-            data={
+            json={
                 "email": "bob2@aol.com",
-                "subreddits[]": ["aviation"] * 11,
+                "subreddits": ["aviation"] * 11,
             },
         )
         self.assertEqual(resp.status_code, 400)
@@ -108,7 +108,7 @@ class UnsubscribeTests(BaseAppTestCase):
 
     def test_unsubscribe(self):
         resp = self.client.post(
-            f"/account/{self.account.uuid}/unsubscribe", data={"unsubscribe": "True"}
+            f"/account/{self.account.uuid}/unsubscribe", json={"unsubscribe": "True"}
         )
         self.assertEqual(resp.status_code, 200)
         db.session.add(self.account)
@@ -116,7 +116,7 @@ class UnsubscribeTests(BaseAppTestCase):
 
         # resubscribe
         resp = self.client.post(
-            f"/account/{self.account.uuid}/unsubscribe", data={"unsubscribe": "False"}
+            f"/account/{self.account.uuid}/unsubscribe", json={"unsubscribe": "False"}
         )
         self.assertEqual(resp.status_code, 200)
         db.session.add(self.account)
@@ -133,7 +133,7 @@ class ManageTests(BaseAppTestCase):
     def test_max_10_subreddits(self):
         resp = self.client.post(
             f"/account/{self.account.uuid}/manage",
-            data={"subreddits[]": ["aviation"] * 11},
+            json={"subreddits": ["aviation"] * 11},
         )
         self.assertEqual(resp.status_code, 400)
 
@@ -141,12 +141,13 @@ class ManageTests(BaseAppTestCase):
         expected_subreddits = ["aviation", "spacex", "analog"]
         resp = self.client.post(
             f"/account/{self.account.uuid}/manage",
-            data={
-                "subreddits[]": expected_subreddits,
-                "email_interval": "weekly",
+            json={
+                "subreddits": expected_subreddits,
+                "emailInterval": "weekly",
             },
         )
         self.assertEqual(resp.status_code, 200)
+        db.session.add(self.account)
         account = Account.query.get(self.account.email)
         self.assertEqual(len(account.email_events), 1)
         self.assertEqual(account.email_events[0].time_of_day, time(12))
@@ -158,11 +159,12 @@ class ManageTests(BaseAppTestCase):
 
         self.client.post(
             f"/account/{self.account.uuid}/manage",
-            data={
-                "subreddits[]": expected_subreddits,
-                "email_interval": "daily",
+            json={
+                "subreddits": expected_subreddits,
+                "emailInterval": "daily",
             },
         )
+        db.session.add(self.account)
         account = Account.query.get(self.account.email)
         self.assertEqual(len(account.email_events), 1)
         self.assertEqual(account.email_events[0].time_of_day, time(12))

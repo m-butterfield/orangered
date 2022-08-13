@@ -4,11 +4,10 @@ import logging
 import os
 
 from flask import url_for
-
 from jinja2 import Template
-
 import praw
-
+from bs4 import BeautifulSoup
+import requests
 from sendgrid import From, Mail, SendGridAPIClient
 
 from app import (
@@ -46,7 +45,8 @@ HTML_TEMPLATE, TEXT_TEMPLATE = _html_template(), _text_template()
 
 
 def insert_subreddits():
-    db.session.add_all([Subreddit(name=s) for s in SUBREDDITS])
+    for s in [Subreddit(name=s) for s in SUBREDDITS]:
+        db.session.merge(s)
     db.session.commit()
 
 
@@ -101,8 +101,8 @@ def _send_email_for_account(account, subreddit_posts):
     )
     context = {
         "subreddits": subreddit_posts.items(),
-        "email_management_url": url_for("manage", uuid=account.uuid),
-        "unsubscribe_url": url_for("unsubscribe", uuid=account.uuid),
+        "email_management_url": url_for("manage", account_uuid=account.uuid),
+        "unsubscribe_url": url_for("unsubscribe", account_uuid=account.uuid),
     }
     html_data = Template(HTML_TEMPLATE, trim_blocks=True).render(**context)
     text_data = Template(TEXT_TEMPLATE, trim_blocks=True).render(**context)
@@ -214,3 +214,42 @@ def _subreddits_to_scrape(day_of_week):
         .join(Account)
         .filter(*_account_filters(day_of_week))
     )
+
+
+def scrape_subreddits():
+    with app.app_context():
+        _scrape_subreddits()
+
+
+def _scrape_subreddits():
+    resp = requests.get(
+        "https://www.reddit.com/subreddits",
+        headers={"User-agent": "orangered 0.1"},
+    )
+    resp.raise_for_status()
+    count = 25
+    results = BeautifulSoup(resp.content, "html.parser").find_all(
+        "p", class_="titlerow"
+    )
+    while results:
+        subreddits = []
+        for title_row in results:
+            link = title_row.find("a")
+            subreddits.append(link.getText()[2:].split(":")[0])
+
+        for s in [Subreddit(name=s) for s in subreddits]:
+            db.session.merge(s)
+        db.session.commit()
+
+        subreddit_id = (
+            title_row.find_next_sibling().find("form").find("input").attrs["value"]
+        )
+        resp = requests.get(
+            f"https://www.reddit.com/subreddits/?app=res&count={count}&after={subreddit_id}",
+            headers={"User-agent": "orangered 0.1"},
+        )
+        resp.raise_for_status()
+        results = BeautifulSoup(resp.content, "html.parser").find_all(
+            "p", class_="titlerow"
+        )
+        count += 25

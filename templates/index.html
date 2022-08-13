@@ -1,103 +1,18 @@
 {% extends 'base.html' %}
 
 {% block body_content %}
-
-<!-- Navigation -->
-<nav class="navbar navbar-expand-lg bg-secondary fixed-top text-uppercase" id="mainNav">
-  <div class="container">
-    <a class="navbar-brand js-scroll-trigger" href="#page-top">orangered</a>
-    <button class="navbar-toggler navbar-toggler-right text-uppercase bg-primary text-white rounded" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
-      Menu
-      <i class="fas fa-bars"></i>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarResponsive">
-      <ul class="navbar-nav ml-auto">
-        <li class="nav-item mx-0 mx-lg-1">
-          <a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="#about">About</a>
-        </li>
-        <li class="nav-item mx-0 mx-lg-1">
-          <a class="nav-link py-3 px-0 px-lg-3 rounded js-scroll-trigger" href="#signup">Sign up</a>
-        </li>
-      </ul>
-    </div>
-  </div>
-</nav>
-
-<!-- Header -->
-<header class="masthead bg-primary text-white text-center">
-  <div class="container">
-    <img class="img-fluid mb-5 d-block mx-auto" src="{{ url_for('static', filename='img/mail_orange.png') }}" alt="">
-    <h1 class="text-uppercase mb-0">orangered</h1>
-    <hr class="star-light">
-    <h2 class="font-weight-light mb-0">The best content from your favorite subreddits delivered to your inbox</h2>
-  </div>
-</header>
-
-<!-- About Section -->
-<section class="bg-primary text-white mb-0" id="about">
-  <div class="container">
-    <h2 class="text-center text-uppercase text-white">About</h2>
-    <hr class="star-light mb-5">
-    <div class="row">
-      <div class="col-lg-8 m-auto text-center">
-          <p class="lead">Select your favorite subreddits below and we'll send you a daily or weekly email with the top posts from each one.</p>
-          <a href="{{ url_for('static', filename='email/sample_email.html') }}" target="_blank">click here to see a sample email</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Signup Section -->
-<section id="signup">
-  <div class="container">
-    <h2 class="text-center text-uppercase text-secondary mb-0">Sign up</h2>
-    <hr class="star-dark mb-5">
-    <div class="row">
-      <div class="col-lg-8 mx-auto">
-        <form name="sentMessage" id="signupForm" novalidate="novalidate">
-          <input type="hidden" id="captcha_input" name="captcha_token" value="">
-          {% include 'subreddit_select.html' %}
-          <div class="control-group">
-            <div class="form-group floating-label-form-group controls mb-0 pb-2">
-              <label>Email Address</label>
-              <input class="form-control" id="email" type="email" placeholder="Enter Email Address" required="required" data-validation-required-message="Please enter your email address.">
-              <p class="help-block text-danger"></p>
-            </div>
-          </div>
-          {% include 'email_interval_radios.html' %}
-          <br>
-          <div id="success"></div>
-          <div class="form-group">
-            <button type="submit" class="btn btn-primary btn-xl" id="sendMessageButton">Sign up</button>
-          </div>
-          <p><small>This site is protected by reCAPTCHA and the Google <a href="https://policies.google.com/privacy">Privacy Policy</a> and <a href="https://policies.google.com/terms">Terms of Service</a> apply.</small></p>
-        </form>
-      </div>
-    </div>
-  </div>
-</section>
-
+<div id="root"></div>
 {% endblock %}
+
 {% block extra_js %}
-{% if not config['DEBUG'] %}
-<script>
-window.recaptchaSiteKey = '{{ recaptcha_site_key }}';
-</script>
-{% endif %}
-<script src="{{ url_for('static', filename='js/signup.js', cache=cache_timestamp) }}"></script>
+
 {% if not config['DEBUG'] %}
 <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}"></script>
-<script>
-grecaptcha.ready(function() {
-  grecaptcha.execute(recaptchaSiteKey, {action: 'homepage'}).then(function(token) {
-    $('#captcha_input').val(token);
-  });
-  window.setInterval(function() {
-    grecaptcha.execute(recaptchaSiteKey, {action: 'homepage'}).then(function(token) {
-      $('#captcha_input').val(token);
-    });
-  }, 90000);
-});
-</script>
 {% endif %}
+
+<script>
+window.allSubreddits = {{ subreddits | tojson }};
+window.recaptchaKey = "{{ recaptcha_site_key }}"
+</script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/dist/index.bundle.js') }}"></script>
 {% endblock %}

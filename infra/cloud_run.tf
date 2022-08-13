@@ -66,7 +66,7 @@ resource "google_cloud_run_service" "orangered" {
         "autoscaling.knative.dev/maxScale"      = "100"
         "client.knative.dev/user-image"         = "gcr.io/mattbutterfield/orangered.email"
         "run.googleapis.com/client-name"        = "gcloud"
-        "run.googleapis.com/client-version"     = "394.0.0"
+        "run.googleapis.com/client-version"     = "396.0.0"
       }
     }
   }
