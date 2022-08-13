@@ -1,7 +1,7 @@
 [[package]]
 name = "appnope"
 version = "0.1.3"
-description = "Disable App Nap on macOS >= 10.9"
+description = "Disable SignupApp Nap on macOS >= 10.9"
 category = "dev"
 optional = false
 python-versions = "*"

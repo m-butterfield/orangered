@@ -3,8 +3,7 @@ import {createRoot} from "react-dom/client";
 import {Provider} from "react-redux";
 import {theme} from "theme";
 import {store} from "app/store";
-import App from "App";
-import "index.css";
+import SignupApp from "SignupApp";
 import {CssBaseline, ThemeProvider} from "@mui/material";
 
 const container = document.getElementById("root");
@@ -15,7 +14,7 @@ root.render(
     <Provider store={store}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <App />
+        <SignupApp />
       </ThemeProvider>
     </Provider>
   </React.StrictMode>

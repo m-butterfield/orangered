@@ -1,9 +1,8 @@
 import React from "react";
 import {SignupForm} from "features/SignupForm/SignupForm";
 import {Footer} from "Footer";
-import "App.css";
 
-function App() {
+function SignupApp() {
   return (
     <div className="App">
       <SignupForm></SignupForm>
@@ -12,4 +11,4 @@ function App() {
   );
 }
 
-export default App;
+export default SignupApp;
