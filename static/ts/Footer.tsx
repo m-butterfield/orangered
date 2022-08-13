@@ -9,6 +9,8 @@ export const Footer = () => {
             Privacy Policy
         </Link>
         <br/>
+        {"Contact: "}<Link href="mailto:help@orangered.email" color="text.secondary">help@orangered.email</Link>
+        <br/>
         {"Copyright © Orangered "}
         {new Date().getFullYear()}
       </Typography>

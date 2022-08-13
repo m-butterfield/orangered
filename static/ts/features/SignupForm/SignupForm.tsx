@@ -181,6 +181,10 @@ export function SignupForm() {
               </FormControl>
             </Grid>
             <Grid item xs={12}>
+              {submitError && <Alert severity="error">{submitError}</Alert>}
+              {successMessage && <Alert severity="success">{successMessage}</Alert> }
+            </Grid>
+            <Grid item xs={12}>
               <Button
                 type="submit"
                 fullWidth
@@ -213,8 +217,7 @@ export function SignupForm() {
               >
                 Sign Up
               </Button>
-              {submitError && <Alert severity="error">{submitError}</Alert>}
-              {successMessage && <Alert severity="success">{successMessage}</Alert> }
+              <Typography color="text.secondary" fontSize="small">This site is protected by reCAPTCHA and the Google <Link color="text.secondary" href="https://policies.google.com/privacy">Privacy Policy</Link> and <Link color="text.secondary" href="https://policies.google.com/terms">Terms of Service</Link> apply.</Typography>
             </Grid>
           </Grid>
         </Box>
