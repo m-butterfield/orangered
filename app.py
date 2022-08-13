@@ -201,22 +201,23 @@ def health_check():
     return "all good"
 
 
-@app.route("/account/<uuid>/manage", methods=["GET", "POST"])
-def manage(uuid):
-    account = Account.query.filter(Account.uuid == uuid).one_or_none()
+@app.route("/account/<account_uuid>/manage", methods=["GET", "POST"])
+def manage(account_uuid):
+    account = Account.query.filter(Account.uuid == account_uuid).one_or_none()
     if account is None:
         return "not found", 404
     if not account.active:
-        return redirect(url_for("unsubscribe", uuid=uuid))
+        return redirect(url_for("unsubscribe", account_uuid=account_uuid))
     if request.method == "POST":
-        subreddits = request.form.getlist("subreddits[]")
+        data = request.get_json()
+        subreddits = data["subreddits"]
         if len(subreddits) > 10:
             return "too many subreddits", 400
         account.email_events[0].subreddits = Subreddit.query.filter(
             Subreddit.name.in_(subreddits)
         ).all()
         account.email_events[0].day_of_week = (
-            6 if request.form["email_interval"] == "weekly" else None
+            6 if data["emailInterval"] == "weekly" else None
         )
         db.session.commit()
     return render_template(
@@ -227,29 +228,31 @@ def manage(uuid):
     )
 
 
-@app.route("/account/<uuid>/unsubscribe", methods=["GET", "POST"])
-def unsubscribe(uuid):
-    account = Account.query.filter(Account.uuid == uuid).one_or_none()
+@app.route("/account/<account_uuid>/unsubscribe", methods=["GET", "POST"])
+def unsubscribe(account_uuid):
+    account = Account.query.filter(Account.uuid == account_uuid).one_or_none()
     if account is None:
         return "not found", 404
     if request.method == "POST":
-        account.active = request.form["unsubscribe"] == "False"
+        data = request.get_json()
+        account.active = data["unsubscribe"] == "False"
         db.session.commit()
     return render_template("unsubscribe.html", account=account)
 
 
 @app.route("/signup", methods=["POST"])
 def signup():
+    data = request.get_json()
     if not app.config["DEBUG"]:
-        _check_captcha(request.form["captcha_token"])
-    email = request.form["email"].lower()
+        _check_captcha(data["captchaToken"])
+    email = data["email"].lower()
     if Account.query.get(email) is not None:
         return "account already exists", 400
-    subreddits = request.form.getlist("subreddits[]")
+    subreddits = data["subreddits"]
     if len(subreddits) > 10:
         return "too many subreddits", 400
     subreddits = Subreddit.query.filter(Subreddit.name.in_(subreddits)).all()
-    email_interval = request.form["email_interval"]
+    email_interval = data["emailInterval"]
     db.session.add(
         Account(
             email=email,

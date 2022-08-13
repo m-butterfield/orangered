@@ -180,37 +180,43 @@ export function SignupForm() {
                 </RadioGroup>
               </FormControl>
             </Grid>
+            <Grid item xs={12}>
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                sx={{mt: 3, mb: 2}}
+                disabled={submitting || !subredditsValid || !emailValid}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (submitError) setSubmitError("");
+                  if (successMessage) setSuccessMessage("");
+                  setSubmitting(true);
+                  submit({
+                    email: email,
+                    subreddits: subreddits,
+                    captchaToken: recaptchaToken,
+                    emailInterval: emailFrequency,
+                  }).then((errorMessage) => {
+                    if (errorMessage) {
+                      alert(errorMessage);
+                      setSubmitError(errorMessage);
+                      setSubmitting(false);
+                      recaptchaRefresh();
+                    } else {
+                      const successMessage = "Success! You will receive your first email soon.";
+                      alert(successMessage);
+                      setSuccessMessage(successMessage);
+                    }
+                  });
+                }}
+              >
+                Sign Up
+              </Button>
+              {submitError && <Alert severity="error">{submitError}</Alert>}
+              {successMessage && <Alert severity="success">{successMessage}</Alert> }
+            </Grid>
           </Grid>
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            sx={{mt: 3, mb: 2}}
-            disabled={submitting || !subredditsValid || !emailValid}
-            onClick={() => {
-              if (submitError) setSubmitError("");
-              if (successMessage) setSuccessMessage("");
-              setSubmitting(true);
-              submit({
-                email: email,
-                subreddits: subreddits,
-                captcha_token: recaptchaToken,
-                email_interval: emailFrequency,
-              }).then((errorMessage) => {
-                if (errorMessage) {
-                  setSubmitError(errorMessage);
-                  setSubmitting(false);
-                  recaptchaRefresh();
-                } else {
-                  setSuccessMessage("Success! You will receive your first email soon.");
-                }
-              });
-            }}
-          >
-            Sign Up
-          </Button>
-          {submitError && <Alert severity="error">{submitError}</Alert>}
-          {successMessage && <Alert severity="success">{successMessage}</Alert> }
         </Box>
       </Container>
     </>

@@ -6,6 +6,6 @@ export enum EmailFrequency {
 export type SignupData = {
   email: string;
   subreddits: string[];
-  captcha_token: string;
-  email_interval: EmailFrequency;
+  captchaToken: string;
+  emailInterval: EmailFrequency;
 }

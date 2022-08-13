@@ -25,7 +25,7 @@
     </div>
     <div class="row">
       <div class="col-lg-8 mx-auto">
-        <form action="{{ url_for('unsubscribe', uuid=account.uuid) }}" method="post">
+        <form action="{{ url_for('unsubscribe', account_uuid=account.uuid) }}" method="post">
           <input type="hidden" name="unsubscribe" value="{{ account.active }}">
           <div class="form-group">
             <button type="submit" class="btn btn-primary btn-xl">{% if account.active %}Unsubscribe{% else %}Resubscribe{% endif %}</button>
@@ -37,7 +37,7 @@
     <div class="row">
       <div class="col-lg-8 m-auto text-center">
         <p class="lead">or</p>
-        <p class="lead"><a href="{{ url_for('manage', uuid=account.uuid) }}">Click here to manage your emails</a></p>
+        <p class="lead"><a href="{{ url_for('manage', account_uuid=account.uuid) }}">Click here to manage your emails</a></p>
       </div>
     </div>
     {% endif %}
