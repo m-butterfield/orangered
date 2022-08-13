@@ -6,6 +6,9 @@ export const Header = (props: {links?: HeaderLink[]}) => {
   return (
     <AppBar
       position="static"
+      color="primary"
+      enableColorOnDark={true}
+      sx={{backgroundImage: "unset", boxShadow: "unset"}}
     >
       <Toolbar>
         <Typography variant="h6" sx={{flexGrow: 1}}>

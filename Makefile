@@ -14,7 +14,7 @@ deploy: docker-build docker-push
 deploy-server: docker-build docker-push
 	$(deployservercommand)
 
-docker-build:
+docker-build: run-webpack-prod
 	docker-compose build
 
 docker-push:

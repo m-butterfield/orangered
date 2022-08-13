@@ -63,7 +63,7 @@ export function ManageForm(props: manageFormProps) {
         >
           Settings
         </Typography>
-        <Typography variant="h6" align="center" color="text.secondary" component="p">
+        <Typography variant="h6" align="center" component="p">
           Select your subreddits.
         </Typography>
         <Box component="form" noValidate sx={{mt: 3}}>
@@ -117,15 +117,15 @@ export function ManageForm(props: manageFormProps) {
               </FormControl>
             </Grid>
             <Grid item xs={12}>
-              {submitError && <Alert severity="error">{submitError}</Alert>}
-              {successMessage && <Alert severity="success">{successMessage}</Alert> }
+              {submitError && <Alert sx={{bgcolor: "#2C3E50"}} severity="error">{submitError}</Alert>}
+              {successMessage && <Alert sx={{bgcolor: "#2C3E50"}} severity="success">{successMessage}</Alert> }
             </Grid>
             <Grid item xs={12}>
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{mt: 3, mb: 2}}
+                sx={{mt: 3, mb: 2, boxShadow: "unset"}}
                 disabled={submitting || !subredditsValid}
                 onClick={(e) => {
                   e.preventDefault();

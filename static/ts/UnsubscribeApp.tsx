@@ -47,16 +47,15 @@ function UnsubscribeApp() {
         <Box component="form" noValidate sx={{mt: 3}}>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              {submitError && <Alert severity="error">{submitError}</Alert>}
-              {successMessage && <Alert severity="success">{successMessage}</Alert> }
+              {submitError && <Alert sx={{bgcolor: "#2C3E50"}} severity="error">{submitError}</Alert>}
+              {successMessage && <Alert sx={{bgcolor: "#2C3E50"}} severity="success">{successMessage}</Alert> }
             </Grid>
             <Grid item xs={12}>
               <Button
                 type="submit"
                 fullWidth
-                color={unsubscribed ? "primary" : "warning"}
                 variant="contained"
-                sx={{mt: 3, mb: 2}}
+                sx={{mt: 3, mb: 2, boxShadow: "unset"}}
                 disabled={submitting}
                 onClick={(e) => {
                   e.preventDefault();

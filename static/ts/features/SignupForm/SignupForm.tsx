@@ -67,7 +67,7 @@ export function SignupForm(props: signupFormProps) {
           <div><img src={mailImg}  alt="mail envelope"/></div>
           Orangered
         </Typography>
-        <Typography variant="h5" align="center" color="text.secondary" component="p">
+        <Typography variant="h5" align="center" component="p">
           The best content from your favorite subreddits delivered to your inbox
         </Typography>
       </Container>
@@ -82,7 +82,7 @@ export function SignupForm(props: signupFormProps) {
         >
           About
         </Typography>
-        <Typography variant="h6" align="center" color="text.secondary" component="p">
+        <Typography variant="h6" align="center" component="p">
           Select your favorite subreddits and we'll send you a daily email with the top posts from each one.
           <br/>
           <Link href="/static/html/sample_email.html" target="_blank">Click here to see a sample email.</Link>
@@ -162,15 +162,15 @@ export function SignupForm(props: signupFormProps) {
               </FormControl>
             </Grid>
             <Grid item xs={12}>
-              {submitError && <Alert severity="error">{submitError}</Alert>}
-              {successMessage && <Alert severity="success">{successMessage}</Alert> }
+              {submitError && <Alert sx={{bgcolor: "#2C3E50"}} severity="error">{submitError}</Alert>}
+              {successMessage && <Alert sx={{bgcolor: "#2C3E50"}} severity="success">{successMessage}</Alert> }
             </Grid>
             <Grid item xs={12}>
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{mt: 3, mb: 2}}
+                sx={{mt: 3, mb: 2, boxShadow: "unset"}}
                 disabled={submitting || !subredditsValid || !emailValid}
                 onClick={(e) => {
                   e.preventDefault();
