@@ -147,6 +147,7 @@ class ManageTests(BaseAppTestCase):
             },
         )
         self.assertEqual(resp.status_code, 200)
+        db.session.add(self.account)
         account = Account.query.get(self.account.email)
         self.assertEqual(len(account.email_events), 1)
         self.assertEqual(account.email_events[0].time_of_day, time(12))
@@ -163,6 +164,7 @@ class ManageTests(BaseAppTestCase):
                 "emailInterval": "daily",
             },
         )
+        db.session.add(self.account)
         account = Account.query.get(self.account.email)
         self.assertEqual(len(account.email_events), 1)
         self.assertEqual(account.email_events[0].time_of_day, time(12))

@@ -223,13 +223,7 @@ def manage(account_uuid):
         return "success", 200
     return render_template(
         "manage.html",
-        account_info={
-            "id": account.uuid,
-            "active": account.active,
-            "email": account.email,
-            "subreddits": [s.name for s in account.email_events[0].subreddits],
-            "emailInterval": ("weekly" if account.email_events[0].day_of_week else "daily"),
-        },
+        account_info=_serialize_account(account),
         subreddits=SUBREDDITS,
     )
 
@@ -238,12 +232,22 @@ def manage(account_uuid):
 def unsubscribe(account_uuid):
     account = Account.query.filter(Account.uuid == account_uuid).one_or_none()
     if account is None:
-        return "not found", 404
+        return "account not found", 404
     if request.method == "POST":
         data = request.get_json()
-        account.active = data["unsubscribe"] == "False"
+        account.active = not data["unsubscribe"]
         db.session.commit()
-    return render_template("unsubscribe.html", account=account)
+    return render_template("unsubscribe.html", account_info=_serialize_account(account))
+
+
+def _serialize_account(account):
+    return {
+        "id": account.uuid,
+        "active": account.active,
+        "email": account.email,
+        "subreddits": [s.name for s in account.email_events[0].subreddits],
+        "emailInterval": ("weekly" if account.email_events[0].day_of_week else "daily"),
+    }
 
 
 @app.route("/signup", methods=["POST"])
