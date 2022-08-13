@@ -10,6 +10,9 @@ module.exports = {
   },
   "plugins": ["@typescript-eslint"],
   "rules": {
+    "no-restricted-imports": ["error", {
+      "patterns": [".*"]
+    }],
     "indent": [
       "error",
       2

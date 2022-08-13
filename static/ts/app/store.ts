@@ -1,9 +1,11 @@
 import {configureStore} from "@reduxjs/toolkit";
 import formReducer from "features/SignupForm/signupFormSlice";
+import manageReducer from "features/ManageForm/manageFormSlice";
 
 export const store = configureStore({
   reducer: {
     form: formReducer,
+    manage: manageReducer,
   },
 });
 

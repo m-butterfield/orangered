@@ -1,8 +1,6 @@
 import {EmailFrequency} from "types";
 
-export type SignupData = {
-  email: string;
+export type ManageData = {
   subreddits: string[];
-  captchaToken: string;
   emailInterval: EmailFrequency;
 }

@@ -1,10 +1,8 @@
 import React, {useState} from "react";
 import {useAppSelector, useAppDispatch} from "app/hooks";
 import {
-  updateEmail,
-  selectFormValues, updateSubreddits, updateFrequency,
-} from "features/SignupForm/signupFormSlice";
-import {SignupData} from "features/SignupForm/types";
+  selectManageValues, updateSubreddits, updateFrequency,
+} from "features/ManageForm/manageFormSlice";
 import {EmailFrequency} from "types";
 import {
   Alert,
@@ -13,14 +11,15 @@ import {
   Button,
   Container, FormControl, FormControlLabel, FormLabel,
   Grid,
-  Link, Radio, RadioGroup,
+  Radio,
+  RadioGroup,
   TextField,
   Typography
 } from "@mui/material";
-import mailImg from "img/mail_orange.png";
+import {ManageData} from "features/ManageForm/types";
 
-const submit = async (data: SignupData): Promise<string> => {
-  const response = await fetch("/signup", {
+const submit = async (accountID: string, data: ManageData): Promise<string> => {
+  const response = await fetch(`/account/${accountID}/manage`, {
     method: "POST",
     headers: new Headers({"Content-Type": "application/json"}),
     body: JSON.stringify(data),
@@ -31,89 +30,47 @@ const submit = async (data: SignupData): Promise<string> => {
   return await response.text();
 };
 
-type signupFormProps = {
+type manageFormProps = {
   allSubreddits: string[];
-  recaptchaToken: string;
-  recaptchaRefresh: () => void;
 }
 
-export function SignupForm(props: signupFormProps) {
-  const {allSubreddits, recaptchaToken, recaptchaRefresh} = props;
-  const {email, subreddits, emailFrequency} = useAppSelector(selectFormValues);
+export function ManageForm(props: manageFormProps) {
+  const {account} = useAppSelector(selectManageValues);
+  if (!account) return <>Account not found.</>;
+
+  const {allSubreddits} = props;
   const dispatch = useAppDispatch();
+
   const [subredditWarning, setSubredditWarning] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  const emailValid = /\S+@\S+/.test(email);
-  const subredditsValid = subreddits.length > 0 && subreddits.length <= 10;
+  const subredditsValid = account.subreddits.length > 0 && account.subreddits.length <= 10;
 
   return (
     <>
       <Container disableGutters maxWidth="sm" component="main" sx={{pt: 8, pb: 6}}>
         <Typography
           component="h1"
-          variant="h1"
-          align="center"
-          color="text.primary"
-          gutterBottom
-        >
-          <div><img src={mailImg}  alt="mail envelope"/></div>
-          Orangered
-        </Typography>
-        <Typography variant="h5" align="center" color="text.secondary" component="p">
-          The best content from your favorite subreddits delivered to your inbox
-        </Typography>
-      </Container>
-      <Container disableGutters maxWidth="sm" component="main" sx={{pt: 8, pb: 6}}>
-        <Typography
-          id="about"
-          component="h1"
           variant="h2"
           align="center"
           color="text.primary"
           gutterBottom
         >
-          About
+          Settings
         </Typography>
         <Typography variant="h6" align="center" color="text.secondary" component="p">
-          Select your favorite subreddits and we'll send you a daily email with the top posts from each one.
-          <br/>
-          <Link href="/static/html/sample_email.html" target="_blank">Click here to see a sample email.</Link>
-        </Typography>
-      </Container>
-      <Container disableGutters maxWidth="sm" component="main" sx={{pt: 8, pb: 6}}>
-        <Typography
-          id="signup"
-          component="h1"
-          variant="h2"
-          align="center"
-          color="text.primary"
-          gutterBottom
-        >
-          Sign Up
+          Select your subreddits.
         </Typography>
         <Box component="form" noValidate sx={{mt: 3}}>
           <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                required
-                fullWidth
-                id="email"
-                label="Email Address"
-                name="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => dispatch(updateEmail(e.target.value))}
-              />
-            </Grid>
             <Grid item xs={12}>
               <Autocomplete
                 disablePortal
                 multiple
                 fullWidth
-                value={subreddits}
+                value={account.subreddits}
                 id="combo-box-demo"
                 options={allSubreddits}
                 onChange={(_, newValue) => {
@@ -143,13 +100,13 @@ export function SignupForm(props: signupFormProps) {
                 >
                   <FormControlLabel value="daily" control={
                     <Radio
-                      checked={emailFrequency === "daily"}
+                      checked={account.emailInterval === "daily"}
                       onChange={(_, val) => val && dispatch(updateFrequency(EmailFrequency.Daily))}
                     />
                   } label="Daily" />
                   <FormControlLabel value="weekly" control={
                     <Radio
-                      checked={emailFrequency === "weekly"}
+                      checked={account.emailInterval === "weekly"}
                       onChange={(_, val) => val && dispatch(updateFrequency(EmailFrequency.Weekly))}
                     />
                   } label="Weekly" />
@@ -166,34 +123,30 @@ export function SignupForm(props: signupFormProps) {
                 fullWidth
                 variant="contained"
                 sx={{mt: 3, mb: 2}}
-                disabled={submitting || !subredditsValid || !emailValid}
+                disabled={submitting || !subredditsValid}
                 onClick={(e) => {
                   e.preventDefault();
                   if (submitError) setSubmitError("");
                   if (successMessage) setSuccessMessage("");
                   setSubmitting(true);
-                  submit({
-                    email: email,
-                    subreddits: subreddits,
-                    captchaToken: recaptchaToken,
-                    emailInterval: emailFrequency,
+                  submit(account.id, {
+                    subreddits: account.subreddits,
+                    emailInterval: account.emailInterval,
                   }).then((errorMessage) => {
                     if (errorMessage) {
                       alert(errorMessage);
                       setSubmitError(errorMessage);
-                      setSubmitting(false);
-                      recaptchaRefresh();
                     } else {
-                      const successMessage = "Success! You will receive your first email soon.";
+                      const successMessage = "Success! Account updated.";
                       alert(successMessage);
                       setSuccessMessage(successMessage);
                     }
+                    setSubmitting(false);
                   });
                 }}
               >
-                Sign Up
+                Update
               </Button>
-              <Typography color="text.secondary" fontSize="small">This site is protected by reCAPTCHA and the Google <Link color="text.secondary" href="https://policies.google.com/privacy">Privacy Policy</Link> and <Link color="text.secondary" href="https://policies.google.com/terms">Terms of Service</Link> apply.</Typography>
             </Grid>
           </Grid>
         </Box>

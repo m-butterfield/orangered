@@ -220,11 +220,17 @@ def manage(account_uuid):
             6 if data["emailInterval"] == "weekly" else None
         )
         db.session.commit()
+        return "success", 200
     return render_template(
         "manage.html",
-        account=account,
-        email_interval=("weekly" if account.email_events[0].day_of_week else "daily"),
-        user_subreddits=[s.name for s in account.email_events[0].subreddits],
+        account_info={
+            "id": account.uuid,
+            "active": account.active,
+            "email": account.email,
+            "subreddits": [s.name for s in account.email_events[0].subreddits],
+            "emailInterval": ("weekly" if account.email_events[0].day_of_week else "daily"),
+        },
+        subreddits=SUBREDDITS,
     )
 
 

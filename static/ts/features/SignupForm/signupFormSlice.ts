@@ -1,6 +1,6 @@
 import {createSlice, PayloadAction} from "@reduxjs/toolkit";
 import {RootState} from "app/store";
-import {EmailFrequency} from "./types";
+import {EmailFrequency} from "types";
 
 export interface SignupFormState {
   email: string;
