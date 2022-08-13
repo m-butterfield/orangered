@@ -45,6 +45,9 @@ send-test-emails: export SERVER_NAME=localhost
 send-test-emails:
 	./send_emails
 
+scrape-subreddits:
+	./scrape_subreddits
+
 test: export SERVER_NAME=orangered.email
 test: export PGDATABASE=orangered_test
 test:

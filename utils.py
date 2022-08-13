@@ -9,6 +9,7 @@ import praw
 from bs4 import BeautifulSoup
 import requests
 from sendgrid import From, Mail, SendGridAPIClient
+from sqlalchemy import func
 
 from app import (
     Account,
@@ -219,6 +220,13 @@ def _subreddits_to_scrape(day_of_week):
 def scrape_subreddits():
     with app.app_context():
         _scrape_subreddits()
+    with open("subreddits.py", "w") as fp:
+        fp.write("SUBREDDITS = [\n")
+        for subreddit in db.session.query(Subreddit).order_by(
+            func.lower(Subreddit.name)
+        ):
+            fp.write(f'    "{subreddit.name}",\n')
+        fp.write("]\n")
 
 
 def _scrape_subreddits():
@@ -235,7 +243,8 @@ def _scrape_subreddits():
         subreddits = []
         for title_row in results:
             link = title_row.find("a")
-            subreddits.append(link.getText()[2:].split(":")[0])
+            name = link.getText()[2:].split(":")[0]
+            subreddits.append(name)
 
         for s in [Subreddit(name=s) for s in subreddits]:
             db.session.merge(s)
@@ -253,3 +262,11 @@ def _scrape_subreddits():
             "p", class_="titlerow"
         )
         count += 25
+
+
+def update_subreddits():
+    for name in SUBREDDITS:
+        print(f"adding: {name}")
+        s = Subreddit(name=name)
+        db.session.merge(s)
+        db.session.commit()
