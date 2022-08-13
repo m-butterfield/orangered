@@ -183,27 +183,35 @@ export function SignupForm(props: signupFormProps) {
                   setSubmitting(true);
                   if (submitError) setSubmitError("");
                   if (successMessage) setSuccessMessage("");
-                  grecaptcha.ready(() => {
-                    grecaptcha.execute(recaptchaKey, {action: "submit"}).then((token) => {
-                      submit({
-                        email: email,
-                        subreddits: subreddits,
-                        captchaToken: token,
-                        emailInterval: emailInterval,
-                      }).then((errorMessage) => {
-                        if (errorMessage) {
-                          alert(errorMessage);
-                          setSubmitError(errorMessage);
-                          setSubmitting(false);
-                        } else {
-                          const successMessage = "Success! You will receive your first email soon.";
-                          alert(successMessage);
-                          setSuccessMessage(successMessage);
-                        }
+
+                  const doSubmit = (token: string) => {
+                    submit({
+                      email: email,
+                      subreddits: subreddits,
+                      captchaToken: token,
+                      emailInterval: emailInterval,
+                    }).then((errorMessage) => {
+                      if (errorMessage) {
+                        alert(errorMessage);
+                        setSubmitError(errorMessage);
+                        setSubmitting(false);
+                      } else {
+                        const successMessage = "Success! You will receive your first email soon.";
+                        alert(successMessage);
+                        setSuccessMessage(successMessage);
+                      }
+                    });
+                  };
+
+                  if (typeof grecaptcha !== "undefined") {
+                    grecaptcha.ready(() => {
+                      grecaptcha.execute(recaptchaKey, {action: "submit"}).then((token) => {
+                        doSubmit(token);
                       });
                     });
-                  });
-
+                  } else {
+                    doSubmit("");
+                  }
                 }}
               >
                 Sign Up
