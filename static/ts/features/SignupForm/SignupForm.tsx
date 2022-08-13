@@ -1,11 +1,10 @@
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import {useAppSelector, useAppDispatch} from "app/hooks";
 import {
   updateEmail,
   selectFormValues,
   updateSubreddits,
   updateFrequency,
-  updateCaptcha,
 } from "features/SignupForm/signupFormSlice";
 import {SignupFormData} from "features/SignupForm/types";
 import {EmailFrequency} from "types";
@@ -51,7 +50,7 @@ declare const grecaptcha: {
 
 export function SignupForm(props: signupFormProps) {
   const {allSubreddits, recaptchaKey} = props;
-  const {email, subreddits, emailInterval, captchaToken} = useAppSelector(selectFormValues);
+  const {email, subreddits, emailInterval} = useAppSelector(selectFormValues);
   const dispatch = useAppDispatch();
   const [subredditWarning, setSubredditWarning] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -60,19 +59,6 @@ export function SignupForm(props: signupFormProps) {
 
   const emailValid = /\S+@\S+/.test(email);
   const subredditsValid = subreddits.length > 0 && subreddits.length <= 10;
-
-  const recaptchaRefresh = () => {
-    typeof grecaptcha !== "undefined" && grecaptcha.execute(recaptchaKey, {action: "homepage"}).then((token) => {
-      updateCaptcha(token);
-    });
-  };
-
-  useEffect(()=>{
-    typeof grecaptcha !== "undefined" && grecaptcha.ready(() => {
-      recaptchaRefresh();
-      setInterval(recaptchaRefresh, 90000);
-    });
-  }, []);
 
   return (
     <>
@@ -194,26 +180,30 @@ export function SignupForm(props: signupFormProps) {
                 disabled={submitting || !subredditsValid || !emailValid}
                 onClick={(e) => {
                   e.preventDefault();
+                  setSubmitting(true);
                   if (submitError) setSubmitError("");
                   if (successMessage) setSuccessMessage("");
-                  setSubmitting(true);
-                  submit({
-                    email: email,
-                    subreddits: subreddits,
-                    captchaToken: captchaToken,
-                    emailInterval: emailInterval,
-                  }).then((errorMessage) => {
-                    if (errorMessage) {
-                      alert(errorMessage);
-                      setSubmitError(errorMessage);
-                      setSubmitting(false);
-                      recaptchaRefresh();
-                    } else {
-                      const successMessage = "Success! You will receive your first email soon.";
-                      alert(successMessage);
-                      setSuccessMessage(successMessage);
-                    }
+                  grecaptcha.ready(() => {
+                    grecaptcha.execute(recaptchaKey, {action: "submit"}).then((token) => {
+                      submit({
+                        email: email,
+                        subreddits: subreddits,
+                        captchaToken: token,
+                        emailInterval: emailInterval,
+                      }).then((errorMessage) => {
+                        if (errorMessage) {
+                          alert(errorMessage);
+                          setSubmitError(errorMessage);
+                          setSubmitting(false);
+                        } else {
+                          const successMessage = "Success! You will receive your first email soon.";
+                          alert(successMessage);
+                          setSuccessMessage(successMessage);
+                        }
+                      });
+                    });
                   });
+
                 }}
               >
                 Sign Up

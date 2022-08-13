@@ -23,13 +23,10 @@ export const signupFormSlice = createSlice({
     updateFrequency: (state, action: PayloadAction<EmailFrequency>) => {
       state.emailInterval = action.payload;
     },
-    updateCaptcha: (state, action: PayloadAction<string>) => {
-      state.captchaToken = action.payload;
-    },
   },
 });
 
-export const {updateEmail, updateSubreddits, updateFrequency, updateCaptcha} = signupFormSlice.actions;
+export const {updateEmail, updateSubreddits, updateFrequency} = signupFormSlice.actions;
 
 export const selectFormValues = (state: RootState) => state.form;
 
