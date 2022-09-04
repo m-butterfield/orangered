@@ -1,30 +1,21 @@
+import Alert from "@mui/material/Alert";
+import Autocomplete from "@mui/material/Autocomplete";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Container from "@mui/material/Container";
+import FormControl from "@mui/material/FormControl";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import FormLabel from "@mui/material/FormLabel";
+import Grid from "@mui/material/Grid";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import React, {useState} from "react";
-import {useAppSelector, useAppDispatch} from "app/hooks";
-import {
-  updateEmail,
-  selectFormValues,
-  updateSubreddits,
-  updateFrequency,
-} from "features/SignupForm/signupFormSlice";
 import {SignupFormData} from "features/SignupForm/types";
 import {EmailFrequency} from "types";
-import {
-  Alert,
-  Autocomplete,
-  Box,
-  Button,
-  Container,
-  FormControl,
-  FormControlLabel,
-  FormLabel,
-  Grid,
-  Link,
-  Radio,
-  RadioGroup,
-  TextField,
-  Typography
-} from "@mui/material";
 import mailImg from "img/mail_orange.png";
+import Link from "@mui/material/Link";
 
 const submit = async (data: SignupFormData): Promise<string> => {
   const response = await fetch("/signup", {
@@ -50,8 +41,12 @@ declare const grecaptcha: {
 
 export function SignupForm(props: signupFormProps) {
   const {allSubreddits, recaptchaKey} = props;
-  const {email, subreddits, emailInterval} = useAppSelector(selectFormValues);
-  const dispatch = useAppDispatch();
+
+  const [email, setEmail] = useState("");
+  const [subreddits, setSubreddits] = useState([]);
+  const [emailInterval, setEmailInterval] = useState(EmailFrequency.Daily);
+
+
   const [subredditWarning, setSubredditWarning] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -116,7 +111,7 @@ export function SignupForm(props: signupFormProps) {
                 name="email"
                 autoComplete="email"
                 value={email}
-                onChange={(e) => dispatch(updateEmail(e.target.value))}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </Grid>
             <Grid item xs={12}>
@@ -133,7 +128,7 @@ export function SignupForm(props: signupFormProps) {
                   } else if (subredditWarning) {
                     setSubredditWarning("");
                   }
-                  dispatch(updateSubreddits(newValue));
+                  setSubreddits(newValue);
                 }}
                 renderInput={(params) => {
                   return <TextField
@@ -155,13 +150,13 @@ export function SignupForm(props: signupFormProps) {
                   <FormControlLabel value="daily" control={
                     <Radio
                       checked={emailInterval === "daily"}
-                      onChange={(_, val) => val && dispatch(updateFrequency(EmailFrequency.Daily))}
+                      onChange={(_, val) => val && setEmailInterval(EmailFrequency.Daily)}
                     />
                   } label="Daily" />
                   <FormControlLabel value="weekly" control={
                     <Radio
                       checked={emailInterval === "weekly"}
-                      onChange={(_, val) => val && dispatch(updateFrequency(EmailFrequency.Weekly))}
+                      onChange={(_, val) => val && setEmailInterval(EmailFrequency.Weekly)}
                     />
                   } label="Weekly" />
                 </RadioGroup>

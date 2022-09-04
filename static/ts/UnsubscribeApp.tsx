@@ -1,17 +1,15 @@
-import {
-  Alert,
-  Box,
-  Button,
-  Container,
-  Grid,
-  Typography,
-} from "@mui/material";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Container from "@mui/material/Container";
+import Grid from "@mui/material/Grid";
+import Typography from "@mui/material/Typography";
 import React, {useState} from "react";
 import {Footer} from "Footer";
 import {Header} from "Header";
 import {Account} from "types";
 
-declare const account: Account;
+declare const account: Account | null;
 
 const submit = async (accountID: string, unsubscribe: boolean): Promise<string> => {
   const response = await fetch(`/account/${accountID}/unsubscribe`, {
@@ -26,6 +24,8 @@ const submit = async (accountID: string, unsubscribe: boolean): Promise<string> 
 };
 
 function UnsubscribeApp() {
+  if (!account) return <>Account not found.</>;
+
   const [unsubscribed, setUnsubscribed] = useState(!account.active);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");

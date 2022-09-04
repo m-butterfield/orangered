@@ -1,5 +1,7 @@
+import Container from "@mui/material/Container";
+import Link from "@mui/material/Link";
+import Typography from "@mui/material/Typography";
 import React from "react";
-import {Container, Link, Typography} from "@mui/material";
 
 export const Footer = () => {
   return (

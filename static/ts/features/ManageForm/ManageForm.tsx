@@ -1,24 +1,18 @@
+import Alert from "@mui/material/Alert";
+import Autocomplete from "@mui/material/Autocomplete";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Container from "@mui/material/Container";
+import FormControl from "@mui/material/FormControl";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import FormLabel from "@mui/material/FormLabel";
+import Grid from "@mui/material/Grid";
+import Radio from "@mui/material/Radio";
+import RadioGroup from "@mui/material/RadioGroup";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
 import React, {useState} from "react";
-import {useAppSelector, useAppDispatch} from "app/hooks";
-import {
-  selectManageValues, updateSubreddits, updateFrequency,
-} from "features/ManageForm/manageFormSlice";
-import {EmailFrequency} from "types";
-import {
-  Alert,
-  Autocomplete,
-  Box,
-  Button,
-  Container,
-  FormControl,
-  FormControlLabel,
-  FormLabel,
-  Grid,
-  Radio,
-  RadioGroup,
-  TextField,
-  Typography
-} from "@mui/material";
+import {Account, EmailFrequency} from "types";
 import {ManageData} from "features/ManageForm/types";
 
 const submit = async (accountID: string, data: ManageData): Promise<string> => {
@@ -37,12 +31,13 @@ type manageFormProps = {
   allSubreddits: string[];
 }
 
+const gAccount = (window as {account?: Account}).account;
+
 export function ManageForm(props: manageFormProps) {
-  const {account} = useAppSelector(selectManageValues);
-  if (!account) return <>Account not found.</>;
+  if (!gAccount) return <>Account not found.</>;
+  const [account, setAccount] = useState(gAccount);
 
   const {allSubreddits} = props;
-  const dispatch = useAppDispatch();
 
   const [subredditWarning, setSubredditWarning] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -82,7 +77,10 @@ export function ManageForm(props: manageFormProps) {
                   } else if (subredditWarning) {
                     setSubredditWarning("");
                   }
-                  dispatch(updateSubreddits(newValue));
+                  setAccount({
+                    ...account,
+                    subreddits: newValue,
+                  });
                 }}
                 renderInput={(params) => {
                   return <TextField
@@ -104,13 +102,13 @@ export function ManageForm(props: manageFormProps) {
                   <FormControlLabel value="daily" control={
                     <Radio
                       checked={account.emailInterval === "daily"}
-                      onChange={(_, val) => val && dispatch(updateFrequency(EmailFrequency.Daily))}
+                      onChange={(_, val) => val && setAccount({...account, emailInterval: EmailFrequency.Daily})}
                     />
                   } label="Daily" />
                   <FormControlLabel value="weekly" control={
                     <Radio
                       checked={account.emailInterval === "weekly"}
-                      onChange={(_, val) => val && dispatch(updateFrequency(EmailFrequency.Weekly))}
+                      onChange={(_, val) => val && setAccount({...account, emailInterval: EmailFrequency.Weekly})}
                     />
                   } label="Weekly" />
                 </RadioGroup>

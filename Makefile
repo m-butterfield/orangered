@@ -39,6 +39,7 @@ run-webpack:
 	yarn run webpack --mode development --watch
 
 run-webpack-prod:
+	rm -rf static/js/dist
 	yarn run webpack --mode production
 
 send-test-emails: export SERVER_NAME=localhost

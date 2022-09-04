@@ -10,14 +10,9 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
+        test: /\.tsx?$/i,
         use: "ts-loader",
         exclude: /node_modules/,
-      },
-      {
-        test: /\.csd$/,
-        use: "raw-loader",
-        include: path.resolve(__dirname, "app", "static", "csound"),
       },
       {
         test: /\.css$/i,

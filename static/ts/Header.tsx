@@ -1,5 +1,8 @@
+import AppBar from "@mui/material/AppBar";
+import Link from "@mui/material/Link";
+import Toolbar from "@mui/material/Toolbar";
+import Typography from "@mui/material/Typography";
 import React from "react";
-import {AppBar, Link, Toolbar, Typography} from "@mui/material";
 import {HeaderLink} from "types";
 
 export const Header = (props: {links?: HeaderLink[]}) => {
