@@ -6,14 +6,19 @@ from unittest import mock
 import uuid
 
 from freezegun import freeze_time
+from sqlalchemy.orm import close_all_sessions
 
 from app import (
     app,
-    db,
+)
+from db import (
     Account,
+    Base,
     EmailEvent,
+    engine,
     ScrapeRecord,
     ScrapeRecordSubredditPost,
+    Session,
     Subreddit,
     SubredditPost,
 )
@@ -23,10 +28,11 @@ from utils import _scrape_posts, _send_emails
 
 class BaseTestCase(unittest.TestCase):
     def setUp(self):
-        db.close_all_sessions()
-        db.drop_all()
-        db.create_all()
+        close_all_sessions()
+        Base.metadata.drop_all(engine)
+        Base.metadata.create_all(engine)
         insert_subreddits()
+        self.session = Session()
 
 
 class BaseAppTestCase(BaseTestCase):
@@ -42,8 +48,11 @@ class BaseAppTestCase(BaseTestCase):
                 )
             ],
         )
-        db.session.add(self.account)
-        db.session.commit()
+        self.session.add(self.account)
+        self.session.commit()
+
+    def tearDown(self) -> None:
+        self.session.close()
 
 
 class SignupTests(BaseAppTestCase):
@@ -58,7 +67,7 @@ class SignupTests(BaseAppTestCase):
             },
         )
         self.assertEqual(resp.status_code, 201)
-        account = Account.query.get("bob2@aol.com")
+        account = self.session.query(Account).get("bob2@aol.com")
         self.assertIsNotNone(account)
         self.assertTrue(account.active)
         self.assertEqual(len(account.email_events), 1)
@@ -77,7 +86,7 @@ class SignupTests(BaseAppTestCase):
                 "emailInterval": "daily",
             },
         )
-        account = Account.query.get("bob3@aol.com")
+        account = self.session.query(Account).get("bob3@aol.com")
         self.assertIsNone(account.email_events[0].day_of_week)
 
     def test_account_already_exists(self):
@@ -108,25 +117,25 @@ class UnsubscribeTests(BaseAppTestCase):
 
     def test_unsubscribe(self):
         resp = self.client.post(
-            f"/account/{self.account.uuid}/unsubscribe", json={"unsubscribe": "True"}
+            f"/account/{self.account.uuid}/unsubscribe", json={"unsubscribe": True}
         )
         self.assertEqual(resp.status_code, 200)
-        db.session.add(self.account)
+        self.session.refresh(self.account)
         self.assertFalse(self.account.active)
 
         # resubscribe
         resp = self.client.post(
-            f"/account/{self.account.uuid}/unsubscribe", json={"unsubscribe": "False"}
+            f"/account/{self.account.uuid}/unsubscribe", json={"unsubscribe": False}
         )
         self.assertEqual(resp.status_code, 200)
-        db.session.add(self.account)
+        self.session.refresh(self.account)
         self.assertTrue(self.account.active)
 
 
 class ManageTests(BaseAppTestCase):
     def test_redirect_to_unsubscribe(self):
         self.account.active = False
-        db.session.commit()
+        self.session.commit()
         resp = self.client.get(f"/account/{self.account.uuid}/manage")
         self.assertEqual(resp.status_code, 302)
 
@@ -147,8 +156,8 @@ class ManageTests(BaseAppTestCase):
             },
         )
         self.assertEqual(resp.status_code, 200)
-        db.session.add(self.account)
-        account = Account.query.get(self.account.email)
+        self.session.refresh(self.account)
+        account = self.session.query(Account).get(self.account.email)
         self.assertEqual(len(account.email_events), 1)
         self.assertEqual(account.email_events[0].time_of_day, time(12))
         self.assertEqual(account.email_events[0].day_of_week, 6)
@@ -164,8 +173,7 @@ class ManageTests(BaseAppTestCase):
                 "emailInterval": "daily",
             },
         )
-        db.session.add(self.account)
-        account = Account.query.get(self.account.email)
+        self.session.refresh(account)
         self.assertEqual(len(account.email_events), 1)
         self.assertEqual(account.email_events[0].time_of_day, time(12))
         self.assertIsNone(account.email_events[0].day_of_week)
@@ -253,7 +261,7 @@ class FakeReddit:
 
 class EmailTests(BaseTestCase):
     def _add_accounts(self, day_of_week=None):
-        db.session.add_all(
+        self.session.add_all(
             [
                 # user account with some subscriptions
                 Account(
@@ -263,9 +271,11 @@ class EmailTests(BaseTestCase):
                             account_email="bob@aol.com",
                             time_of_day=time(12),
                             day_of_week=day_of_week,
-                            subreddits=Subreddit.query.filter(
+                            subreddits=self.session.query(Subreddit)
+                            .filter(
                                 Subreddit.name.in_(["aviation", "spacex", "running"])
-                            ).all(),
+                            )
+                            .all(),
                         )
                     ],
                 ),
@@ -278,9 +288,9 @@ class EmailTests(BaseTestCase):
                             account_email="bob@aol.com",
                             time_of_day=time(12),
                             day_of_week=day_of_week,
-                            subreddits=Subreddit.query.filter(
-                                Subreddit.name.in_(["programming", "askreddit"])
-                            ).all(),
+                            subreddits=self.session.query(Subreddit)
+                            .filter(Subreddit.name.in_(["programming", "askreddit"]))
+                            .all(),
                         )
                     ],
                 ),
@@ -293,9 +303,9 @@ class EmailTests(BaseTestCase):
                             account_email="bob@aol.com",
                             time_of_day=time(12),
                             day_of_week=day_of_week,
-                            subreddits=Subreddit.query.filter(
-                                Subreddit.name.in_(["analog", "finance"])
-                            ).all(),
+                            subreddits=self.session.query(Subreddit)
+                            .filter(Subreddit.name.in_(["analog", "finance"]))
+                            .all(),
                         )
                     ],
                 ),
@@ -307,9 +317,11 @@ class EmailTests(BaseTestCase):
                             account_email="bob@aol.com",
                             time_of_day=time(12),
                             day_of_week=6 if day_of_week is None else None,
-                            subreddits=Subreddit.query.filter(
+                            subreddits=self.session.query(Subreddit)
+                            .filter(
                                 Subreddit.name.in_(["aviation", "spacex", "running"])
-                            ).all(),
+                            )
+                            .all(),
                         )
                     ],
                 ),
@@ -317,7 +329,7 @@ class EmailTests(BaseTestCase):
         )
 
     def _add_posts(self, now, interval="daily"):
-        db.session.add_all(
+        self.session.add_all(
             [
                 # last scraped past one day for 'running' so scraping should happen
                 ScrapeRecord(
@@ -420,7 +432,7 @@ class EmailTests(BaseTestCase):
         now = datetime.utcnow()
         self._add_accounts()
         self._add_posts(now)
-        db.session.commit()
+        self.session.commit()
 
         with mock.patch(
             "utils.reddit_client",
@@ -428,7 +440,7 @@ class EmailTests(BaseTestCase):
                 interval="day",
             ),
         ):
-            subreddit_posts = _scrape_posts()
+            subreddit_posts = _scrape_posts(self.session)
 
         self.assertSetEqual(
             {"aviation", "spacex", "running"}, set(subreddit_posts.keys())
@@ -436,42 +448,44 @@ class EmailTests(BaseTestCase):
         self.assertEqual(len(subreddit_posts["aviation"]), 2)
         self.assertEqual(
             len(
-                ScrapeRecord.query.filter(
-                    ScrapeRecord.subreddit_name == "aviation"
-                ).all()
+                self.session.query(ScrapeRecord)
+                .filter(ScrapeRecord.subreddit_name == "aviation")
+                .all()
             ),
             2,
         )
         self.assertEqual(
             len(
-                ScrapeRecord.query.filter(ScrapeRecord.subreddit_name == "spacex").all()
+                self.session.query(ScrapeRecord)
+                .filter(ScrapeRecord.subreddit_name == "spacex")
+                .all()
             ),
             3,
         )
         self.assertEqual(len(subreddit_posts["spacex"]), 4)
         self.assertEqual(
             len(
-                ScrapeRecord.query.filter(
-                    ScrapeRecord.subreddit_name == "running"
-                ).all()
+                self.session.query(ScrapeRecord)
+                .filter(ScrapeRecord.subreddit_name == "running")
+                .all()
             ),
             2,
         )
         self.assertEqual(len(subreddit_posts["running"]), 5)
 
-        spacex_2 = SubredditPost.query.get("spacex_2")
+        spacex_2 = self.session.query(SubredditPost).get("spacex_2")
         self.assertEqual(spacex_2.num_comments, 23)
         self.assertGreaterEqual(spacex_2.scraped_at, now)
         sr_1, sr_2 = spacex_2.scrape_records
         self.assertEqual(sr_1.interval, "weekly")
         self.assertEqual(sr_2.interval, "daily")
 
-        spacex_3 = SubredditPost.query.get("spacex_3")
+        spacex_3 = self.session.query(SubredditPost).get("spacex_3")
         (sr_3,) = spacex_3.scrape_records
         self.assertEqual(sr_2, sr_3)
 
-        _send_emails(subreddit_posts)
-        db.session.add_all(chain.from_iterable(subreddit_posts.values()))
+        _send_emails(self.session, subreddit_posts)
+        self.session.add_all(chain.from_iterable(subreddit_posts.values()))
         fake_template().render.assert_called_with(
             email_management_url=mock.ANY,
             unsubscribe_url=mock.ANY,
@@ -485,7 +499,9 @@ class EmailTests(BaseTestCase):
         )
         fake_send_email.assert_called_once_with("bob@aol.com", mock.ANY, mock.ANY)
         self.assertAlmostEqual(
-            Account.query.get("bob@aol.com").last_email, now, delta=timedelta(seconds=1)
+            self.session.query(Account).get("bob@aol.com").last_email,
+            now,
+            delta=timedelta(seconds=1),
         )
 
     @mock.patch("utils.Template")
@@ -495,7 +511,7 @@ class EmailTests(BaseTestCase):
         now = datetime.utcnow()
         self._add_accounts(day_of_week=6)
         self._add_posts(now, interval="weekly")
-        db.session.commit()
+        self.session.commit()
 
         with mock.patch(
             "utils.reddit_client",
@@ -503,7 +519,7 @@ class EmailTests(BaseTestCase):
                 interval="week",
             ),
         ):
-            subreddit_posts = _scrape_posts("weekly")
+            subreddit_posts = _scrape_posts(self.session, "weekly")
 
         self.assertSetEqual(
             {"aviation", "spacex", "running"}, set(subreddit_posts.keys())
@@ -511,42 +527,44 @@ class EmailTests(BaseTestCase):
         self.assertEqual(len(subreddit_posts["aviation"]), 2)
         self.assertEqual(
             len(
-                ScrapeRecord.query.filter(
-                    ScrapeRecord.subreddit_name == "aviation"
-                ).all()
+                self.session.query(ScrapeRecord)
+                .filter(ScrapeRecord.subreddit_name == "aviation")
+                .all()
             ),
             2,
         )
         self.assertEqual(
             len(
-                ScrapeRecord.query.filter(ScrapeRecord.subreddit_name == "spacex").all()
+                self.session.query(ScrapeRecord)
+                .filter(ScrapeRecord.subreddit_name == "spacex")
+                .all()
             ),
             3,
         )
         self.assertEqual(len(subreddit_posts["spacex"]), 4)
         self.assertEqual(
             len(
-                ScrapeRecord.query.filter(
-                    ScrapeRecord.subreddit_name == "running"
-                ).all()
+                self.session.query(ScrapeRecord)
+                .filter(ScrapeRecord.subreddit_name == "running")
+                .all()
             ),
             2,
         )
         self.assertEqual(len(subreddit_posts["running"]), 5)
 
-        spacex_2 = SubredditPost.query.get("spacex_2")
+        spacex_2 = self.session.query(SubredditPost).get("spacex_2")
         self.assertEqual(spacex_2.num_comments, 23)
         self.assertGreaterEqual(spacex_2.scraped_at, now)
         sr_1, sr_2 = spacex_2.scrape_records
         self.assertEqual(sr_1.interval, "daily")
         self.assertEqual(sr_2.interval, "weekly")
 
-        spacex_3 = SubredditPost.query.get("spacex_3")
+        spacex_3 = self.session.query(SubredditPost).get("spacex_3")
         (sr_3,) = spacex_3.scrape_records
         self.assertEqual(sr_2, sr_3)
 
-        _send_emails(subreddit_posts, "weekly")
-        db.session.add_all(chain.from_iterable(subreddit_posts.values()))
+        _send_emails(self.session, subreddit_posts, "weekly")
+        self.session.add_all(chain.from_iterable(subreddit_posts.values()))
         fake_template().render.assert_called_with(
             email_management_url=mock.ANY,
             unsubscribe_url=mock.ANY,
@@ -560,5 +578,7 @@ class EmailTests(BaseTestCase):
         )
         fake_send_email.assert_called_once_with("bob@aol.com", mock.ANY, mock.ANY)
         self.assertAlmostEqual(
-            Account.query.get("bob@aol.com").last_email, now, delta=timedelta(seconds=1)
+            self.session.query(Account).get("bob@aol.com").last_email,
+            now,
+            delta=timedelta(seconds=1),
         )

@@ -11,15 +11,15 @@ import requests
 from sendgrid import From, Mail, SendGridAPIClient
 from sqlalchemy import func
 
-from app import (
+from app import app
+from db import (
     Account,
-    app,
-    db,
     EmailEvent,
-    ScrapeRecord,
     ScrapeRecordSubredditPost,
+    ScrapeRecord,
     Subreddit,
     SubredditPost,
+    Session,
 )
 
 from subreddits import SUBREDDITS
@@ -46,9 +46,10 @@ HTML_TEMPLATE, TEXT_TEMPLATE = _html_template(), _text_template()
 
 
 def insert_subreddits():
-    for s in [Subreddit(name=s) for s in SUBREDDITS]:
-        db.session.merge(s)
-    db.session.commit()
+    with Session() as session:
+        for s in [Subreddit(name=s) for s in SUBREDDITS]:
+            session.merge(s)
+        session.commit()
 
 
 def reddit_client():
@@ -62,15 +63,18 @@ def reddit_client():
 
 
 def send_emails():
-    _send_emails(_scrape_posts())
-    if datetime.now().weekday() == 6:
-        _send_emails(_scrape_posts("weekly"), "weekly")
+    with Session() as session:
+        _send_emails(session, _scrape_posts(session))
+        if datetime.now().weekday() == 6:
+            _send_emails(session, _scrape_posts(session, "weekly"), "weekly")
 
 
-def _send_emails(subreddit_posts, interval="daily"):
+def _send_emails(session, subreddit_posts, interval="daily"):
     with app.app_context():
-        for account in Account.query.join(Account.email_events).filter(
-            *_account_filters(6 if interval == "weekly" else None)
+        for account in (
+            session.query(Account)
+            .join(Account.email_events)
+            .filter(*_account_filters(6 if interval == "weekly" else None))
         ):
             account_subreddit_posts = OrderedDict(
                 [
@@ -78,7 +82,7 @@ def _send_emails(subreddit_posts, interval="daily"):
                     for s in account.email_events[0].subreddits
                 ]
             )
-            _send_email_for_account(account, account_subreddit_posts)
+            _send_email_for_account(session, account, account_subreddit_posts)
 
 
 def _account_filters(day_of_week):
@@ -94,7 +98,7 @@ def _account_filters(day_of_week):
     )
 
 
-def _send_email_for_account(account, subreddit_posts):
+def _send_email_for_account(session, account, subreddit_posts):
     logging.info(
         "Sending email to %s with subreddits: %s",
         account.email,
@@ -109,11 +113,11 @@ def _send_email_for_account(account, subreddit_posts):
     text_data = Template(TEXT_TEMPLATE, trim_blocks=True).render(**context)
     _send_email(account.email, html_data, text_data)
     account.last_email = datetime.utcnow()
-    db.session.commit()
+    session.commit()
 
 
 def _send_email(email, html, text):
-    if app.config["DEBUG"]:
+    if os.getenv("FLASK_DEBUG"):
         return _save_test_emails(html, text)
     SendGridAPIClient(os.environ.get("SENDGRID_API_KEY")).send(
         Mail(
@@ -135,33 +139,39 @@ def _save_test_emails(html, text):
         return
 
 
-def _scrape_posts(interval="daily"):
+def _scrape_posts(session, interval="daily"):
     logging.info(f"Scraping subreddit posts for {interval} interval")
     reddit = reddit_client()
     subreddit_posts = {}
     now = datetime.utcnow()
-    for subreddit in _subreddits_to_scrape(6 if interval == "weekly" else None):
-        scrape_record = ScrapeRecord.query.filter(
-            ScrapeRecord.subreddit == subreddit,
-            ScrapeRecord.interval == interval,
-            ScrapeRecord.scrape_time > now - timedelta(hours=23),
-        ).one_or_none()
+    for subreddit in _subreddits_to_scrape(
+        session, 6 if interval == "weekly" else None
+    ):
+        scrape_record = (
+            session.query(ScrapeRecord)
+            .filter(
+                ScrapeRecord.subreddit == subreddit,
+                ScrapeRecord.interval == interval,
+                ScrapeRecord.scrape_time > now - timedelta(hours=23),
+            )
+            .one_or_none()
+        )
         if not scrape_record:
             logging.info(
                 f"Scraping new {interval} top posts for " f"subreddit: {subreddit.name}"
             )
-            scrape_record = _scrape_new_posts(reddit, subreddit, interval)
+            scrape_record = _scrape_new_posts(session, reddit, subreddit, interval)
         subreddit_posts[subreddit.name] = scrape_record.subreddit_posts
     logging.info("Done scraping subreddit posts")
     return subreddit_posts
 
 
-def _scrape_new_posts(reddit, subreddit, interval):
+def _scrape_new_posts(session, reddit, subreddit, interval):
     posts = []
     for post in reddit.subreddit(subreddit.name).top(
         "day" if interval == "daily" else "week", limit=10
     ):
-        existing_post = SubredditPost.query.get(post.id)
+        existing_post = session.query(SubredditPost).get(post.id)
         if existing_post:
             if any(sr.interval == interval for sr in existing_post.scrape_records):
                 continue
@@ -190,8 +200,8 @@ def _scrape_new_posts(reddit, subreddit, interval):
             for i, subreddit_post in enumerate(posts)
         ],
     )
-    db.session.add(scrape_record)
-    db.session.commit()
+    session.add(scrape_record)
+    session.commit()
     return scrape_record
 
 
@@ -209,27 +219,28 @@ def _get_permalink_url(post):
     return f"https://www.reddit.com{post.permalink}"
 
 
-def _subreddits_to_scrape(day_of_week):
+def _subreddits_to_scrape(session, day_of_week):
     return (
-        Subreddit.query.join(Subreddit.email_events)
+        session.query(Subreddit)
+        .join(Subreddit.email_events)
         .join(Account)
         .filter(*_account_filters(day_of_week))
     )
 
 
 def scrape_subreddits():
-    with app.app_context():
-        _scrape_subreddits()
-    with open("subreddits.py", "w") as fp:
-        fp.write("SUBREDDITS = [\n")
-        for subreddit in db.session.query(Subreddit).order_by(
-            func.lower(Subreddit.name)
-        ):
-            fp.write(f'    "{subreddit.name}",\n')
-        fp.write("]\n")
+    with Session() as session, app.app_context():
+        _scrape_subreddits(session)
+        with open("subreddits.py", "w") as fp:
+            fp.write("SUBREDDITS = [\n")
+            for subreddit in session.query(Subreddit).order_by(
+                func.lower(Subreddit.name)
+            ):
+                fp.write(f'    "{subreddit.name}",\n')
+            fp.write("]\n")
 
 
-def _scrape_subreddits():
+def _scrape_subreddits(session):
     resp = requests.get(
         "https://www.reddit.com/subreddits",
         headers={"User-agent": "orangered 0.1"},
@@ -247,8 +258,8 @@ def _scrape_subreddits():
             subreddits.append(name)
 
         for s in [Subreddit(name=s) for s in subreddits]:
-            db.session.merge(s)
-        db.session.commit()
+            session.merge(s)
+        session.commit()
 
         subreddit_id = (
             title_row.find_next_sibling().find("form").find("input").attrs["value"]
@@ -262,11 +273,3 @@ def _scrape_subreddits():
             "p", class_="titlerow"
         )
         count += 25
-
-
-def update_subreddits():
-    for name in SUBREDDITS:
-        print(f"adding: {name}")
-        s = Subreddit(name=name)
-        db.session.merge(s)
-        db.session.commit()

@@ -23,7 +23,7 @@ docker-push:
 reset-db:
 	dropdb --if-exists orangered
 	createdb orangered
-	python -c 'from app import db; db.create_all()'
+	python -c 'from db import Base, engine; Base.metadata.create_all(engine)'
 	python -c 'from utils import insert_subreddits; insert_subreddits()'
 
 fmt:
