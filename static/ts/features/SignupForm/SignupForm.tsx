@@ -42,8 +42,11 @@ declare const grecaptcha: {
 export function SignupForm(props: signupFormProps) {
   const {allSubreddits, recaptchaKey} = props;
 
+  const params = new URLSearchParams(window.location.search);
+  const subredditSearch = params.has("subreddits") ? params.get("subreddits").split(",") : undefined;
+
+  const [subreddits, setSubreddits] = useState(subredditSearch || []);
   const [email, setEmail] = useState("");
-  const [subreddits, setSubreddits] = useState([]);
   const [emailInterval, setEmailInterval] = useState(EmailFrequency.Daily);
 
 
@@ -74,23 +77,6 @@ export function SignupForm(props: signupFormProps) {
       </Container>
       <Container disableGutters maxWidth="sm" component="main" sx={{pt: 8, pb: 6}}>
         <Typography
-          id="about"
-          component="h1"
-          variant="h2"
-          align="center"
-          color="text.primary"
-          gutterBottom
-        >
-          About
-        </Typography>
-        <Typography variant="h6" align="center" component="p">
-          Select your favorite subreddits and we'll send you a daily email with the top posts from each one.
-          <br/>
-          <Link href="/static/html/sample_email.html" target="_blank">Click here to see a sample email.</Link>
-        </Typography>
-      </Container>
-      <Container disableGutters maxWidth="sm" component="main" sx={{pt: 8, pb: 6}}>
-        <Typography
           id="signup"
           component="h1"
           variant="h2"
@@ -106,6 +92,7 @@ export function SignupForm(props: signupFormProps) {
               <TextField
                 required
                 fullWidth
+                autoFocus
                 id="email"
                 label="Email Address"
                 name="email"
@@ -215,6 +202,23 @@ export function SignupForm(props: signupFormProps) {
             </Grid>
           </Grid>
         </Box>
+      </Container>
+      <Container disableGutters maxWidth="sm" component="main" sx={{pt: 8, pb: 6}}>
+        <Typography
+          id="about"
+          component="h1"
+          variant="h2"
+          align="center"
+          color="text.primary"
+          gutterBottom
+        >
+          About
+        </Typography>
+        <Typography variant="h6" align="center" component="p">
+          Select your favorite subreddits and we'll send you a daily email with the top posts from each one.
+          <br/>
+          <Link href="/static/html/sample_email.html" target="_blank">Click here to see a sample email.</Link>
+        </Typography>
       </Container>
     </>
   );
