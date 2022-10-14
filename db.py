@@ -14,7 +14,8 @@ from sqlalchemy import (
     Table,
     Time,
 )
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship, sessionmaker
 
 
 def _psql_uri():
@@ -142,7 +143,9 @@ class ScrapeRecordSubredditPost(Base):
     )
     ordinal = Column(Integer, nullable=False)
 
-    scrape_record = relationship("ScrapeRecord")
+    scrape_record = relationship(
+        "ScrapeRecord", backref="scrape_record_subreddit_posts"
+    )
     subreddit_post = relationship("SubredditPost")
 
 
@@ -161,7 +164,6 @@ class ScrapeRecord(Base):
     )
 
     subreddit = relationship("Subreddit")
-    scrape_record_subreddit_posts = relationship("ScrapeRecordSubredditPost")
     subreddit_posts = relationship(
         "SubredditPost",
         backref="scrape_records",

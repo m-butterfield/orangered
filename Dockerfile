@@ -10,7 +10,7 @@ RUN apt-get update \
     && apt-get -y install libpq-dev gcc
 RUN python -c 'from urllib.request import urlopen; print(urlopen("https://install.python-poetry.org").read().decode())' | python -
 COPY ./pyproject.toml /orangered/pyproject.toml
-RUN poetry install --no-interaction --no-ansi -vvv
+RUN poetry install --no-dev --no-interaction --no-ansi -vvv
 
 FROM python as server
 ENV PATH="/orangered/.venv/bin:$PATH"

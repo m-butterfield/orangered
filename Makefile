@@ -56,6 +56,9 @@ test:
 	createdb orangered_test
 	python -m unittest -v $(filter-out $@,$(MAKECMDGOALS))
 
+mypy:
+	mypy . --strict
+
 tf-plan:
 	$(terraformbasecommand) plan $(terraformvarsarg)
 
