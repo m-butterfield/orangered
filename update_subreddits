@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+from utils import update_subreddits
+
+
+if __name__ == "__main__":
+    update_subreddits()

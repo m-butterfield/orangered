@@ -273,3 +273,17 @@ def _scrape_subreddits(session):
             "p", class_="titlerow"
         )
         count += 25
+
+
+def update_subreddits() -> None:
+    with Session() as session:
+        for s in [Subreddit(name=s) for s in SUBREDDITS]:
+            print(f"merging subreddit: {s}")
+            session.merge(s)
+        session.commit()
+
+
+def update_static() -> None:
+    client = app.test_client()
+    result = client.get("/")
+    breakpoint()

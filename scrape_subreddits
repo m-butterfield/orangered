@@ -3,4 +3,6 @@ from utils import scrape_subreddits
 
 
 if __name__ == "__main__":
+    print("Scraping subreddits...")
     scrape_subreddits()
+    print("Complete. Don't forget to update the production database.")

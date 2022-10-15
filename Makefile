@@ -8,7 +8,7 @@ export PGHOST=localhost
 export PGDATABASE=orangered
 export FLASK_DEBUG=1
 
-.PHONY: deploy deploy-server docker-build docker-push reset-db fmt run-server run-webpack run-webpack-prod send-test-emails scrape-subreddits test mypy tf-plan tf-apply tf-refresh update-deps
+.PHONY: deploy deploy-server docker-build docker-push reset-db fmt run-server run-webpack run-webpack-prod update-static send-test-emails scrape-subreddits test mypy tf-plan tf-apply tf-refresh update-deps
 
 deploy: docker-build docker-push
 	$(deployservercommand)
@@ -43,6 +43,9 @@ run-webpack:
 run-webpack-prod:
 	rm -rf static/js/dist
 	yarn run webpack --mode production
+
+update-static:
+	./update_static
 
 send-test-emails: export SERVER_NAME=localhost
 send-test-emails:

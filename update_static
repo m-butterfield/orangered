@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+from utils import update_static
+
+
+if __name__ == "__main__":
+    update_static()
