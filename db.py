@@ -18,7 +18,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 
 
-def _psql_uri():
+def _psql_uri() -> str:
     username = os.environ.get("PGUSER")
     password = os.environ.get("PGPASSWORD")
     if username and password:
@@ -52,7 +52,7 @@ class Account(Base):
     last_email = Column(DateTime)
     signup_time = Column(DateTime, server_default=func.now(), nullable=False)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Account {self.email}>"
 
 
@@ -61,7 +61,7 @@ class Subreddit(Base):
 
     name = Column(String(21), primary_key=True)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<Subreddit {self.name}>"
 
 
@@ -83,7 +83,7 @@ class SubredditPost(Base):
     permalink_url = Column(String(2000))
     num_comments = Column(Integer, nullable=False)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<SubredditPost {self.id}>"
 
 

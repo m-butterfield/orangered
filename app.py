@@ -2,12 +2,15 @@ import datetime
 import logging
 import os
 import sys
+from typing import Dict, List, Tuple, TYPE_CHECKING, Union
 
 from flask import Flask
 from flask import abort, render_template, redirect, request, Response, url_for
 
-
 from subreddits import SUBREDDITS
+
+if TYPE_CHECKING:
+    from werkzeug import Response
 
 
 RECAPTCHA_SITE_KEY = os.environ.get("RECAPTCHA_SITE_KEY")
@@ -27,7 +30,7 @@ logging.getLogger("parso").setLevel(logging.WARNING)
 
 
 @app.route("/")
-def index():
+def index() -> str:
     return render_template(
         "index.html",
         recaptcha_site_key=RECAPTCHA_SITE_KEY,
@@ -36,7 +39,7 @@ def index():
 
 
 @app.route("/account/<account_uuid>/manage", methods=["GET", "POST"])
-def manage(account_uuid):
+def manage(account_uuid: str) -> Union[str, Tuple[str, int], "Response"]:
     from db import Account, Session, Subreddit
 
     with Session() as session:
@@ -48,7 +51,7 @@ def manage(account_uuid):
         if not account.active:
             return redirect(url_for("unsubscribe", account_uuid=account_uuid))
         if request.method == "POST":
-            data = request.get_json()
+            data: Dict[str, Union[str, List[str]]] = request.json or {}
             subreddits = data["subreddits"]
             if len(subreddits) > 10:
                 return "too many subreddits", 400
@@ -99,6 +102,7 @@ def _serialize_account(account):
 @app.route("/signup", methods=["POST"])
 def signup():
     from db import Account, EmailEvent, Session, Subreddit
+    from sendgrid import From, Mail, SendGridAPIClient
 
     with Session() as session:
         data = request.get_json()
@@ -107,12 +111,10 @@ def signup():
         email = data["email"].lower()
         if session.query(Account).get(email) is not None:
             return "account already exists", 400
-        subreddits = data["subreddits"]
-        if len(subreddits) > 10:
+        subs = data["subreddits"]
+        if len(subs) > 10:
             return "too many subreddits", 400
-        subreddits = (
-            session.query(Subreddit).filter(Subreddit.name.in_(subreddits)).all()
-        )
+        subreddits = session.query(Subreddit).filter(Subreddit.name.in_(subs)).all()
         email_interval = data["emailInterval"]
         session.add(
             Account(
@@ -128,6 +130,15 @@ def signup():
             )
         )
         session.commit()
+        if not os.getenv("FLASK_DEBUG"):
+            SendGridAPIClient(os.environ.get("SENDGRID_API_KEY")).send(
+                Mail(
+                    from_email=From("postman@orangered.email", "Orangered"),
+                    to_emails="matt@mattbutterfield.com",
+                    subject="New Orangered Signup",
+                    plain_text_content=f"You have a new signup: {email}, with subreddits: {', '.join(subs)}",
+                )
+            )
         return "success", 201
 
 

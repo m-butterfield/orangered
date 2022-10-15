@@ -57,6 +57,15 @@ resource "google_cloud_run_service" "orangered" {
             }
           }
         }
+        env {
+          name = "SENDGRID_API_KEY"
+          value_from {
+            secret_key_ref {
+              name = google_secret_manager_secret.orangered_sendgrid_api_key.secret_id
+              key  = "latest"
+            }
+          }
+        }
       }
       service_account_name = google_service_account.orangered_cloud_run.email
     }
