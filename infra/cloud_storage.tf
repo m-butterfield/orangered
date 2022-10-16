@@ -22,7 +22,7 @@ resource "google_compute_managed_ssl_certificate" "orangered" {
 }
 
 resource "google_compute_global_address" "orangered" {
-  name    = "orangered"
+  name = "orangered"
 }
 
 resource "google_compute_backend_bucket" "orangered" {
