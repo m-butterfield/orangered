@@ -106,8 +106,8 @@ def _send_email_for_account(session, account, subreddit_posts):
     )
     context = {
         "subreddits": subreddit_posts.items(),
-        "email_management_url": url_for("account", account_uuid=account.uuid),
-        "unsubscribe_url": url_for("unsubscribe_account", account_uuid=account.uuid),
+        "email_management_url": f"https://orangered.email/manage/index.html?account_uuid={account.uuid}",
+        "unsubscribe_url": f"https://orangered.email/unsubscribe/index.html?account_uuid={account.uuid}",
     }
     html_data = Template(HTML_TEMPLATE, trim_blocks=True).render(**context)
     text_data = Template(TEXT_TEMPLATE, trim_blocks=True).render(**context)
