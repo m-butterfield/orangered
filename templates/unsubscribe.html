@@ -6,7 +6,7 @@
 
 {% block extra_js %}
 <script>
-window.account = {{ account_info | tojson }}
+window.APP_BASE_URL = "{{ app_base_url }}";
 </script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/dist/unsubscribe.bundle.js') }}"></script>
 {% endblock %}

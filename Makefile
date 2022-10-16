@@ -33,6 +33,7 @@ fmt:
 	yarn run eslint static/ts/ --fix
 	cd infra/ && terraform fmt
 
+run-server: export RENDER_STATIC=1
 run-server: export FLASK_APP=app.py
 run-server:
 	flask run -p 8000
@@ -44,6 +45,7 @@ run-webpack-prod:
 	rm -rf static/js/dist
 	yarn run webpack --mode production
 
+update-static: export RENDER_STATIC=1
 update-static:
 	rm -rf _site
 	mkdir _site

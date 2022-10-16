@@ -11,12 +11,13 @@ import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import {ManageData} from "features/ManageForm/types";
 import React, {useState} from "react";
 import {Account, EmailFrequency} from "types";
-import {ManageData} from "features/ManageForm/types";
+import {APP_BASE} from "utils";
 
 const submit = async (accountID: string, data: ManageData): Promise<string> => {
-  const response = await fetch(`/account/${accountID}/manage`, {
+  const response = await fetch(`${APP_BASE}/account/${accountID}`, {
     method: "POST",
     headers: new Headers({"Content-Type": "application/json"}),
     body: JSON.stringify(data),
@@ -29,15 +30,13 @@ const submit = async (accountID: string, data: ManageData): Promise<string> => {
 
 type manageFormProps = {
   allSubreddits: string[];
+  account: Account | null;
+  setAccount: (a: Account) => void;
 }
 
-const gAccount = (window as {account?: Account}).account;
-
 export function ManageForm(props: manageFormProps) {
-  if (!gAccount) return <>Account not found.</>;
-  const [account, setAccount] = useState(gAccount);
-
-  const {allSubreddits} = props;
+  const {account, allSubreddits, setAccount} = props;
+  if (!account) return <>Account not found</>;
 
   const [subredditWarning, setSubredditWarning] = useState("");
   const [submitting, setSubmitting] = useState(false);

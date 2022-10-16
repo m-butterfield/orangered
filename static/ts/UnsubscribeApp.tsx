@@ -8,11 +8,12 @@ import React, {useState} from "react";
 import {Footer} from "Footer";
 import {Header} from "Header";
 import {Account} from "types";
+import {APP_BASE} from "utils";
 
 declare const account: Account | null;
 
 const submit = async (accountID: string, unsubscribe: boolean): Promise<string> => {
-  const response = await fetch(`/account/${accountID}/unsubscribe`, {
+  const response = await fetch(`${APP_BASE}/account/${accountID}/unsubscribe`, {
     method: "POST",
     headers: new Headers({"Content-Type": "application/json"}),
     body: JSON.stringify({unsubscribe: unsubscribe}),
