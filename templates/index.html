@@ -17,6 +17,7 @@
 <script>
 window.allSubreddits = {{ subreddits | tojson }};
 window.recaptchaKey = "{{ recaptcha_site_key }}"
+window.APP_BASE_URL = "{{ app_base_url }}";
 </script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/dist/index.bundle.js') }}"></script>
 {% endblock %}

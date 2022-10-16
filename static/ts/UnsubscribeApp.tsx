@@ -4,16 +4,14 @@ import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {Footer} from "Footer";
 import {Header} from "Header";
 import {Account} from "types";
-import {APP_BASE} from "utils";
-
-declare const account: Account | null;
+import {APP_BASE, getAccount} from "utils";
 
 const submit = async (accountID: string, unsubscribe: boolean): Promise<string> => {
-  const response = await fetch(`${APP_BASE}/account/${accountID}/unsubscribe`, {
+  const response = await fetch(`${APP_BASE}/unsubscribe/${accountID}`, {
     method: "POST",
     headers: new Headers({"Content-Type": "application/json"}),
     body: JSON.stringify({unsubscribe: unsubscribe}),
@@ -24,8 +22,14 @@ const submit = async (accountID: string, unsubscribe: boolean): Promise<string> 
   return await response.text();
 };
 
-function UnsubscribeApp() {
-  if (!account) return <>Account not found.</>;
+type UnsubscribeProps = {
+  account: Account | null;
+  setAccount: (a: Account) => void;
+}
+
+const Unsubscribe = (props: UnsubscribeProps) => {
+  const {account} = props;
+  if (!account) return <>Account not found</>;
 
   const [unsubscribed, setUnsubscribed] = useState(!account.active);
   const [submitting, setSubmitting] = useState(false);
@@ -43,7 +47,7 @@ function UnsubscribeApp() {
           color="text.primary"
           gutterBottom
         >
-          Unsubscribe
+            Unsubscribe
         </Typography>
         <Box component="form" noValidate sx={{mt: 3}}>
           <Grid container spacing={2}>
@@ -86,6 +90,31 @@ function UnsubscribeApp() {
       <Footer></Footer>
     </div>
   );
-}
+};
+
+const UnsubscribeApp = () => {
+  const [account, setAccount] = useState<Account>(null);
+  const [loading, setLoading] = useState(true);
+  const params = new URLSearchParams(window.location.search);
+  const accountUUID = params.has("account_uuid") ? params.get("account_uuid") : undefined;
+
+  useEffect(() => {
+    getAccount(accountUUID).then(data => {
+      setAccount(data);
+      setLoading(false);
+    }).catch((e) => {
+      console.log(e);
+      alert("Could not fetch account.");
+    });
+  }, []);
+
+  if (!accountUUID) return <>Account not found.</>;
+  if (loading) return <>Loading</>;
+
+  return <Unsubscribe
+    account={account}
+    setAccount={setAccount}
+  />;
+};
 
 export default UnsubscribeApp;

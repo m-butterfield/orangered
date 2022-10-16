@@ -38,6 +38,7 @@ if os.getenv("RENDER_STATIC"):
             "index.html",
             recaptcha_site_key=RECAPTCHA_SITE_KEY,
             subreddits=SUBREDDITS,
+            app_base_url=app.config["APP_BASE_URL"],
         )
 
     @app.route("/manage")
@@ -65,8 +66,6 @@ def account(account_uuid: str) -> Union[Dict, Tuple[str, int], "Response"]:
         )
         if account is None:
             return "not found", 404
-        if not account.active:
-            return redirect(url_for("unsubscribe", account_uuid=account_uuid))
         if request.method == "POST":
             data: Dict[str, Union[str, List[str]]] = request.json or {}
             subreddits = data["subreddits"]
