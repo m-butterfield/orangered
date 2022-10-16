@@ -295,8 +295,8 @@ def update_static() -> None:
     with open("_site/index.html", "w") as f:
         f.write(result.text)
     result = client.get("/manage")
-    with open("_site/manage.html", "w") as f:
+    with open("_site/manage/index.html", "w") as f:
         f.write(result.text)
     result = client.get("/unsubscribe")
-    with open("_site/unsubscribe.html", "w") as f:
+    with open("_site/unsubscribe/index.html", "w") as f:
         f.write(result.text)

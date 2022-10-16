@@ -50,10 +50,15 @@ update-static: export FLASK_DEBUG=false
 update-static: export APP_BASE_URL=https://app.orangered.email
 update-static: run-webpack-prod
 	rm -rf _site
-	mkdir _site
+	mkdir -p _site/manage
+	mkdir _site/unsubscribe
 	./update_static
 	mkdir -p _site/static/js/dist/
+	mkdir _site/static/img
+	mkdir _site/static/html
 	cp static/js/dist/* _site/static/js/dist
+	cp static/img/* _site/static/img
+	cp static/html/* _site/static/html
 	gsutil -m rsync -R _site gs://orangered.email
 
 send-test-emails: export SERVER_NAME=localhost
