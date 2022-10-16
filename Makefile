@@ -6,7 +6,6 @@ terraformvarsarg := -var-file=secrets.tfvars
 
 export PGHOST=localhost
 export PGDATABASE=orangered
-export FLASK_DEBUG=1
 
 .PHONY: deploy deploy-server docker-build docker-push reset-db fmt run-server run-webpack run-webpack-prod update-static send-test-emails scrape-subreddits test mypy tf-plan tf-apply tf-refresh update-deps
 
@@ -33,6 +32,7 @@ fmt:
 	yarn run eslint static/ts/ --fix
 	cd infra/ && terraform fmt
 
+run-server: export FLASK_DEBUG=1
 run-server: export FLASK_APP=app.py
 run-server:
 	flask run -p 8000
@@ -45,7 +45,11 @@ run-webpack-prod:
 	yarn run webpack --mode production
 
 update-static:
+	rm -rf _site
+	mkdir _site
 	./update_static
+	mkdir -p _site/static/js/dist/
+	cp static/js/dist/* _site/static/js/dist
 
 send-test-emails: export SERVER_NAME=localhost
 send-test-emails:

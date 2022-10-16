@@ -284,6 +284,17 @@ def update_subreddits() -> None:
 
 
 def update_static() -> None:
+    if not os.environ.get("RECAPTCHA_SITE_KEY") or not os.environ.get(
+        "RECAPTCHA_SECRET_KEY"
+    ):
+        raise Exception("You must have recaptcha keys set in your env.")
     client = app.test_client()
     result = client.get("/")
-    breakpoint()
+    with open("_site/index.html", "w") as f:
+        f.write(result.text)
+    result = client.get("/manage")
+    with open("_site/manage.html", "w") as f:
+        f.write(result.text)
+    result = client.get("/unsubscribe")
+    with open("_site/unsubscribe.html", "w") as f:
+        f.write(result.text)

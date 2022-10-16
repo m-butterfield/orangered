@@ -5,3 +5,4 @@ secrets.tfvars
 node_modules
 dist/
 *.log
+_site/
