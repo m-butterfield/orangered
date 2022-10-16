@@ -13,6 +13,7 @@ praw = "^7.6.0"
 gunicorn = "^20.1.0"
 sendgrid = "^6.9.7"
 beautifulsoup4 = "^4.11.1"
+Flask-Cors = "^3.0.10"
 
 [tool.poetry.dev-dependencies]
 ipdb = "^0.13.9"

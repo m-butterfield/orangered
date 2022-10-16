@@ -11,7 +11,7 @@ resource "google_cloud_run_service" "orangered" {
         }
         env {
           name  = "SERVER_NAME"
-          value = "orangered.email"
+          value = "app.orangered.email"
         }
         env {
           name  = "PGDATABASE"
@@ -98,9 +98,9 @@ resource "google_cloud_run_service_iam_policy" "noauth" {
   policy_data = data.google_iam_policy.noauth.policy_data
 }
 
-resource "google_cloud_run_domain_mapping" "orangered" {
+resource "google_cloud_run_domain_mapping" "app_orangered" {
   location = var.default_region
-  name     = "orangered.email"
+  name     = "app.orangered.email"
 
   metadata {
     namespace = var.project

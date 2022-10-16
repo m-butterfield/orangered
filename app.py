@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple, TYPE_CHECKING, Union
 
 from flask import Flask
 from flask import abort, render_template, request, Response
+from flask_cors import CORS
 
 from subreddits import SUBREDDITS
 
@@ -25,6 +26,7 @@ class Config:
 
 app = Flask(__name__)
 app.config.from_object(Config)
+CORS(app)
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logging.getLogger("parso").setLevel(logging.WARNING)
