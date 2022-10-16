@@ -5,7 +5,7 @@ import sys
 from typing import Dict, List, Tuple, TYPE_CHECKING, Union
 
 from flask import Flask
-from flask import abort, render_template, redirect, request, Response, url_for
+from flask import abort, render_template, request, Response
 
 from subreddits import SUBREDDITS
 

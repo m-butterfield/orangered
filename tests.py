@@ -111,13 +111,9 @@ class SignupTests(BaseAppTestCase):
 
 
 class UnsubscribeTests(BaseAppTestCase):
-    def test_unsubscribe_not_found(self):
-        resp = self.client.post("/email/blah/unsubscribe")
-        self.assertEqual(resp.status_code, 404)
-
     def test_unsubscribe(self):
         resp = self.client.post(
-            f"/account/{self.account.uuid}/unsubscribe", json={"unsubscribe": True}
+            f"/unsubscribe/{self.account.uuid}", json={"unsubscribe": True}
         )
         self.assertEqual(resp.status_code, 200)
         self.session.refresh(self.account)
@@ -125,7 +121,7 @@ class UnsubscribeTests(BaseAppTestCase):
 
         # resubscribe
         resp = self.client.post(
-            f"/account/{self.account.uuid}/unsubscribe", json={"unsubscribe": False}
+            f"/unsubscribe/{self.account.uuid}", json={"unsubscribe": False}
         )
         self.assertEqual(resp.status_code, 200)
         self.session.refresh(self.account)
@@ -133,15 +129,9 @@ class UnsubscribeTests(BaseAppTestCase):
 
 
 class ManageTests(BaseAppTestCase):
-    def test_redirect_to_unsubscribe(self):
-        self.account.active = False
-        self.session.commit()
-        resp = self.client.get(f"/account/{self.account.uuid}/manage")
-        self.assertEqual(resp.status_code, 302)
-
     def test_max_10_subreddits(self):
         resp = self.client.post(
-            f"/account/{self.account.uuid}/manage",
+            f"/account/{self.account.uuid}",
             json={"subreddits": ["aviation"] * 11},
         )
         self.assertEqual(resp.status_code, 400)
@@ -149,7 +139,7 @@ class ManageTests(BaseAppTestCase):
     def test_update_account(self):
         expected_subreddits = ["aviation", "spacex", "analog"]
         resp = self.client.post(
-            f"/account/{self.account.uuid}/manage",
+            f"/account/{self.account.uuid}",
             json={
                 "subreddits": expected_subreddits,
                 "emailInterval": "weekly",
@@ -167,7 +157,7 @@ class ManageTests(BaseAppTestCase):
         )
 
         self.client.post(
-            f"/account/{self.account.uuid}/manage",
+            f"/account/{self.account.uuid}",
             json={
                 "subreddits": expected_subreddits,
                 "emailInterval": "daily",
@@ -176,6 +166,7 @@ class ManageTests(BaseAppTestCase):
         self.session.refresh(account)
         self.assertEqual(len(account.email_events), 1)
         self.assertEqual(account.email_events[0].time_of_day, time(12))
+
         self.assertIsNone(account.email_events[0].day_of_week)
 
 
