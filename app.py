@@ -130,7 +130,7 @@ def signup():
             )
         )
         session.commit()
-        if not os.getenv("FLASK_DEBUG"):
+        if not app.config["DEBUG"]:
             SendGridAPIClient(os.environ.get("SENDGRID_API_KEY")).send(
                 Mail(
                     from_email=From("postman@orangered.email", "Orangered"),
