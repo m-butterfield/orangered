@@ -288,6 +288,8 @@ def update_static() -> None:
         "RECAPTCHA_SECRET_KEY"
     ):
         raise Exception("You must have recaptcha keys set in your env.")
+    if app.config["DEBUG"]:
+        raise Exception("App must not be in debug mode")
     client = app.test_client()
     result = client.get("/")
     with open("_site/index.html", "w") as f:

@@ -46,6 +46,8 @@ run-webpack-prod:
 	yarn run webpack --mode production
 
 update-static: export RENDER_STATIC=1
+update-static: export FLASK_DEBUG=false
+update-static: export APP_BASE_URL=https://app.orangered.email
 update-static:
 	rm -rf _site
 	mkdir _site
