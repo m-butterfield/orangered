@@ -43,7 +43,30 @@ resource "google_compute_target_https_proxy" "orangered" {
 
 resource "google_compute_global_forwarding_rule" "orangered" {
   name       = "orangered"
-  ip_version = "IPV4"
   target     = google_compute_target_https_proxy.orangered.id
+  ip_address = google_compute_global_address.orangered.address
   port_range = 443
+}
+
+# begin http -> https redirect
+
+resource "google_compute_url_map" "orangered_http" {
+  name = "orangered-http"
+  default_url_redirect {
+    redirect_response_code = "MOVED_PERMANENTLY_DEFAULT"
+    strip_query            = false
+    https_redirect         = true
+  }
+}
+
+resource "google_compute_target_http_proxy" "orangered_http" {
+  name    = "orangered-http"
+  url_map = google_compute_url_map.orangered_http.self_link
+}
+
+resource "google_compute_global_forwarding_rule" "orangered_http" {
+  name       = "orangered-http"
+  target     = google_compute_target_http_proxy.orangered_http.self_link
+  ip_address = google_compute_global_address.orangered.address
+  port_range = "80"
 }
