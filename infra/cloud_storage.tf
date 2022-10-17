@@ -13,16 +13,16 @@ resource "google_storage_bucket_iam_member" "orangered_public" {
   member = "allUsers"
 }
 
+resource "google_compute_global_address" "orangered" {
+  name = "orangered"
+}
+
 resource "google_compute_managed_ssl_certificate" "orangered" {
   name = "orangered"
 
   managed {
     domains = ["orangered.email"]
   }
-}
-
-resource "google_compute_global_address" "orangered" {
-  name = "orangered"
 }
 
 resource "google_compute_backend_bucket" "orangered" {
