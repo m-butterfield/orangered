@@ -137,6 +137,18 @@ async = ["asgiref (>=3.2)"]
 dotenv = ["python-dotenv"]
 
 [[package]]
+name = "flask-cors"
+version = "3.0.10"
+description = "A Flask extension adding a decorator for CORS support"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+Flask = ">=0.9"
+Six = "*"
+
+[[package]]
 name = "freezegun"
 version = "1.2.2"
 description = "Let your Python tests travel through time"
@@ -500,7 +512,7 @@ starkbank-ecdsa = ">=2.0.1"
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 
@@ -682,7 +694,7 @@ watchdog = ["watchdog"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "daec579d2994ffda72007cf8a1220d18c42059fab2bcd4001d427cfff811a329"
+content-hash = "e53aa632f609c3f2e5f834f6922440c5df2b0ca4aedb480596967e33c9d44663"
 
 [metadata.files]
 appnope = []
@@ -703,6 +715,7 @@ decorator = [
 ]
 executing = []
 flask = []
+flask-cors = []
 freezegun = []
 greenlet = []
 gunicorn = []

@@ -5,7 +5,8 @@ import sys
 from typing import Dict, List, Tuple, TYPE_CHECKING, Union
 
 from flask import Flask
-from flask import abort, render_template, redirect, request, Response, url_for
+from flask import abort, render_template, request, Response
+from flask_cors import CORS
 
 from subreddits import SUBREDDITS
 
@@ -19,27 +20,46 @@ RECAPTCHA_SECRET = os.environ.get("RECAPTCHA_SECRET_KEY")
 
 class Config:
     SERVER_NAME = os.environ.get("SERVER_NAME")
-    PREFERRED_URL_SCHEME = "https" if SERVER_NAME == "orangered.email" else "http"
+    APP_BASE_URL = os.environ.get("APP_BASE_URL", "http://localhost:8000")
+    PREFERRED_URL_SCHEME = "https" if SERVER_NAME == "app.orangered.email" else "http"
 
 
 app = Flask(__name__)
 app.config.from_object(Config)
+CORS(app)
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logging.getLogger("parso").setLevel(logging.WARNING)
 
 
-@app.route("/")
-def index() -> str:
-    return render_template(
-        "index.html",
-        recaptcha_site_key=RECAPTCHA_SITE_KEY,
-        subreddits=SUBREDDITS,
-    )
+if os.getenv("RENDER_STATIC"):
+
+    @app.route("/")
+    def index() -> str:
+        return render_template(
+            "index.html",
+            recaptcha_site_key=RECAPTCHA_SITE_KEY,
+            subreddits=SUBREDDITS,
+            app_base_url=app.config["APP_BASE_URL"],
+        )
+
+    @app.route("/manage")
+    def manage() -> str:
+        return render_template(
+            "manage.html",
+            subreddits=SUBREDDITS,
+            app_base_url=app.config["APP_BASE_URL"],
+        )
+
+    @app.route("/unsubscribe")
+    def unsubscribe() -> str:
+        return render_template(
+            "unsubscribe.html", app_base_url=app.config["APP_BASE_URL"]
+        )
 
 
-@app.route("/account/<account_uuid>/manage", methods=["GET", "POST"])
-def manage(account_uuid: str) -> Union[str, Tuple[str, int], "Response"]:
+@app.route("/account/<account_uuid>", methods=["GET", "POST"])
+def account(account_uuid: str) -> Union[Dict, Tuple[str, int], "Response"]:
     from db import Account, Session, Subreddit
 
     with Session() as session:
@@ -48,8 +68,6 @@ def manage(account_uuid: str) -> Union[str, Tuple[str, int], "Response"]:
         )
         if account is None:
             return "not found", 404
-        if not account.active:
-            return redirect(url_for("unsubscribe", account_uuid=account_uuid))
         if request.method == "POST":
             data: Dict[str, Union[str, List[str]]] = request.json or {}
             subreddits = data["subreddits"]
@@ -63,15 +81,11 @@ def manage(account_uuid: str) -> Union[str, Tuple[str, int], "Response"]:
             )
             session.commit()
             return "success", 200
-        return render_template(
-            "manage.html",
-            account_info=_serialize_account(account),
-            subreddits=SUBREDDITS,
-        )
+        return _serialize_account(account)
 
 
-@app.route("/account/<account_uuid>/unsubscribe", methods=["GET", "POST"])
-def unsubscribe(account_uuid):
+@app.route("/unsubscribe/<account_uuid>", methods=["POST"])
+def unsubscribe_account(account_uuid) -> Tuple[str, int]:
     from db import Account, Session
 
     with Session() as session:
@@ -80,13 +94,10 @@ def unsubscribe(account_uuid):
         )
         if account is None:
             return "account not found", 404
-        if request.method == "POST":
-            data = request.get_json()
-            account.active = not data["unsubscribe"]
-            session.commit()
-        return render_template(
-            "unsubscribe.html", account_info=_serialize_account(account)
-        )
+        data = request.get_json()
+        account.active = not data["unsubscribe"]
+        session.commit()
+        return "success", 200
 
 
 def _serialize_account(account):
@@ -130,7 +141,7 @@ def signup():
             )
         )
         session.commit()
-        if not os.getenv("FLASK_DEBUG"):
+        if not app.config["DEBUG"]:
             SendGridAPIClient(os.environ.get("SENDGRID_API_KEY")).send(
                 Mail(
                     from_email=From("postman@orangered.email", "Orangered"),

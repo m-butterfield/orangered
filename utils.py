@@ -106,8 +106,8 @@ def _send_email_for_account(session, account, subreddit_posts):
     )
     context = {
         "subreddits": subreddit_posts.items(),
-        "email_management_url": url_for("manage", account_uuid=account.uuid),
-        "unsubscribe_url": url_for("unsubscribe", account_uuid=account.uuid),
+        "email_management_url": f"https://orangered.email/manage/index.html?account_uuid={account.uuid}",
+        "unsubscribe_url": f"https://orangered.email/unsubscribe/index.html?account_uuid={account.uuid}",
     }
     html_data = Template(HTML_TEMPLATE, trim_blocks=True).render(**context)
     text_data = Template(TEXT_TEMPLATE, trim_blocks=True).render(**context)
@@ -273,3 +273,30 @@ def _scrape_subreddits(session):
             "p", class_="titlerow"
         )
         count += 25
+
+
+def update_subreddits() -> None:
+    with Session() as session:
+        for s in [Subreddit(name=s) for s in SUBREDDITS]:
+            print(f"merging subreddit: {s}")
+            session.merge(s)
+        session.commit()
+
+
+def update_static() -> None:
+    if not os.environ.get("RECAPTCHA_SITE_KEY") or not os.environ.get(
+        "RECAPTCHA_SECRET_KEY"
+    ):
+        raise Exception("You must have recaptcha keys set in your env.")
+    if app.config["DEBUG"]:
+        raise Exception("App must not be in debug mode")
+    client = app.test_client()
+    result = client.get("/")
+    with open("_site/index.html", "w") as f:
+        f.write(result.text)
+    result = client.get("/manage")
+    with open("_site/manage/index.html", "w") as f:
+        f.write(result.text)
+    result = client.get("/unsubscribe")
+    with open("_site/unsubscribe/index.html", "w") as f:
+        f.write(result.text)

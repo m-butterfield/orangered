@@ -16,9 +16,10 @@ import {SignupFormData} from "features/SignupForm/types";
 import {EmailFrequency} from "types";
 import mailImg from "img/mail_orange.png";
 import Link from "@mui/material/Link";
+import {APP_BASE} from "utils";
 
 const submit = async (data: SignupFormData): Promise<string> => {
-  const response = await fetch("/signup", {
+  const response = await fetch(`${APP_BASE}/signup`, {
     method: "POST",
     headers: new Headers({"Content-Type": "application/json"}),
     body: JSON.stringify(data),

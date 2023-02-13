@@ -8,15 +8,15 @@ export PGHOST=localhost
 export PGDATABASE=orangered
 export FLASK_DEBUG=1
 
-.PHONY: deploy deploy-server docker-build docker-push reset-db fmt run-server run-webpack run-webpack-prod send-test-emails scrape-subreddits test mypy tf-plan tf-apply tf-refresh update-deps
+.PHONY: deploy deploy-server docker-build docker-push reset-db fmt run-server run-webpack run-webpack-prod update-static send-test-emails scrape-subreddits test mypy tf-plan tf-apply tf-refresh update-deps
 
-deploy: docker-build docker-push
+deploy: update-static docker-build docker-push
 	$(deployservercommand)
 
 deploy-server: docker-build docker-push
 	$(deployservercommand)
 
-docker-build: run-webpack-prod
+docker-build:
 	docker-compose build
 
 docker-push:
@@ -33,6 +33,7 @@ fmt:
 	yarn run eslint static/ts/ --fix
 	cd infra/ && terraform fmt
 
+run-server: export RENDER_STATIC=1
 run-server: export FLASK_APP=app.py
 run-server:
 	flask run -p 8000
@@ -44,6 +45,22 @@ run-webpack-prod:
 	rm -rf static/js/dist
 	yarn run webpack --mode production
 
+update-static: export RENDER_STATIC=1
+update-static: export FLASK_DEBUG=false
+update-static: export APP_BASE_URL=https://app.orangered.email
+update-static: run-webpack-prod
+	rm -rf _site
+	mkdir -p _site/manage
+	mkdir _site/unsubscribe
+	./update_static
+	mkdir -p _site/static/js/dist/
+	mkdir _site/static/img
+	mkdir _site/static/html
+	cp static/js/dist/* _site/static/js/dist
+	cp static/img/* _site/static/img
+	cp static/html/* _site/static/html
+	gsutil -m rsync -R _site gs://orangered.email
+
 send-test-emails: export SERVER_NAME=localhost
 send-test-emails:
 	./send_emails
@@ -51,7 +68,7 @@ send-test-emails:
 scrape-subreddits:
 	./scrape_subreddits
 
-test: export SERVER_NAME=orangered.email
+test: export SERVER_NAME=app.orangered.email
 test: export PGDATABASE=orangered_test
 test:
 	dropdb --if-exists orangered_test
